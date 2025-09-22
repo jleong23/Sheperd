@@ -17,9 +17,9 @@ export default function NavBar() {
   ];
 
   const linkClass = ({ isActive }) =>
-    `inline-block transition-transform duration-300 ${
+    `inline-block transition-transform duration-300 text-xl ${
       isActive ? "text-blue-500" : ""
-    } hover:-translate-y-1 hover:scale-105`;
+    } hover:-translate-y-1 hover:scale-80`;
 
   return (
     <nav className=" text-black p-4 relative z-50 font-semibold">
@@ -37,11 +37,16 @@ export default function NavBar() {
           to="/"
           className="absolute left-1/2 transform -translate-x-1/2 lg:static lg:transform-none flex-shrink-0"
         >
-          <img
-            src={logo}
-            alt="Dreamers logo"
-            className="w-24 h-20 rounded-lg "
-          />
+          <span className="flex items-center">
+            <img
+              src={logo}
+              alt="Dreamers logo"
+              className="w-24 h-20 rounded-lg "
+            />
+            <div className="font-dm text-3xl font-bold tracking-wider md:text-4xl">
+              Dreamers Youth
+            </div>
+          </span>
         </Link>
 
         {/* Desktop Links */}

@@ -1,11 +1,26 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// NavBar
 import NavBar from "./components/ui/NavBar";
-import { BrowserRouter } from "react-router-dom";
-export default function App() {
+
+// Leader Pages
+import LeaderHome from "./pages/leaders/Home";
+
+function AppWithRouter() {
   return (
     <>
-      <BrowserRouter>
-        <NavBar />
-      </BrowserRouter>
+      <NavBar />
+      <Routes>
+        <Route path="/" element={<LeaderHome />} />
+      </Routes>
     </>
+  );
+}
+export default function App() {
+  return (
+    <div>
+      <Router>
+        <AppWithRouter />
+      </Router>
+    </div>
   );
 }
