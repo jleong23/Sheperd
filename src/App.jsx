@@ -1,6 +1,11 @@
+import NavBar from "./components/ui/NavBar";
+import { BrowserRouter } from "react-router-dom";
 export default function App() {
   return (
-    <h1 className="text-red-300 font-bold
-    ">Tailwind is working 🎉</h1>
+    <>
+      <BrowserRouter>
+        <NavBar />
+      </BrowserRouter>
+    </>
   );
 }
