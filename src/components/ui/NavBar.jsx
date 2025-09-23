@@ -26,10 +26,10 @@ export default function NavBar() {
       <div className="flex justify-between items-center">
         {/* Hamburger Button (shown below lg) */}
         <button
-          className="lg:hidden p-2 rounded hover:bg-slate-800 hover:text-white"
+          className="lg:hidden p-4 rounded hover:bg-slate-800 hover:text-white"
           onClick={() => setMenuOpen(!menuOpen)}
         >
-          {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          {menuOpen ? <X size={30} /> : <Menu size={30} />}
         </button>
 
         {/* Logo (center on small screens) */}
@@ -41,7 +41,7 @@ export default function NavBar() {
             <img
               src={logo}
               alt="Dreamers logo"
-              className="w-24 h-20 rounded-full "
+              className="w-12 h-10 rounded-full md:w-24 md:h-20 "
             />
             <div className="font-dm text-3xl font-bold tracking-wider md:text-4xl">
               Dreamers Youth

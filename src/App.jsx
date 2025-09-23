@@ -4,6 +4,7 @@ import NavBar from "./components/ui/NavBar";
 
 // Leader Pages
 import LeaderHome from "./pages/leaders/Home";
+import Kids from "./pages/leaders/Kids";
 
 function AppWithRouter() {
   return (
@@ -11,6 +12,7 @@ function AppWithRouter() {
       <NavBar />
       <Routes>
         <Route path="/" element={<LeaderHome />} />
+        <Route path="/kid-list" element={<Kids />} />
       </Routes>
     </>
   );
