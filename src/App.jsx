@@ -17,7 +17,7 @@ function AppWithRouter() {
 }
 export default function App() {
   return (
-    <div>
+    <div className="min-h-screen bg-[#b6becc]">
       <Router>
         <AppWithRouter />
       </Router>

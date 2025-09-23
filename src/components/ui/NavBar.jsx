@@ -22,7 +22,7 @@ export default function NavBar() {
     } hover:-translate-y-1 hover:scale-80`;
 
   return (
-    <nav className=" text-black p-4 relative z-50 font-semibold">
+    <nav className=" text-black md:p-6 relative z-50 font-semibold bg-slate-200 rounded-lg ">
       <div className="flex justify-between items-center">
         {/* Hamburger Button (shown below lg) */}
         <button
@@ -37,11 +37,11 @@ export default function NavBar() {
           to="/"
           className="absolute left-1/2 transform -translate-x-1/2 lg:static lg:transform-none flex-shrink-0"
         >
-          <span className="flex items-center">
+          <span className="flex items-center gap-3">
             <img
               src={logo}
               alt="Dreamers logo"
-              className="w-24 h-20 rounded-lg "
+              className="w-24 h-20 rounded-full "
             />
             <div className="font-dm text-3xl font-bold tracking-wider md:text-4xl">
               Dreamers Youth
@@ -63,7 +63,7 @@ export default function NavBar() {
 
       {/* Mobile Dropdown */}
       <div
-        className={`absolute top-full left-0 w-full bg-slate-300 lg:hidden shadow-lg z-50 overflow-hidden transition-all duration-500 ${
+        className={`absolute top-full left-0 w-full bg-slate-200 lg:hidden shadow-lg z-50 overflow-hidden transition-all duration-500 ${
           menuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
