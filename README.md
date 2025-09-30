@@ -1,12 +1,112 @@
-# React + Vite
+# Dreamers Attendance App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A web application for tracking attendance of kids, built with React (frontend) and Express/PostgreSQL (backend).
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The project is organized into two main directories:
 
-## Expanding the ESLint configuration
+- `frontend/`: Contains the React application built with Vite
+- `backend/`: Contains the Express API server and PostgreSQL database configuration
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Backend
+
+The backend is a RESTful API built with Express and PostgreSQL. It provides endpoints for managing kids and their attendance records.
+
+### Key Features
+
+- RESTful API with proper error handling
+- PostgreSQL database with well-defined schema
+- Organized route structure
+- Environment variable configuration
+- Database seeding scripts
+
+For detailed information about the backend, see the [Backend README](./backend/README.md).
+
+## Frontend
+
+The frontend is a React application built with Vite. It provides a user interface for managing kids and their attendance records.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v14 or later)
+- PostgreSQL (v12 or later)
+
+### Backend Setup
+
+1. Navigate to the backend directory:
+   ```
+   cd backend
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+3. Create a `.env` file based on `.env.example` and configure your environment variables.
+
+4. Initialize the database:
+   ```
+   psql -U your_username -d your_database -f init.sql
+   ```
+
+5. Seed the database:
+   ```
+   node seed.js
+   ```
+
+6. Start the server:
+   ```
+   npm run dev
+   ```
+
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+   ```
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+3. Start the development server:
+   ```
+   npm run dev
+   ```
+
+## Recent Improvements
+
+The backend has been significantly improved with the following changes:
+
+1. **Database Configuration**:
+   - Created a centralized `db.js` file for database connection
+   - Added environment variable support for database credentials
+   - Added connection pooling for better performance
+
+2. **Code Organization**:
+   - Separated routes into dedicated files
+   - Added proper error handling and validation
+   - Improved documentation with JSDoc comments
+
+3. **Database Schema**:
+   - Updated `init.sql` to include both kids and attendance tables
+   - Added foreign key constraints for data integrity
+   - Added timestamps for tracking record creation and updates
+
+4. **API Endpoints**:
+   - Implemented complete CRUD operations for kids and attendance
+   - Added filtering capabilities for attendance records
+   - Improved error responses
+
+5. **Documentation**:
+   - Added comprehensive README files
+   - Documented API endpoints
+   - Added environment variable examples
+
+These improvements make the backend more maintainable, secure, and easier to understand for future development.
