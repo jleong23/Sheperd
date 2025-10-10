@@ -17,13 +17,13 @@ export default function Home() {
         <div className="inline-flex flex-wrap justify-center gap-8">
           <a
             href="/attendance"
-            className="bg-yellow-500 text-red-600 px-8 py-4 rounded-full font-semibold shadow-lg hover:bg-yellow-600 hover:scale-105 transform transition"
+            className="bg-black text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:bg-yellow-600 hover:scale-105 transform transition"
           >
             <BsCardChecklist className="inline mr-2 text-2xl" /> Attendance
           </a>
           <a
             href="/new-people"
-            className="bg-pink-500 text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:bg-pink-600 hover:scale-105 transform transition"
+            className="bg-black text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:bg-pink-600 hover:scale-105 transform transition"
           >
             <BsCardChecklist className="inline mr-2 text-2xl" /> New People
           </a>
@@ -32,7 +32,7 @@ export default function Home() {
 
       {/* Leader Stats */}
       <section className="bg-gray-200 p-12 rounded-xl shadow-lg max-w-5xl mx-auto">
-        <h2 className="text-5xl font-bold text-center mb-10 text-[#E07B13]">
+        <h2 className="text-5xl font-bold text-center mb-10 text-blue-900">
           Leader Stats
         </h2>
 
@@ -120,7 +120,7 @@ export default function Home() {
             key={idx}
             className="bg-white rounded-xl shadow-lg p-8 border text-center hover:shadow-2xl transition cursor-pointer"
           >
-            <h2 className="font-extrabold text-3xl text-[#E07B13] mb-3">
+            <h2 className="font-extrabold text-3xl text-blue-900 mb-3">
               {title}
             </h2>
             <p className="text-muted text-lg mb-3">{date}</p>
@@ -130,7 +130,7 @@ export default function Home() {
       </section>
 
       {/* Reminders */}
-      <section className="bg-red-200 p-12 rounded-xl shadow-lg max-w-5xl mx-auto">
+      <section className="bg-blue-900 text-white p-12 rounded-xl shadow-lg max-w-5xl mx-auto">
         <h2 className="text-5xl font-bold text-center mb-10">Reminders</h2>
         {[
           {
