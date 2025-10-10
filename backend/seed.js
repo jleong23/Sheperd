@@ -1,8 +1,14 @@
+/**
+ * This file is use to seed the PostgreSQL database
+ * This is usually run during development/testing to populate database with initial data
+ * seed.js reads JSON seed data & inserts it into your PostgreSQL database
+ * RUN: node backend/seed.js
+ */
 const fs = require("fs");
 const path = require("path");
-const pool = require("./db");
+const pool = require("./db"); // PostgreSQl connection pool from db.js
 
-// Load JSON files using relative paths
+// Region | Load JSON files using relative paths
 const kids = JSON.parse(
   fs.readFileSync(
     path.join(__dirname, "../frontend/src/data/kids.json"),
@@ -16,16 +22,17 @@ const attendanceData = JSON.parse(
     "utf8"
   )
 );
+// EndRegion
 
 async function seed() {
   try {
     console.log("Seeding kids and attendance...");
 
-    // Clear existing data
+    // Clear existing data to start fresh everytime this seed script is run
     await pool.query("DELETE FROM attendance");
     await pool.query("DELETE FROM kids");
 
-    // Reset sequences
+    // Reset sequences so that SERIAL ID fields starts from 1 again
     await pool.query("ALTER SEQUENCE kids_id_seq RESTART WITH 1");
     await pool.query("ALTER SEQUENCE attendance_id_seq RESTART WITH 1");
 
@@ -56,12 +63,16 @@ async function seed() {
           const date = new Date(weekData.date);
 
           for (const record of weekData.attendance) {
+            // Returns the kids object if found, or undefined if not found
             const kid = kids.find((k) => k.id === record.kidId);
             if (!kid) {
-              console.warn(`Kid with ID ${record.kidId} not found, skipping record`);
+              console.warn(
+                `Kid with ID ${record.kidId} not found, skipping record`
+              );
               continue;
             }
 
+            // Insert attendance records into attendance table
             await pool.query(
               `INSERT INTO attendance
                 (kidid, name, week, present, reason, photo, term, created_at)
