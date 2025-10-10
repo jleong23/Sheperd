@@ -1,3 +1,4 @@
+#! This file is to ignore files and directories that should not be tracked/ pushed by Git
 # Node modules
 node_modules/
 backend/node_modules/
@@ -17,3 +18,4 @@ yarn-debug.log*
 .env
 .env.local
 .env.*.local
+.gitignore
