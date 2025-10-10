@@ -1,3 +1,9 @@
+/**
+- Used to **test API endpoints** and seed data **through your backend routes**.
+- Simulates how a frontend app would create records via API.
+- Ensures that the **routes, controllers, and middleware** are working correctly.
+ */
+
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
@@ -28,7 +34,7 @@ async function seedKids() {
     for (const kid of kids) {
       await axios.post(`${API_URL}/kids`, {
         name: kid.name,
-        photo: kid.photo || ""
+        photo: kid.photo || "",
       });
       count++;
       console.log(`Created kid: ${kid.name}`);
@@ -61,7 +67,9 @@ async function seedAttendance() {
           for (const record of weekData.attendance) {
             const kid = kids.find((k) => k.id === record.kidId);
             if (!kid) {
-              console.warn(`Kid with ID ${record.kidId} not found, skipping record`);
+              console.warn(
+                `Kid with ID ${record.kidId} not found, skipping record`
+              );
               continue;
             }
 
@@ -72,11 +80,13 @@ async function seedAttendance() {
               term,
               present: record.present,
               reason: record.reason || "",
-              photo: kid.photo || ""
+              photo: kid.photo || "",
             });
 
             count++;
-            console.log(`Inserted attendance for ${kid.name} for week ${week}, term ${term}`);
+            console.log(
+              `Inserted attendance for ${kid.name} for week ${week}, term ${term}`
+            );
           }
         }
       }

@@ -1,3 +1,11 @@
+/**
+ * Main backend server for the Attendance app
+ * - Sets up Express app, middleware (CORS, JSON parsing)
+ * - Connects /kids and /attendance API routes
+ * - Provides a root health check route
+ * - Handles 404 and server errors
+ * - Starts listening on PORT for incoming requests
+ */
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -6,19 +14,19 @@ require("dotenv").config();
 const kidsRoutes = require("./routes/kids");
 const attendanceRoutes = require("./routes/attendance");
 
-const app = express();
-const PORT = process.env.PORT || 4000;
+// API Routes
+app.use("/kids", kidsRoutes);
+app.use("/attendance", attendanceRoutes);
+
+const app = express(); // Creating express app instance
+const PORT = process.env.PORT || 4000; // uses the env variabel Port, else defaults to 4000
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// API Routes
-app.use("/kids", kidsRoutes);
-app.use("/attendance", attendanceRoutes);
-
 // Root route
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
   res.json({
     message: "Attendance API is running",
     endpoints: {
@@ -27,16 +35,16 @@ app.get("/", (req, res) => {
         GET_ONE: "/kids/:id - Get a kid by ID",
         POST: "/kids - Create a new kid",
         PUT: "/kids/:id - Update a kid",
-        DELETE: "/kids/:id - Delete a kid"
+        DELETE: "/kids/:id - Delete a kid",
       },
       attendance: {
         GET: "/attendance - Get all attendance records (optional query params: year, term)",
         GET_ONE: "/attendance/:id - Get an attendance record by ID",
         POST: "/attendance - Create a new attendance record",
         PATCH: "/attendance/:id - Update an attendance record",
-        DELETE: "/attendance/:id - Delete an attendance record"
-      }
-    }
+        DELETE: "/attendance/:id - Delete an attendance record",
+      },
+    },
   });
 });
 
@@ -45,13 +53,19 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     error: "Server error",
-    message: process.env.NODE_ENV === "development" ? err.message : "An unexpected error occurred"
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "An unexpected error occurred",
   });
 });
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({ error: "Not found", message: "The requested resource does not exist" });
+  res.status(404).json({
+    error: "Not found",
+    message: "The requested resource does not exist",
+  });
 });
 
 // Start server
