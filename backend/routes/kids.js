@@ -1,37 +1,39 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const pool = require("../db"); // Import the PostgreSQL connection pool
 
 /**
  * @route GET /kids
- * @desc Get all kids
+ * @desc Get all kids from the database
  * @access Public
  */
 router.get("/", async (req, res) => {
   try {
+    // Query all kids, ordered by ID
     const result = await pool.query("SELECT * FROM kids ORDER BY id");
-    res.json(result.rows);
+    res.json(result.rows); // Send the array of kids as JSON
   } catch (err) {
     console.error("Error fetching kids:", err);
-    res.status(500).json({ error: "Failed to fetch kids" });
+    res.status(500).json({ error: "Failed to fetch kids" }); // Handle errors
   }
 });
 
 /**
  * @route GET /kids/:id
- * @desc Get a kid by ID
+ * @desc Get a single kid by their ID
  * @access Public
  */
 router.get("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    const result = await pool.query("SELECT * FROM kids WHERE id = $1", [id]);
+    const { id } = req.params; // Get the ID from URL parameters
+    const result = await pool.query("SELECT * FROM kids WHERE id = $1", [id]); // Parameterized query
 
     if (result.rows.length === 0) {
+      // If no kid is found
       return res.status(404).json({ error: "Kid not found" });
     }
 
-    res.json(result.rows[0]);
+    res.json(result.rows[0]); // Send the single kid object
   } catch (err) {
     console.error("Error fetching kid:", err);
     res.status(500).json({ error: "Failed to fetch kid" });
@@ -45,18 +47,19 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   try {
-    const { name, photo } = req.body;
+    const { name, photo } = req.body; // Extract data from request body
 
     if (!name) {
-      return res.status(400).json({ error: "Name is required" });
+      return res.status(400).json({ error: "Name is required" }); // Validate input
     }
 
+    // Insert new kid into the database
     const result = await pool.query(
       "INSERT INTO kids (name, photo) VALUES ($1, $2) RETURNING *",
       [name, photo || ""]
     );
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result.rows[0]); // Return the newly created kid
   } catch (err) {
     console.error("Error creating kid:", err);
     res.status(500).json({ error: "Failed to create kid" });
@@ -65,7 +68,7 @@ router.post("/", async (req, res) => {
 
 /**
  * @route PUT /kids/:id
- * @desc Update a kid
+ * @desc Update an existing kid
  * @access Public
  */
 router.put("/:id", async (req, res) => {
@@ -77,16 +80,17 @@ router.put("/:id", async (req, res) => {
       return res.status(400).json({ error: "Name is required" });
     }
 
+    // Update kid's data in the database
     const result = await pool.query(
       "UPDATE kids SET name = $1, photo = $2, updated_at = NOW() WHERE id = $3 RETURNING *",
       [name, photo || "", id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Kid not found" });
+      return res.status(404).json({ error: "Kid not found" }); // Kid does not exist
     }
 
-    res.json(result.rows[0]);
+    res.json(result.rows[0]); // Return the updated kid
   } catch (err) {
     console.error("Error updating kid:", err);
     res.status(500).json({ error: "Failed to update kid" });
@@ -95,19 +99,24 @@ router.put("/:id", async (req, res) => {
 
 /**
  * @route DELETE /kids/:id
- * @desc Delete a kid
+ * @desc Delete a kid from the database
  * @access Public
  */
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query("DELETE FROM kids WHERE id = $1 RETURNING *", [id]);
+
+    // Delete the kid and return the deleted record
+    const result = await pool.query(
+      "DELETE FROM kids WHERE id = $1 RETURNING *",
+      [id]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Kid not found" });
     }
 
-    res.json({ message: "Kid deleted successfully" });
+    res.json({ message: "Kid deleted successfully" }); // Confirm deletion
   } catch (err) {
     console.error("Error deleting kid:", err);
     res.status(500).json({ error: "Failed to delete kid" });
@@ -115,3 +124,23 @@ router.delete("/:id", async (req, res) => {
 });
 
 module.exports = router;
+
+/**
+ * ===================== NOTE =====================
+ * This file defines the API endpoints for managing "kids":
+ * - GET /kids → list all kids
+ * - GET /kids/:id → get a specific kid by ID
+ * - POST /kids → create a new kid
+ * - PUT /kids/:id → update an existing kid
+ * - DELETE /kids/:id → delete a kid
+ *
+ * Key concepts:
+ * - `req.params` → used to get URL parameters like ID
+ * - `req.body` → contains data sent by client for POST/PUT
+ * - `pool.query(...)` → executes SQL queries safely using parameterized queries
+ * - Error handling returns proper HTTP status codes
+ *
+ * This router is mounted in server.js with:
+ *   app.use("/kids", kidsRoutes)
+ * so all routes are prefixed with /kids
+ */
