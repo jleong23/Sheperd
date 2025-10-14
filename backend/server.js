@@ -14,16 +14,21 @@ require("dotenv").config();
 const kidsRoutes = require("./routes/kids");
 const attendanceRoutes = require("./routes/attendance");
 
-// API Routes
-app.use("/kids", kidsRoutes);
-app.use("/attendance", attendanceRoutes);
-
 const app = express(); // Creating express app instance
 const PORT = process.env.PORT || 4000; // uses the env variabel Port, else defaults to 4000
 
-// Middleware
-app.use(cors());
+// MIddleware should come BEFORE routes
+app.use(
+  cors({
+    origin: "http://localhost:5173", // allow your React app
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  })
+);
 app.use(express.json());
+
+// API Routes comes after middleware
+app.use("/kids", kidsRoutes);
+app.use("/attendance", attendanceRoutes);
 
 // Root route
 app.get("/", (_, res) => {
