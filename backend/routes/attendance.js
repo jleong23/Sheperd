@@ -167,7 +167,7 @@ router.delete("/:id", async (req, res) => {
 
 module.exports = router;
 
-// Adding years and terms to the attendance table
+// Adding years and terms to the attendance table -------------
 /**
  * @route POST /attendance/year
  * @desc Add a new year (create attendance records for all kids)
@@ -219,5 +219,57 @@ router.post("/year", async (req, res) => {
   } catch (err) {
     console.error("Error adding year: ", err);
     res.status(500).json({ error: "Failed to add year" });
+  }
+});
+
+/**
+ * @route POST /attendance/term
+ * @desc Add a new term (create attendance records for all kids for the new term)
+ * @access Public
+ */
+router.post("/term", async (req, res) => {
+  try {
+    const { year, term, weeks = 10 } = req.body;
+
+    if (!year || !term)
+      return res.status(400).json({ error: "Year & Term is required" });
+
+    // Fetch all kids
+    const kidsResult = await pool.query("SELECT id, name, photo FROM kids");
+    const kids = kidsResult.rows;
+
+    // Generate attendance records
+    const records = [];
+    for (const kid of kids) {
+      for (let week = 1; week <= weeks; week++) {
+        records.push([
+          kid.id,
+          kid.name,
+          week,
+          false,
+          "",
+          kid.photo,
+          term,
+          year,
+        ]);
+      }
+    }
+
+    // Insert into attendance tables
+    const insertQuery = `
+      INSERT INTO attendance (kidId, name, week, present, reason, photo, term, year)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `;
+
+    for (const record of records) {
+      await pool.query(insertQuery, record);
+    }
+
+    res.json({
+      message: `Term ${term} added for year ${year} with ${weeks} weeks`,
+    });
+  } catch (err) {
+    console.log("Error adding term: ", err);
+    res.status(500).json({ error: "Failed to add term" });
   }
 });
