@@ -6,6 +6,7 @@ export default function AddYearTerm({ refreshAttendance }) {
   const [weeks, setWeeks] = useState(10);
 
   const handleAddYear = async () => {
+    if (!year) return alert("Enter a year");
     const res = await fetch("http://localhost:4000/attendance/year", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -17,6 +18,7 @@ export default function AddYearTerm({ refreshAttendance }) {
   };
 
   const handleAddTerm = async () => {
+    if (!year || !term) return alert("Enter both year and term");
     const res = await fetch("http://localhost:4000/attendance/term", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -32,40 +34,56 @@ export default function AddYearTerm({ refreshAttendance }) {
   };
 
   return (
-    <div className="space-y-4 p-4 border rounded">
-      <input
-        type="number"
-        placeholder="Year"
-        value={year}
-        onChange={(e) => setYear(e.target.value)}
-        className="border p-2 rounded"
-      />
-      <div className="flex gap-2">
+    <div className="p-4 bg-white shadow-md rounded-xl border border-gray-200 w-full max-w-sm mx-auto">
+      <h2 className="text-lg font-bold mb-4 text-center">Add Year / Term</h2>
+
+      {/* Year input */}
+      <div className="flex flex-col mb-3">
+        <label className="mb-1 font-medium text-sm">Year</label>
         <input
           type="number"
-          placeholder="Term"
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          className="borders p-2 rounded"
-        />
-        <input
-          type="numnber"
-          placeholder="Week"
-          value={weeks}
-          onChange={(e) => setWeeks(e.target.value)}
-          className="border p-2 rounded"
+          placeholder="e.g. 2026"
+          value={year}
+          onChange={(e) => setYear(e.target.value)}
+          className="border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
       </div>
-      <div className="flex gap-2">
+
+      {/* Term input */}
+      <div className="flex flex-col mb-3">
+        <label className="mb-1 font-medium text-sm">Term</label>
+        <input
+          type="number"
+          placeholder="e.g. 4"
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          className="border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
+        />
+      </div>
+
+      {/* Weeks input */}
+      <div className="flex flex-col mb-4">
+        <label className="mb-1 font-medium text-sm">Weeks</label>
+        <input
+          type="number"
+          placeholder="e.g. 10"
+          value={weeks}
+          onChange={(e) => setWeeks(e.target.value)}
+          className="border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        />
+      </div>
+
+      {/* Buttons */}
+      <div className="flex gap-3 justify-center">
         <button
           onClick={handleAddYear}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-black hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition"
         >
           Add Year
         </button>
         <button
           onClick={handleAddTerm}
-          className="bg-green-500 text-white px-4 py-2 rounded"
+          className="bg-black hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
         >
           Add Term
         </button>
