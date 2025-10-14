@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toggleAttendance } from "../../api/attendance";
 export default function AttendanceList({
   currentAttendance,
   onToggleAttendance,
@@ -13,6 +14,38 @@ export default function AttendanceList({
     }));
     setLocalAttendance(mapped); // use mapped array, not currentAttendance directly
   }, [currentAttendance]);
+
+  // Update local state for toggle
+  const handleToggle = async (recordId, currentPresent) => {
+    // optimistic update
+    setLocalAttendance((prev) =>
+      prev.map((r) =>
+        r.id === recordId
+          ? {
+              ...r,
+              present: !currentPresent,
+            }
+          : r
+      )
+    );
+
+    try {
+      await toggleAttendance(recordId, !currentPresent);
+    } catch (err) {
+      console.error(err);
+      //Optionally revert change on failure
+      setLocalAttendance((prev) =>
+        prev.map((r) =>
+          r.id === recordId
+            ? {
+                ...r,
+                present: currentPresent,
+              }
+            : r
+        )
+      );
+    }
+  };
 
   // Handle reason update
   const handleReasonChange = (kidId, week, value) => {
@@ -94,9 +127,7 @@ export default function AttendanceList({
                         type="checkbox"
                         className="sr-only peer"
                         checked={record.present}
-                        onChange={() =>
-                          onToggleAttendance(record.kidId, record.week)
-                        }
+                        onChange={() => handleToggle(record.id, record.present)}
                       />
                       <div
                         className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600
