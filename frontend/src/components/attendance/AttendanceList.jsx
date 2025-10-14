@@ -93,7 +93,7 @@ export default function AttendanceList({
 
   const sortedWeeks = Object.keys(attendanceByWeek)
     .map(Number)
-    .sort((a, b) => b - a);
+    .sort((a, b) => a - b);
 
   return sortedWeeks.length > 0 ? (
     <div className="space-y-6">
