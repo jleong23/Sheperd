@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { toggleAttendance } from "../../api/attendance";
+
 export default function AttendanceList({
   currentAttendance,
   onToggleAttendance,

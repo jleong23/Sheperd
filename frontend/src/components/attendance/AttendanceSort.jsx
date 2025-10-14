@@ -1,3 +1,5 @@
+import AddYearTerm from "./AddYearTerm";
+
 export default function AttendanceSort({
   selectedYear,
   selectedTerm,
@@ -43,6 +45,8 @@ export default function AttendanceSort({
           ))}
         </select>
       </div>
+
+      <AddYearTerm />
 
       {/* Week selection is now hidden */}
       {!hideWeek && (

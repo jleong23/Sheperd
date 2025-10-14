@@ -77,6 +77,7 @@ router.post("/", async (req, res) => {
       reason = "",
       photo = "",
       term = 1,
+      year,
     } = req.body;
 
     // Validate required fields
@@ -97,8 +98,17 @@ router.post("/", async (req, res) => {
     const kidPhoto = photo || kidCheck.rows[0].photo;
 
     const result = await pool.query(
-      "INSERT INTO attendance (kidId, name, week, present, reason, photo, term) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
-      [kidId, kidName, week, present, reason, kidPhoto, term]
+      "INSERT INTO attendance (kidId, name, week, present, reason, photo, term, year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+      [
+        kidId,
+        kidName,
+        week,
+        present,
+        reason,
+        kidPhoto,
+        term,
+        year || new Date().getFullYear(),
+      ]
     );
 
     res.status(201).json(result.rows[0]);

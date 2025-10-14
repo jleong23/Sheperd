@@ -21,6 +21,7 @@ CREATE TABLE attendance (
     present BOOLEAN DEFAULT FALSE,
     reason TEXT,
     photo TEXT,
+    year INT DEFAULT EXTRACT(YEAR FROM NOW()), 
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (kidId) REFERENCES kids(id) ON DELETE CASCADE --if kid is deleted, attendance records are also deleted
