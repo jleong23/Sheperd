@@ -283,3 +283,62 @@ router.post("/term", async (req, res) => {
     res.status(500).json({ error: "Failed to add term" });
   }
 });
+
+// Deleting years and terms to the attendance table -------------
+/**
+ * @route DELETE/attendance/year
+ * @desc Delete a year
+ * @access public
+ */
+router.delete("/year/:year", async (req, res) => {
+  try {
+    const { year } = req.params;
+    const result = await pool.query(
+      "DELETE FROM attendance WHERE year = $1 RETURNING *",
+      [year]
+    );
+    if (result.row.length === 0) {
+      return res.status(404).json({ error: "Year not found" });
+    }
+
+    res.json({ message: `Year ${year} deleted succesfully` });
+  } catch (err) {
+    console.error("Error deleting attendance record: ", err);
+    res.status(500).json({ error: "Failed to delete year" });
+  }
+});
+
+/**
+ * @route DELETE/attendance/term
+ * @desc Delete a term in a year
+ * @access public
+ */
+router.delete("/term", async (req, res) => {
+  try {
+    const { year, term } = req.body;
+
+    if (!year || !term) {
+      return res.status(400).json({ error: "Year and term are required" });
+    }
+
+    // Delele all attendance records for the year and term
+    const result = await pool.query(
+      "DELETE FROM attendance WHERE year = $1 AND term = $2 RETURNING *",
+      [year, term]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        error: "No records found for that year and term",
+      });
+    }
+
+    res.json({
+      message: `Deleted all records for Year ${year} and Term ${term}`,
+      deletedCount: result.rowCount,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete term" });
+  }
+});
