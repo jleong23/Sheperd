@@ -33,6 +33,31 @@ export default function AddYearTerm({ refreshAttendance }) {
     refreshAttendance();
   };
 
+  const handleDeleteTerm = async () => {
+    if (!year || !term) {
+      alert("Please enter both year and term to delete");
+      return;
+    }
+
+    if (
+      !confirm(`Are you sure you want to delete Year ${year} , Term ${term}? `)
+    )
+      return;
+
+    const res = await fetch("http://localhost:4000/attendance/term", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        year: Number(years),
+        term: Number(term),
+      }),
+    });
+
+    const data = await res.json();
+    alert(data.message || data.error);
+    refreshAttendance();
+  };
+
   return (
     <div className="p-4 bg-white shadow-md rounded-xl border border-gray-200 w-full max-w-sm mx-auto">
       <h2 className="text-lg font-bold mb-4 text-center">Add Year / Term</h2>
