@@ -175,8 +175,6 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-module.exports = router;
-
 // Adding years and terms to the attendance table -------------
 /**
  * @route POST /attendance/year
@@ -297,7 +295,7 @@ router.delete("/year/:year", async (req, res) => {
       "DELETE FROM attendance WHERE year = $1 RETURNING *",
       [year]
     );
-    if (result.row.length === 0) {
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: "Year not found" });
     }
 
@@ -313,9 +311,9 @@ router.delete("/year/:year", async (req, res) => {
  * @desc Delete a term in a year
  * @access public
  */
-router.delete("/term", async (req, res) => {
+router.delete("/term/:year/:term", async (req, res) => {
   try {
-    const { year, term } = req.body;
+    const { year, term } = req.params;
 
     if (!year || !term) {
       return res.status(400).json({ error: "Year and term are required" });
@@ -324,7 +322,7 @@ router.delete("/term", async (req, res) => {
     // Delele all attendance records for the year and term
     const result = await pool.query(
       "DELETE FROM attendance WHERE year = $1 AND term = $2 RETURNING *",
-      [year, term]
+      [Number(year), Number(term)]
     );
 
     if (result.rowCount === 0) {
@@ -342,3 +340,5 @@ router.delete("/term", async (req, res) => {
     res.status(500).json({ error: "Failed to delete term" });
   }
 });
+
+module.exports = router;

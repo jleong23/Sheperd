@@ -44,14 +44,17 @@ export default function AddYearTerm({ refreshAttendance }) {
     )
       return;
 
-    const res = await fetch("http://localhost:4000/attendance/term", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        year: Number(years),
-        term: Number(term),
-      }),
-    });
+    const res = await fetch(
+      `http://localhost:4000/attendance/term/${year}/${term}`,
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          year: Number(year),
+          term: Number(term),
+        }),
+      }
+    );
 
     const data = await res.json();
     alert(data.message || data.error);
@@ -59,43 +62,44 @@ export default function AddYearTerm({ refreshAttendance }) {
   };
 
   return (
-    <div className="p-4 bg-white shadow-md rounded-xl border border-gray-200 w-full max-w-sm mx-auto">
+    <div className="p-4 bg-white shadow-md rounded-xl border border-gray-200 w-full max-w-xl mx-auto">
       <h2 className="text-lg font-bold mb-4 text-center">Add Year / Term</h2>
+      <div className="flex gap-3 ">
+        {/* Year input */}
+        <div className="flex flex-col mb-3">
+          <label className="mb-1 font-medium text-sm">Year</label>
+          <input
+            type="number"
+            placeholder="e.g. 2026"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className="border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-sm"
+          />
+        </div>
 
-      {/* Year input */}
-      <div className="flex flex-col mb-3">
-        <label className="mb-1 font-medium text-sm">Year</label>
-        <input
-          type="number"
-          placeholder="e.g. 2026"
-          value={year}
-          onChange={(e) => setYear(e.target.value)}
-          className="border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-      </div>
+        {/* Term input */}
+        <div className="flex flex-col mb-3">
+          <label className="mb-1 font-medium text-sm">Term</label>
+          <input
+            type="number"
+            placeholder="e.g. 4"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            className="border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
+          />
+        </div>
 
-      {/* Term input */}
-      <div className="flex flex-col mb-3">
-        <label className="mb-1 font-medium text-sm">Term</label>
-        <input
-          type="number"
-          placeholder="e.g. 4"
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          className="border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
-        />
-      </div>
-
-      {/* Weeks input */}
-      <div className="flex flex-col mb-4">
-        <label className="mb-1 font-medium text-sm">Weeks</label>
-        <input
-          type="number"
-          placeholder="e.g. 10"
-          value={weeks}
-          onChange={(e) => setWeeks(e.target.value)}
-          className="border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        />
+        {/* Weeks input */}
+        <div className="flex flex-col mb-4">
+          <label className="mb-1 font-medium text-sm">Weeks</label>
+          <input
+            type="number"
+            placeholder="e.g. 10"
+            value={weeks}
+            onChange={(e) => setWeeks(e.target.value)}
+            className="border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+        </div>
       </div>
 
       {/* Buttons */}
@@ -111,6 +115,13 @@ export default function AddYearTerm({ refreshAttendance }) {
           className="bg-black hover:bg-green-600 text-white px-4 py-2 rounded-lg transition"
         >
           Add Term
+        </button>
+
+        <button
+          onClick={handleDeleteTerm}
+          className="bg-black hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
+        >
+          Delete Term
         </button>
       </div>
     </div>
