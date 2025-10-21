@@ -4,7 +4,7 @@ import { FaBirthdayCake, FaSchool, FaPhoneAlt } from "react-icons/fa";
 import { MdContactPhone } from "react-icons/md";
 
 import { useEffect, useState } from "react";
-import Modal from "../ui/Modal";
+import KidDetailModal from "../ui/Modals/KidDetailModal";
 
 export default function KidsCard({ kid }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,7 +49,7 @@ export default function KidsCard({ kid }) {
       </div>
       {/* TODO find meaning */}
 
-      <Modal open={isModalOpen} onClose={closeModal}>
+      <KidDetailModal open={isModalOpen} onClose={closeModal}>
         <h2 className="text-xl font-bold mb-4">{kid.name}</h2>
         <img
           src={kid.photo}
@@ -76,7 +76,7 @@ export default function KidsCard({ kid }) {
           <MdContactPhone />
           Parents: {kid.parentPhone}
         </div>{" "}
-      </Modal>
+      </KidDetailModal>
     </>
   );
 }

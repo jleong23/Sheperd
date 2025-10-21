@@ -1,10 +1,23 @@
 import { useState, useEffect } from "react";
 import { toggleAttendance } from "../../api/attendance";
+import AttendanceReasonModal from "../ui/Modals/AttendanceReasonModal";
 export default function AttendanceList({
   currentAttendance,
   onToggleAttendance,
 }) {
   const [localAttendance, setLocalAttendance] = useState(currentAttendance);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const openReasonEditor = (record) => {
+    setSelectedRecord(record);
+    setModalOpen(true);
+  };
+
+  const closeReasonEditor = () => {
+    setSelectedRecord(null);
+    setModalOpen(false);
+  };
 
   // Keep local state in sync when props change
   useEffect(() => {
@@ -47,23 +60,14 @@ export default function AttendanceList({
     }
   };
 
-  // Handle reason update
-  const handleReasonChange = (kidId, week, value) => {
-    setLocalAttendance((prev) =>
-      prev.map((r) =>
-        r.kidId === kidId && r.week === week ? { ...r, reason: value } : r
-      )
-    );
-  };
-
-  const handleReasonSubmit = async (record) => {
+  const handleReasonSubmit = async (record, reason) => {
     try {
       const res = await fetch(`http://localhost:4000/attendance/${record.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           present: record.present,
-          reason: record.reason,
+          reason: reason,
         }),
       });
 
@@ -76,7 +80,8 @@ export default function AttendanceList({
           r.id === updated.id ? { ...r, reason: updated.reason } : r
         )
       );
-      alert(`Reason for ${record.name} updated!`);
+      setModalOpen(false);
+      setSelectedRecord(null);
     } catch (err) {
       console.error(err);
       alert("Failed to update reason.");
@@ -142,27 +147,34 @@ export default function AttendanceList({
                   </div>
 
                   {!record.present && (
-                    <div className="flex gap-2">
-                      <textarea
-                        type="text"
-                        placeholder="Reason:"
-                        value={record.reason || ""}
-                        onChange={(e) =>
-                          handleReasonChange(
-                            record.kidId,
-                            record.week,
-                            e.target.value
-                          )
-                        }
-                        className="border w-full rounded-md px-2 py-1 text-gray-700"
-                      />
-                      <button
-                        className="bg-green-200 hover:bg-green-400 px-3 rounded-md"
-                        onClick={() => handleReasonSubmit(record)}
+                    <div className="flex items-start justify-between gap-2">
+                      <p
+                        className="flex-1 text-gray-600 text-sm line-clamp-2 cursor-pointer hover:underline"
+                        onClick={() => openReasonEditor(record)}
                       >
-                        Done
+                        {record.reason ? (
+                          record.reason
+                        ) : (
+                          <span className="italic text-gray-400">
+                            No reason provided
+                          </span>
+                        )}
+                      </p>
+                      <button
+                        className="bg-blue-200 hover:bg-blue-400 px-3 rounded-md text-sm"
+                        onClick={() => openReasonEditor(record)}
+                      >
+                        Edit
                       </button>
                     </div>
+                  )}
+                  {modalOpen && selectedRecord?.id === record.id && (
+                    <AttendanceReasonModal
+                      open={modalOpen}
+                      record={selectedRecord}
+                      onClose={closeReasonEditor}
+                      onSubmit={handleReasonSubmit}
+                    />
                   )}
                 </div>
               );

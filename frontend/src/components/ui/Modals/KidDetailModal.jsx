@@ -1,4 +1,4 @@
-export default function Modal({ open, onClose, children }) {
+export default function KidDetailModal({ open, onClose, children }) {
   return (
     <div
       onClick={onClose}
