@@ -62,23 +62,23 @@ export default function AddYearTerm({ refreshAttendance }) {
   };
 
   return (
-    <div className="p-4 bg-white shadow-md rounded-xl border border-gray-200 w-full max-w-xl mx-auto">
-      <h2 className="text-lg font-bold mb-4 text-center">Add Year / Term</h2>
-      <div className="flex gap-3 ">
+    <div className="p-4 bg-white shadow-md rounded-xl border border-gray-200 w-full max-w-lg mx-auto">
+      <h2 className="text-xl font-bold mb-4 text-center">Add Year / Term</h2>
+      <div className="flex justify-center space-x-4 mb-5">
         {/* Year input */}
-        <div className="flex flex-col mb-3">
+        <div className="flex flex-col w-24">
           <label className="mb-1 font-medium text-sm">Year</label>
           <input
             type="number"
-            placeholder="e.g. 2026"
+            placeholder="2026"
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            className="border p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 max-w-sm"
+            className="border p-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
 
         {/* Term input */}
-        <div className="flex flex-col mb-3">
+        <div className="flex flex-col w-24">
           <label className="mb-1 font-medium text-sm">Term</label>
           <input
             type="number"
@@ -90,7 +90,7 @@ export default function AddYearTerm({ refreshAttendance }) {
         </div>
 
         {/* Weeks input */}
-        <div className="flex flex-col mb-4">
+        <div className="flex flex-col w-24">
           <label className="mb-1 font-medium text-sm">Weeks</label>
           <input
             type="number"
