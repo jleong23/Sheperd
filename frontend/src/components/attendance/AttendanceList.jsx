@@ -4,6 +4,7 @@ import { toggleAttendance } from "../../api/attendance";
 export default function AttendanceList({
   currentAttendance,
   onToggleAttendance,
+  onAttendanceUpdate,
 }) {
   const [localAttendance, setLocalAttendance] = useState(currentAttendance);
 
@@ -31,7 +32,8 @@ export default function AttendanceList({
     );
 
     try {
-      await toggleAttendance(recordId, !currentPresent);
+      const updatedRecord = await toggleAttendance(recordId, !currentPresent);
+      onAttendanceUpdate(updatedRecord); // Update parent state
     } catch (err) {
       console.error(err);
       //Optionally revert change on failure
@@ -77,6 +79,7 @@ export default function AttendanceList({
           r.id === updated.id ? { ...r, reason: updated.reason } : r
         )
       );
+      onAttendanceUpdate(updated); // Update parent state
       alert(`Reason for ${record.name} updated!`);
     } catch (err) {
       console.error(err);

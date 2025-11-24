@@ -8,6 +8,7 @@ export default function AttendanceSort({
   availableTerms,
   onYearChange,
   onTermChange,
+  refreshAttendance,
 }) {
   const [showAddYearTerm, setShowAddYearTerm] = useState(false);
 
@@ -65,7 +66,7 @@ export default function AttendanceSort({
           showAddYearTerm ? "max-h-96 mt-4" : "max-h-0"
         }`}
       >
-        {showAddYearTerm && <AddYearTerm refreshAttendance={() => {}} />}
+        {showAddYearTerm && <AddYearTerm refreshAttendance={refreshAttendance} />}
       </div>
     </div>
   );

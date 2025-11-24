@@ -11,7 +11,11 @@ export default function Attendance() {
   const [currentAttendance, setCurrentAttendance] = useState([]);
 
   // Fetch all attendance once (for dropdowns)
-  useEffect(() => {
+  const fetchAllAttendance = (newRecords) => {
+    if (newRecords) {
+      setAllAttendance((prev) => [...prev, ...newRecords]);
+      return;
+    }
     axios
       .get("http://localhost:4000/attendance")
       .then((res) => {
@@ -19,7 +23,31 @@ export default function Attendance() {
         setAllAttendance(res.data);
       })
       .catch((err) => console.error("Failed to fetch attendance:", err));
+  };
+
+  useEffect(() => {
+    fetchAllAttendance();
   }, []);
+
+  // Set default year and term on initial load
+  useEffect(() => {
+    if (allAttendance.length > 0 && !selectedYear) {
+      const latestYear = Math.max(...allAttendance.map((a) => a.year));
+      setSelectedYear(latestYear);
+    }
+  }, [allAttendance, selectedYear]);
+
+  useEffect(() => {
+    if (selectedYear) {
+      const termsForYear = allAttendance
+        .filter((a) => a.year === selectedYear)
+        .map((a) => a.term);
+      if (termsForYear.length > 0) {
+        const latestTerm = Math.max(...termsForYear);
+        setSelectedTerm(latestTerm);
+      }
+    }
+  }, [selectedYear]);
 
   // Fetch filtered attendance when year + term selected
   useEffect(() => {
@@ -27,8 +55,7 @@ export default function Attendance() {
 
     const filtered = allAttendance
       .filter((a) => {
-        const year = new Date(a.created_at).getFullYear();
-        return year === Number(selectedYear) && a.term === Number(selectedTerm);
+        return a.year === Number(selectedYear) && a.term === Number(selectedTerm);
       })
       .map((record) => {
         const kid = kidsData.find((k) => k.id === record.kidid);
@@ -59,11 +86,7 @@ export default function Attendance() {
         }
       );
 
-      setCurrentAttendance((prev) =>
-        prev.map((r) =>
-          r.id === updated.data.id ? { ...r, present: updated.data.present } : r
-        )
-      );
+      updateAttendanceRecord(updated.data);
     } catch (err) {
       console.error("Failed to update attendance:", err);
     }
@@ -71,7 +94,7 @@ export default function Attendance() {
 
   // Generate dropdown options
   const availableYears = Array.from(
-    new Set(allAttendance.map((a) => new Date(a.created_at).getFullYear()))
+    new Set(allAttendance.map((a) => a.year))
   ).sort((a, b) => b - a);
 
   const availableTerms = selectedYear
@@ -79,12 +102,24 @@ export default function Attendance() {
         new Set(
           allAttendance
             .filter(
-              (a) => new Date(a.created_at).getFullYear() === selectedYear
+              (a) => a.year === selectedYear
             )
             .map((a) => a.term)
         )
       ).sort((a, b) => a - b)
     : [];
+
+  const updateAttendanceRecord = (updatedRecord) => {
+    const updateState = (setter) =>
+      setter((prev) =>
+        prev.map((r) => (r.id === updatedRecord.id ? updatedRecord : r))
+      );
+    updateState(setAllAttendance);
+  };
+
+  const handleYearChange = (year) => {
+    setSelectedYear(year);
+  };
 
   return (
     <div className="p-8">
@@ -93,12 +128,10 @@ export default function Attendance() {
         selectedTerm={selectedTerm}
         availableYears={availableYears}
         availableTerms={availableTerms}
-        onYearChange={(year) => {
-          setSelectedYear(year);
-          setSelectedTerm(null); // reset term when year changes
-        }}
+        onYearChange={handleYearChange}
         onTermChange={setSelectedTerm}
         hideWeek={true}
+        refreshAttendance={fetchAllAttendance}
       />
 
       {selectedYear && selectedTerm ? (
@@ -106,6 +139,7 @@ export default function Attendance() {
           <AttendanceList
             currentAttendance={currentAttendance}
             onToggleAttendance={toggleAttendance}
+            onAttendanceUpdate={updateAttendanceRecord}
           />
         ) : (
           <p className="text-center mt-8 text-gray-500">

@@ -187,6 +187,15 @@ router.post("/year", async (req, res) => {
 
     if (!year) return res.status(400).json({ error: "Year is required" });
 
+    // Check if the year already exists
+    const yearCheck = await pool.query(
+      "SELECT 1 FROM attendance WHERE year = $1 LIMIT 1",
+      [year]
+    );
+    if (yearCheck.rows.length > 0) {
+      return res.status(400).json({ error: `Year ${year} already exists.` });
+    }
+
     // Fetch all kids
     const kidsResult = await pool.query("SELECT id, name, photo FROM kids");
     const kids = kidsResult.rows;
@@ -215,14 +224,17 @@ router.post("/year", async (req, res) => {
     // Insert into attendance table
     const insertQuery = `
     INSERT INTO attendance (kidId, name, week, present, reason, photo, term, year)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`;
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
 
+    const createdRecords = [];
     for (const record of records) {
-      await pool.query(insertQuery, record);
+      const result = await pool.query(insertQuery, record);
+      createdRecords.push(result.rows[0]);
     }
 
     res.json({
       message: `Year ${year} added with default term 1 and 10 weeks`,
+      createdRecords,
     });
   } catch (err) {
     console.error("Error adding year: ", err);

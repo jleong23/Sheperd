@@ -13,8 +13,10 @@ export default function AddYearTerm({ refreshAttendance }) {
       body: JSON.stringify({ year: Number(year) }),
     });
     const data = await res.json();
-    alert(data.message);
-    refreshAttendance();
+    alert(data.message || data.error);
+    if (res.ok) {
+      refreshAttendance(data.createdRecords);
+    }
   };
 
   const handleAddTerm = async () => {
@@ -29,8 +31,10 @@ export default function AddYearTerm({ refreshAttendance }) {
       }),
     });
     const data = await res.json();
-    alert(data.message);
-    refreshAttendance();
+    alert(data.message || data.error);
+    if (res.ok) {
+      refreshAttendance();
+    }
   };
 
   const handleDeleteTerm = async () => {
