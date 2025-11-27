@@ -73,7 +73,7 @@ router.post("/", async (req, res) => {
       kidId,
       name,
       week,
-      present = false,
+      status = "maybe",
       reason = "",
       photo = "",
       term = 1,
@@ -98,12 +98,12 @@ router.post("/", async (req, res) => {
     const kidPhoto = photo || kidCheck.rows[0].photo;
 
     const result = await pool.query(
-      "INSERT INTO attendance (kidId, name, week, present, reason, photo, term, year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+      "INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
       [
         kidId,
         kidName,
         week,
-        present,
+        status,
         reason,
         kidPhoto,
         term,
@@ -126,18 +126,18 @@ router.post("/", async (req, res) => {
 router.patch("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { present, reason } = req.body;
+    const { status, reason } = req.body;
 
     // Validate that at least one field is provided
-    if (present === undefined && reason === undefined) {
+    if (status === undefined && reason === undefined) {
       return res.status(400).json({
-        error: "At least one field (present or reason) must be provided",
+        error: "At least one field (status or reason) must be provided",
       });
     }
 
     const result = await pool.query(
-      "UPDATE attendance SET present = COALESCE($1, present), reason = COALESCE($2, reason), updated_at = NOW() WHERE id = $3 RETURNING *",
-      [present, reason, id]
+      "UPDATE attendance SET status = COALESCE($1, status), reason = COALESCE($2, reason), updated_at = NOW() WHERE id = $3 RETURNING *",
+      [status, reason, id]
     );
 
     if (result.rows.length === 0) {
@@ -212,7 +212,7 @@ router.post("/year", async (req, res) => {
           kid.id,
           kid.name,
           week,
-          false,
+          "maybe",
           "",
           kid.photo,
           term,
@@ -223,7 +223,7 @@ router.post("/year", async (req, res) => {
 
     // Insert into attendance table
     const insertQuery = `
-    INSERT INTO attendance (kidId, name, week, present, reason, photo, term, year)
+    INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
 
     const createdRecords = [];
@@ -266,7 +266,7 @@ router.post("/term", async (req, res) => {
           kid.id,
           kid.name,
           week,
-          false,
+          "maybe",
           "",
           kid.photo,
           term,
@@ -277,7 +277,7 @@ router.post("/term", async (req, res) => {
 
     // Insert into attendance tables
     const insertQuery = `
-      INSERT INTO attendance (kidId, name, week, present, reason, photo, term, year)
+      INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `;
 
