@@ -53,7 +53,7 @@ export default function AttendanceList({
             <h3 className="text-4xl text-center font-bold mb-2">Week {week}</h3>
 
             {/* Summary */}
-            <div className="flex justify-center gap-6 mb-4 text-lg font-semibold">
+            <div className="flex justify-center gap-4 mb-4 text-lg font-semibold">
               <span className="text-green-700">Coming: {summary.coming}</span>
               <span className="text-yellow-700">Maybe: {summary.maybe}</span>
               <span className="text-red-700">
@@ -61,14 +61,14 @@ export default function AttendanceList({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-white p-8 m-8 rounded-xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-slate-100 p-8 m-8 rounded-xl">
               {weekRecords.map((record) => {
                 const [dropdownOpen, setDropdownOpen] = useState(false);
 
                 return (
                   <div
                     key={record.id}
-                    className={`border rounded p-4 flex flex-col gap-3 ${
+                    className={`border shadow-md rounded-xl p-4 flex flex-col gap-3 ${
                       record.status === "coming"
                         ? "bg-green-100"
                         : record.status === "not coming"
