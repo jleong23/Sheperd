@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function AttendanceList({
   currentAttendance,
@@ -30,14 +30,36 @@ export default function AttendanceList({
     }
   };
 
+  const [openDropdowns, setOpenDropdowns] = useState({});
+  const containerRef = useRef(null);
+
+  // Close dropdowns if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setOpenDropdowns({});
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleDropdown = (recordId) => {
+    setOpenDropdowns((prev) => ({
+      ...prev,
+      [recordId]: !prev[recordId],
+    }));
+  };
+
   return sortedWeeks.length > 0 ? (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={containerRef}>
       {sortedWeeks.map((week) => {
         const weekRecords = attendanceByWeek[week];
 
-        // -----------------------------
-        // Compute summary counts
-        // -----------------------------
+        // Summary counts
         const summary = weekRecords.reduce(
           (acc, r) => {
             if (r.status === "coming") acc.coming += 1;
@@ -63,7 +85,7 @@ export default function AttendanceList({
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-slate-100 p-8 m-8 rounded-xl">
               {weekRecords.map((record) => {
-                const [dropdownOpen, setDropdownOpen] = useState(false);
+                const isOpen = !!openDropdowns[record.id];
 
                 return (
                   <div
@@ -94,36 +116,60 @@ export default function AttendanceList({
                       </div>
 
                       {/* Status Dropdown */}
+                      {/* Status Dropdown */}
                       <div className="relative">
                         <button
-                          onClick={() => setDropdownOpen(!dropdownOpen)}
-                          className={`px-3 py-1 rounded-full font-semibold text-sm w-28 text-left ${getStatusPillClass(record.status)}`}
+                          onClick={() => toggleDropdown(record.id)}
+                          className={`px-3 py-1 rounded-full font-semibold text-sm w-28 text-left flex justify-between items-center ${getStatusPillClass(
+                            record.status
+                          )}`}
                         >
-                          {record.status}
+                          <span>{record.status}</span>
+                          {/* Arrow */}
+                          <svg
+                            className={`w-4 h-4 ml-2 transition-transform duration-300 ${
+                              isOpen ? "rotate-180" : ""
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
                         </button>
 
-                        {dropdownOpen && (
-                          <div className="absolute mt-1 w-28 bg-white border rounded shadow-lg z-10">
-                            {["maybe", "coming", "not coming"].map((option) => (
-                              <button
-                                key={option}
-                                onClick={() => {
-                                  onStatusChange(
-                                    record.kidId,
-                                    record.week,
-                                    option
-                                  );
-                                  setDropdownOpen(false);
-                                }}
-                                className={`block w-full text-left px-2 py-1 hover:bg-gray-100 ${
-                                  record.status === option ? "font-bold" : ""
-                                }`}
-                              >
-                                {option}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        {/* Animated dropdown */}
+                        <div
+                          className={`absolute mt-1 w-28 bg-white border rounded shadow-lg z-10 overflow-hidden transition-all duration-300 ${
+                            isOpen
+                              ? "max-h-40 opacity-100"
+                              : "max-h-0 opacity-0"
+                          }`}
+                        >
+                          {["maybe", "coming", "not coming"].map((option) => (
+                            <button
+                              key={option}
+                              onClick={() => {
+                                onStatusChange(
+                                  record.kidId,
+                                  record.week,
+                                  option
+                                );
+                                setOpenDropdowns({});
+                              }}
+                              className={`block w-full text-left px-2 py-1 hover:bg-gray-100 ${
+                                record.status === option ? "font-bold" : ""
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
