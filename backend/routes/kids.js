@@ -47,7 +47,7 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   try {
-    const { name, photo } = req.body; // Extract data from request body
+    const { name, birthday, school, phone, parent_phone, photo } = req.body; // Extract data from request body
 
     if (!name) {
       return res.status(400).json({ error: "Name is required" }); // Validate input
@@ -55,8 +55,8 @@ router.post("/", async (req, res) => {
 
     // Insert new kid into the database
     const result = await pool.query(
-      "INSERT INTO kids (name, photo) VALUES ($1, $2) RETURNING *",
-      [name, photo || ""]
+      "INSERT INTO kids (name, birthday, school, phone, parent_phone, photo) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [name, birthday, school, phone, parent_phone, photo]
     );
 
     res.status(201).json(result.rows[0]); // Return the newly created kid
