@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import kidsData from "../../data/kids.json";
 import AttendanceList from "../../components/attendance/AttendanceList.jsx";
 import AttendanceSort from "../../components/attendance/AttendanceSort.jsx";
 
@@ -9,83 +8,187 @@ export default function Attendance() {
   const [selectedTerm, setSelectedTerm] = useState(null);
   const [allAttendance, setAllAttendance] = useState([]);
   const [currentAttendance, setCurrentAttendance] = useState([]);
+  const [kids, setKids] = useState([]);
 
-  // Fetch all attendance once (for dropdowns)
-  useEffect(() => {
+  // -----------------------------
+  // Fetch ALL attendance
+  // -----------------------------
+  const fetchAllAttendance = (newRecords) => {
+    if (newRecords) {
+      const normalizedNewRecords = newRecords.map((r) => ({
+        ...r,
+        kidId: r.kidid ?? r.kidId,
+      }));
+
+      setAllAttendance((prev) => {
+        const merged = [...prev, ...normalizedNewRecords];
+        const unique = merged.filter(
+          (v, i, a) => a.findIndex((x) => x.id === v.id) === i
+        );
+        return unique;
+      });
+      return;
+    }
+
     axios
       .get("http://localhost:4000/attendance")
       .then((res) => {
-        console.log("All Attendance Data:", res.data); // <-- Add this line
-        setAllAttendance(res.data);
+        const normalized = res.data.map((r) => ({
+          ...r,
+          kidId: r.kidid ?? r.kidId,
+        }));
+        setAllAttendance(normalized);
       })
       .catch((err) => console.error("Failed to fetch attendance:", err));
+  };
+
+  // Fetch on load
+  useEffect(() => {
+    fetchAllAttendance();
+    axios
+      .get("http://localhost:4000/kids")
+      .then((res) => setKids(res.data))
+      .catch((err) => console.error("Failed to fetch kids:", err));
   }, []);
 
-  // Fetch filtered attendance when year + term selected
+  // -----------------------------
+  // Auto-select latest year
+  // -----------------------------
+  useEffect(() => {
+    if (allAttendance.length > 0 && !selectedYear) {
+      const latestYear = Math.max(...allAttendance.map((a) => a.year));
+      setSelectedYear(latestYear);
+    }
+  }, [allAttendance, selectedYear]);
+
+  // -----------------------------
+  // Auto-select latest term
+  // -----------------------------
+  useEffect(() => {
+    if (selectedYear) {
+      const terms = allAttendance
+        .filter((a) => a.year === selectedYear)
+        .map((a) => a.term);
+      if (terms.length > 0) {
+        setSelectedTerm(Math.max(...terms));
+      }
+    }
+  }, [selectedYear]);
+
+  // -----------------------------
+  // Filter attendance by year + term
+  // -----------------------------
   useEffect(() => {
     if (!selectedYear || !selectedTerm) return;
 
     const filtered = allAttendance
-      .filter((a) => {
-        const year = new Date(a.created_at).getFullYear();
-        return year === Number(selectedYear) && a.term === Number(selectedTerm);
-      })
+      .filter(
+        (a) =>
+          a.year === Number(selectedYear) && a.term === Number(selectedTerm)
+      )
       .map((record) => {
-        const kid = kidsData.find((k) => k.id === record.kidid);
+        const kid = kids.find((k) => k.id === record.kidId);
         return {
           ...record,
-          name: kid ? kid.name : `Unknown (ID: ${record.kidid})`,
-          photo: kid ? kid.photo : null,
+          name: kid ? kid.name : `Unknown (ID: ${record.kidId})`,
+          photo: kid?.photo ?? null,
         };
       })
       .sort((a, b) => b.week - a.week);
 
     setCurrentAttendance(filtered);
-  }, [selectedYear, selectedTerm, allAttendance]);
+  }, [selectedYear, selectedTerm, allAttendance, kids]);
 
-  // Toggle attendance
-  const toggleAttendance = async (kidId, week) => {
-    const record = currentAttendance.find(
-      (r) => r.kidId === kidId && r.week === week
-    );
+  // -----------------------------
+  // Toggle Status
+  // -----------------------------
+  const handleStatusChange = async (recordId, newStatus) => {
+    const record = currentAttendance.find((r) => r.id === recordId);
     if (!record) return;
 
     try {
       const updated = await axios.patch(
-        `http://localhost:4000/attendance/${record.id}`,
-        {
-          present: !record.present,
-          reason: record.reason || "",
-        }
+        `http://localhost:4000/attendance/${recordId}`,
+        { status: newStatus }
       );
 
-      setCurrentAttendance((prev) =>
-        prev.map((r) =>
-          r.id === updated.data.id ? { ...r, present: updated.data.present } : r
-        )
-      );
+      updateAttendanceRecord(updated.data);
     } catch (err) {
       console.error("Failed to update attendance:", err);
     }
   };
 
-  // Generate dropdown options
-  const availableYears = Array.from(
-    new Set(allAttendance.map((a) => new Date(a.created_at).getFullYear()))
-  ).sort((a, b) => b - a);
+  // -----------------------------
+  // Reason Handlers
+  // -----------------------------
+  const handleReasonChange = (recordId, reason) => {
+    setCurrentAttendance((prev) =>
+      prev.map((r) => (r.id === recordId ? { ...r, reason } : r))
+    );
+  };
+
+  const handleReasonSubmit = async (recordId) => {
+    const record = currentAttendance.find((r) => r.id === recordId);
+    if (!record) return;
+
+    try {
+      const updated = await axios.patch(
+        `http://localhost:4000/attendance/${recordId}`,
+        { reason: record.reason }
+      );
+
+      updateAttendanceRecord(updated.data);
+      alert(`Reason for ${record.name} updated!`);
+    } catch (err) {
+      console.error("Failed to update reason:", err);
+      alert("Failed to update reason.");
+    }
+  };
+
+  // -----------------------------
+  // Update attendance record everywhere
+  // -----------------------------
+  const updateAttendanceRecord = (updatedRecord) => {
+    const kidId = updatedRecord.kidid ?? updatedRecord.kidId;
+
+    const kid = kids.find((k) => k.id === kidId);
+
+    const fullRecord = {
+      ...updatedRecord,
+      kidId,
+      name: kid ? kid.name : `Unknown (ID: ${kidId})`,
+      photo: kid?.photo ?? null,
+    };
+
+    const updateState = (setter) =>
+      setter((prev) =>
+        prev.map((r) => (r.id === fullRecord.id ? fullRecord : r))
+      );
+
+    updateState(setAllAttendance);
+    updateState(setCurrentAttendance);
+  };
+
+  // -----------------------------
+  // Dropdown Options
+  // -----------------------------
+  const availableYears = [...new Set(allAttendance.map((a) => a.year))].sort(
+    (a, b) => b - a
+  );
 
   const availableTerms = selectedYear
-    ? Array.from(
-        new Set(
+    ? [
+        ...new Set(
           allAttendance
-            .filter(
-              (a) => new Date(a.created_at).getFullYear() === selectedYear
-            )
+            .filter((a) => a.year === selectedYear)
             .map((a) => a.term)
-        )
-      ).sort((a, b) => a - b)
+        ),
+      ].sort((a, b) => a - b)
     : [];
 
+  // -----------------------------
+  // Render
+  // -----------------------------
   return (
     <div className="p-8">
       <AttendanceSort
@@ -93,19 +196,20 @@ export default function Attendance() {
         selectedTerm={selectedTerm}
         availableYears={availableYears}
         availableTerms={availableTerms}
-        onYearChange={(year) => {
-          setSelectedYear(year);
-          setSelectedTerm(null); // reset term when year changes
-        }}
+        onYearChange={setSelectedYear}
         onTermChange={setSelectedTerm}
         hideWeek={true}
+        refreshAttendance={fetchAllAttendance}
       />
 
       {selectedYear && selectedTerm ? (
         currentAttendance.length > 0 ? (
           <AttendanceList
             currentAttendance={currentAttendance}
-            onToggleAttendance={toggleAttendance}
+            onStatusChange={handleStatusChange}
+            onAttendanceUpdate={updateAttendanceRecord}
+            onReasonChange={handleReasonChange}
+            onReasonSubmit={handleReasonSubmit}
           />
         ) : (
           <p className="text-center mt-8 text-gray-500">

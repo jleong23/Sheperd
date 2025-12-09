@@ -23,9 +23,10 @@ router.get("/", async (req, res) => {
     // Filter by term if provided
     if (term) {
       params.push(Number(term));
-      query += params.length === 1 
-        ? ` WHERE term = $${params.length}` 
-        : ` AND term = $${params.length}`;
+      query +=
+        params.length === 1
+          ? ` WHERE term = $${params.length}`
+          : ` AND term = $${params.length}`;
     }
 
     query += " ORDER BY week DESC, kidId";
@@ -46,7 +47,9 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query("SELECT * FROM attendance WHERE id = $1", [id]);
+    const result = await pool.query("SELECT * FROM attendance WHERE id = $1", [
+      id,
+    ]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Attendance record not found" });
@@ -70,10 +73,11 @@ router.post("/", async (req, res) => {
       kidId,
       name,
       week,
-      present = false,
+      status = "maybe",
       reason = "",
       photo = "",
       term = 1,
+      year,
     } = req.body;
 
     // Validate required fields
@@ -82,7 +86,9 @@ router.post("/", async (req, res) => {
     }
 
     // Check if kid exists
-    const kidCheck = await pool.query("SELECT * FROM kids WHERE id = $1", [kidId]);
+    const kidCheck = await pool.query("SELECT * FROM kids WHERE id = $1", [
+      kidId,
+    ]);
     if (kidCheck.rows.length === 0) {
       return res.status(400).json({ error: "Kid not found" });
     }
@@ -92,8 +98,17 @@ router.post("/", async (req, res) => {
     const kidPhoto = photo || kidCheck.rows[0].photo;
 
     const result = await pool.query(
-      "INSERT INTO attendance (kidId, name, week, present, reason, photo, term) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
-      [kidId, kidName, week, present, reason, kidPhoto, term]
+      "INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+      [
+        kidId,
+        kidName,
+        week,
+        status,
+        reason,
+        kidPhoto,
+        term,
+        year || new Date().getFullYear(),
+      ]
     );
 
     res.status(201).json(result.rows[0]);
@@ -111,16 +126,18 @@ router.post("/", async (req, res) => {
 router.patch("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { present, reason } = req.body;
+    const { status, reason } = req.body;
 
     // Validate that at least one field is provided
-    if (present === undefined && reason === undefined) {
-      return res.status(400).json({ error: "At least one field (present or reason) must be provided" });
+    if (status === undefined && reason === undefined) {
+      return res.status(400).json({
+        error: "At least one field (status or reason) must be provided",
+      });
     }
 
     const result = await pool.query(
-      "UPDATE attendance SET present = COALESCE($1, present), reason = COALESCE($2, reason), updated_at = NOW() WHERE id = $3 RETURNING *",
-      [present, reason, id]
+      "UPDATE attendance SET status = COALESCE($1, status), reason = COALESCE($2, reason), updated_at = NOW() WHERE id = $3 RETURNING *",
+      [status, reason, id]
     );
 
     if (result.rows.length === 0) {
@@ -142,7 +159,10 @@ router.patch("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query("DELETE FROM attendance WHERE id = $1 RETURNING *", [id]);
+    const result = await pool.query(
+      "DELETE FROM attendance WHERE id = $1 RETURNING *",
+      [id]
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Attendance record not found" });
@@ -152,6 +172,184 @@ router.delete("/:id", async (req, res) => {
   } catch (err) {
     console.error("Error deleting attendance record:", err);
     res.status(500).json({ error: "Failed to delete attendance record" });
+  }
+});
+
+// Adding years and terms to the attendance table -------------
+/**
+ * @route POST /attendance/year
+ * @desc Add a new year (create attendance records for all kids)
+ * @access Public
+ */
+router.post("/year", async (req, res) => {
+  try {
+    const { year } = req.body;
+
+    if (!year) return res.status(400).json({ error: "Year is required" });
+
+    // Check if the year already exists
+    const yearCheck = await pool.query(
+      "SELECT 1 FROM attendance WHERE year = $1 LIMIT 1",
+      [year]
+    );
+    if (yearCheck.rows.length > 0) {
+      return res.status(400).json({ error: `Year ${year} already exists.` });
+    }
+
+    // Fetch all kids
+    const kidsResult = await pool.query("SELECT id, name, photo FROM kids");
+    const kids = kidsResult.rows;
+
+    // By default, term 1 and 10 weeks
+    const term = 1;
+    const weeks = 10;
+
+    // Generate attendance records for each kid for each week
+    const records = [];
+    for (const kid of kids) {
+      for (let week = 1; week <= weeks; week++) {
+        records.push([
+          kid.id,
+          kid.name,
+          week,
+          "maybe",
+          "",
+          kid.photo,
+          term,
+          year,
+        ]);
+      }
+    }
+
+    // Insert into attendance table
+    const insertQuery = `
+    INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
+
+    const createdRecords = [];
+    for (const record of records) {
+      const result = await pool.query(insertQuery, record);
+      createdRecords.push(result.rows[0]);
+    }
+
+    res.json({
+      message: `Year ${year} added with default term 1 and 10 weeks`,
+      createdRecords,
+    });
+  } catch (err) {
+    console.error("Error adding year: ", err);
+    res.status(500).json({ error: "Failed to add year" });
+  }
+});
+
+/**
+ * @route POST /attendance/term
+ * @desc Add a new term (create attendance records for all kids for the new term)
+ * @access Public
+ */
+router.post("/term", async (req, res) => {
+  try {
+    const { year, term, weeks = 10 } = req.body;
+
+    if (!year || !term)
+      return res.status(400).json({ error: "Year & Term is required" });
+
+    // Fetch all kids
+    const kidsResult = await pool.query("SELECT id, name, photo FROM kids");
+    const kids = kidsResult.rows;
+
+    // Generate attendance records
+    const records = [];
+    for (const kid of kids) {
+      for (let week = 1; week <= weeks; week++) {
+        records.push([
+          kid.id,
+          kid.name,
+          week,
+          "maybe",
+          "",
+          kid.photo,
+          term,
+          year,
+        ]);
+      }
+    }
+
+    // Insert into attendance tables
+    const insertQuery = `
+      INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `;
+
+    for (const record of records) {
+      await pool.query(insertQuery, record);
+    }
+
+    res.json({
+      message: `Term ${term} added for year ${year} with ${weeks} weeks`,
+    });
+  } catch (err) {
+    console.log("Error adding term: ", err);
+    res.status(500).json({ error: "Failed to add term" });
+  }
+});
+
+// Deleting years and terms to the attendance table -------------
+/**
+ * @route DELETE/attendance/year
+ * @desc Delete a year
+ * @access public
+ */
+router.delete("/year/:year", async (req, res) => {
+  try {
+    const { year } = req.params;
+    const result = await pool.query(
+      "DELETE FROM attendance WHERE year = $1 RETURNING *",
+      [year]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Year not found" });
+    }
+
+    res.json({ message: `Year ${year} deleted succesfully` });
+  } catch (err) {
+    console.error("Error deleting attendance record: ", err);
+    res.status(500).json({ error: "Failed to delete year" });
+  }
+});
+
+/**
+ * @route DELETE/attendance/term
+ * @desc Delete a term in a year
+ * @access public
+ */
+router.delete("/term/:year/:term", async (req, res) => {
+  try {
+    const { year, term } = req.params;
+
+    if (!year || !term) {
+      return res.status(400).json({ error: "Year and term are required" });
+    }
+
+    // Delele all attendance records for the year and term
+    const result = await pool.query(
+      "DELETE FROM attendance WHERE year = $1 AND term = $2 RETURNING *",
+      [Number(year), Number(term)]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        error: "No records found for that year and term",
+      });
+    }
+
+    res.json({
+      message: `Deleted all records for Year ${year} and Term ${term}`,
+      deletedCount: result.rowCount,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete term" });
   }
 });
 

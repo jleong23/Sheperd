@@ -11,12 +11,12 @@ export async function fetchAttendance(year, term) {
   }
 }
 
-export async function toggleAttendance(recordId, present) {
+export async function updateAttendanceStatus(recordId, status) {
   try {
     const res = await fetch(`${BASE_URL}/attendance/${recordId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ present }),
+      body: JSON.stringify({ status }),
     });
     return await res.json();
   } catch (err) {

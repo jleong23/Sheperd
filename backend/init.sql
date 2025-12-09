@@ -1,4 +1,5 @@
 -- Drop tables if they exist
+DROP TYPE IF EXISTS attendance_status;
 DROP TABLE IF EXISTS attendance;
 DROP TABLE IF EXISTS kids;
 
@@ -11,6 +12,9 @@ CREATE TABLE kids (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Create attendance status enum
+CREATE TYPE attendance_status AS ENUM ('coming', 'maybe', 'not coming');
+
 -- Create attendance table
 CREATE TABLE attendance (
     id SERIAL PRIMARY KEY,
@@ -18,9 +22,10 @@ CREATE TABLE attendance (
     name TEXT,
     week INT NOT NULL,
     term INT DEFAULT 1, --default term starts at 1
-    present BOOLEAN DEFAULT FALSE,
+    status attendance_status DEFAULT 'maybe',
     reason TEXT,
     photo TEXT,
+    year INT DEFAULT EXTRACT(YEAR FROM NOW()),
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (kidId) REFERENCES kids(id) ON DELETE CASCADE --if kid is deleted, attendance records are also deleted
