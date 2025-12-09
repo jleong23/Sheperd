@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function AddKids({ refreshKids }) {
+export default function AddKids({}) {
   const [name, setName] = useState("");
   const [birthday, setBirthday] = useState("");
   const [school, setSchool] = useState("");
@@ -34,7 +34,7 @@ export default function AddKids({ refreshKids }) {
         setPhone("");
         setParentPhone("");
         setPhoto("");
-        refreshKids(); // optional callback to reload kids list
+        // refreshKids(); // optional callback to reload kids list
       } else {
         alert(data.error || "Failed to add kid");
       }
