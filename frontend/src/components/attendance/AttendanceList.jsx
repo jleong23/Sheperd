@@ -55,7 +55,7 @@ export default function AttendanceList({
   };
 
   return sortedWeeks.length > 0 ? (
-    <div className="space-y-6" ref={containerRef}>
+    <div className="space-y-6">
       {sortedWeeks.map((week) => {
         const weekRecords = attendanceByWeek[week];
 
@@ -116,7 +116,7 @@ export default function AttendanceList({
                       </div>
 
                       {/* Status Dropdown */}
-                      <div className="relative">
+                      <div className="relative" ref={containerRef}>
                         <button
                           onClick={() => toggleDropdown(record.id)}
                           className={`px-3 py-1 rounded-full font-semibold text-sm w-28 text-left flex justify-between items-center ${getStatusPillClass(
