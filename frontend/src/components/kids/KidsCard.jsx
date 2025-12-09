@@ -33,7 +33,7 @@ export default function KidsCard({ kid }) {
         {/*Kids image */}
         <img
           src={kid.photo}
-          alt="Ashton Koh's photo"
+          alt={`${kid.name}'s photo`}
           className="w-full h-45 object-cover rounded mb-4"
         />
         {/*Kids name */}
@@ -53,29 +53,9 @@ export default function KidsCard({ kid }) {
         <h2 className="text-xl font-bold mb-4">{kid.name}</h2>
         <img
           src={kid.photo}
-          alt="Ashton Koh's photo"
+          alt={`${kid.name}'s photo`}
           className="w-full h-45 object-cover rounded mb-4"
         />
-        {/*Kids birthday */}
-        <div className="flex items-center gap-1 font-bold ">
-          <FaBirthdayCake />
-          {kid.birthday}
-        </div>
-        {/*Kids School */}
-        <div className="text-gray-500 flex items-center gap-1">
-          <FaSchool />
-          {kid.school}
-        </div>
-        {/*Kids phone number */}
-        <div className="flex items-center gap-1 font-semibold text-lg">
-          <FaPhoneAlt />
-          {kid.phone}
-        </div>
-        {/*Kids parent phone number */}
-        <div className="flex items-center gap-1 font-semibold text-lg">
-          <MdContactPhone />
-          Parents: {kid.parentPhone}
-        </div>{" "}
       </KidDetailModal>
     </>
   );

@@ -1,7 +1,17 @@
-// const BASE_URL = "http://localhost:4000";
+const BASE_URL = "http://localhost:4000";
 
-// export aysnc function fetchKids(){
-//   try {
-//     const res = await fetch(`${BASE_URL}/ `)
-//   }
-// }
+export async function fetchKids() {
+  const res = await fetch(`${BASE_URL}/kids`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch kids");
+  }
+  return res.json();
+}
+
+export async function fetchKidById(id) {
+  const res = await fetch(`${BASE_URL}/kids/${id}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch kid with id ${id}`);
+  }
+  return res.json();
+}
