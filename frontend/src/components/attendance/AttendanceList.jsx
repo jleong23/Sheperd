@@ -116,7 +116,6 @@ export default function AttendanceList({
                       </div>
 
                       {/* Status Dropdown */}
-                      {/* Status Dropdown */}
                       <div className="relative">
                         <button
                           onClick={() => toggleDropdown(record.id)}
@@ -155,11 +154,7 @@ export default function AttendanceList({
                             <button
                               key={option}
                               onClick={() => {
-                                onStatusChange(
-                                  record.kidId,
-                                  record.week,
-                                  option
-                                );
+                                onStatusChange(record.id, option);
                                 setOpenDropdowns({});
                               }}
                               className={`block w-full text-left px-2 py-1 hover:bg-gray-100 ${
@@ -181,11 +176,7 @@ export default function AttendanceList({
                           placeholder="Reason..."
                           value={record.reason || ""}
                           onChange={(e) =>
-                            onReasonChange(
-                              record.kidId,
-                              record.week,
-                              e.target.value
-                            )
+                            onReasonChange(record.id, e.target.value)
                           }
                           rows={2}
                           className="border w-full rounded-md px-2 py-1 text-gray-700 resize-none"
@@ -193,9 +184,7 @@ export default function AttendanceList({
 
                         <button
                           className="bg-green-200 hover:bg-green-400 px-3 rounded-md"
-                          onClick={() =>
-                            onReasonSubmit(record.kidId, record.week)
-                          }
+                          onClick={() => onReasonSubmit(record.id)}
                         >
                           Done
                         </button>

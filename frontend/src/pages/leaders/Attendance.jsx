@@ -102,23 +102,14 @@ export default function Attendance() {
   // -----------------------------
   // Toggle Status
   // -----------------------------
-  const handleStatusChange = async (kidId, week) => {
-    const record = currentAttendance.find(
-      (r) => r.kidId === kidId && r.week === week
-    );
+  const handleStatusChange = async (recordId, newStatus) => {
+    const record = currentAttendance.find((r) => r.id === recordId);
     if (!record) return;
-
-    const nextState =
-      record.status === "maybe"
-        ? "coming"
-        : record.status === "coming"
-          ? "not coming"
-          : "maybe";
 
     try {
       const updated = await axios.patch(
-        `http://localhost:4000/attendance/${record.id}`,
-        { status: nextState }
+        `http://localhost:4000/attendance/${recordId}`,
+        { status: newStatus }
       );
 
       updateAttendanceRecord(updated.data);
@@ -130,23 +121,19 @@ export default function Attendance() {
   // -----------------------------
   // Reason Handlers
   // -----------------------------
-  const handleReasonChange = (kidId, week, reason) => {
+  const handleReasonChange = (recordId, reason) => {
     setCurrentAttendance((prev) =>
-      prev.map((r) =>
-        r.kidId === kidId && r.week === week ? { ...r, reason } : r
-      )
+      prev.map((r) => (r.id === recordId ? { ...r, reason } : r))
     );
   };
 
-  const handleReasonSubmit = async (kidId, week) => {
-    const record = currentAttendance.find(
-      (r) => r.kidId === kidId && r.week === week
-    );
+  const handleReasonSubmit = async (recordId) => {
+    const record = currentAttendance.find((r) => r.id === recordId);
     if (!record) return;
 
     try {
       const updated = await axios.patch(
-        `http://localhost:4000/attendance/${record.id}`,
+        `http://localhost:4000/attendance/${recordId}`,
         { reason: record.reason }
       );
 
