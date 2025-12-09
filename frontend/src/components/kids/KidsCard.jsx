@@ -5,6 +5,7 @@ import { MdContactPhone } from "react-icons/md";
 
 import { useEffect, useState } from "react";
 import KidDetailModal from "../ui/Modals/KidDetailModal";
+import profileIcon from "../../assets/profileIcon.png";
 
 export default function KidsCard({ kid }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,9 +33,9 @@ export default function KidsCard({ kid }) {
       >
         {/*Kids image */}
         <img
-          src={kid.photo}
+          src={profileIcon}
           alt={`${kid.name}'s photo`}
-          className="w-full h-45 object-cover rounded mb-4"
+          className="w-full h-30 object-cover rounded mb-5"
         />
         {/*Kids name */}
         <div className="font-semibold flex items-center gap-1 text-xl">
@@ -52,10 +53,30 @@ export default function KidsCard({ kid }) {
       <KidDetailModal open={isModalOpen} onClose={closeModal}>
         <h2 className="text-xl font-bold mb-4">{kid.name}</h2>
         <img
-          src={kid.photo}
+          src="profileIcon.png"
           alt={`${kid.name}'s photo`}
           className="w-full h-45 object-cover rounded mb-4"
         />
+        {/*Kids birthday */}
+        <div className="flex items-center gap-1 font-bold ">
+          <FaBirthdayCake />
+          {kid.birthday}
+        </div>
+        {/*Kids School */}
+        <div className="text-gray-500 flex items-center gap-1">
+          <FaSchool />
+          {kid.school}
+        </div>
+        {/*Kids phone number */}
+        <div className="flex items-center gap-1 font-semibold text-lg">
+          <FaPhoneAlt />
+          {kid.phone}
+        </div>
+        {/*Kids parent phone number */}
+        <div className="flex items-center gap-1 font-semibold text-lg">
+          <MdContactPhone />
+          Parents No: {kid.parent_phone}
+        </div>{" "}
       </KidDetailModal>
     </>
   );

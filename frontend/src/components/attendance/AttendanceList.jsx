@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import profileIcon from "../../assets/profileIcon.png";
 
 export default function AttendanceList({
   currentAttendance,
@@ -99,7 +100,7 @@ export default function AttendanceList({
                       <div className="flex items-center gap-3">
                         {record.photo ? (
                           <img
-                            src={record.photo}
+                            src={profileIcon}
                             alt={record.name}
                             className="w-12 h-12 rounded-full object-cover"
                           />
