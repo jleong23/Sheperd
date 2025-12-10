@@ -35,13 +35,9 @@ export default function KidsList() {
     <div className="p-8">
       <h2 className="text-5xl font-bold text-center my-8">Year 9 Listing</h2>
       <AddKids onKidAdded={getKids} />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mx-auto ">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 mx-auto mt-3">
         {kids.map((kid) => (
-          <KidsCard
-            key={kid.id}
-            kid={kid}
-            onKidDeleted={() => setKids(kids.filter((k) => k.id !== kid.id))}
-          />
+          <KidsCard key={kid.id} kid={kid} onKidDeleted={getKids} />
         ))}
       </div>
     </div>

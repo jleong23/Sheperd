@@ -1,6 +1,5 @@
-// Icons import
 import { CgProfile } from "react-icons/cg";
-import { FaBirthdayCake, FaSchool, FaPhoneAlt } from "react-icons/fa";
+import { FaBirthdayCake, FaSchool, FaPhoneAlt, FaTrash } from "react-icons/fa";
 import { MdContactPhone } from "react-icons/md";
 import profileIcon from "../../assets/profileIcon.png";
 
@@ -22,67 +21,74 @@ export default function KidsCard({ kid, onKidDeleted }) {
         return;
       }
 
-      alert(`${kid.name} has been deleted Successfully`);
-      onKidDeleted?.(); // Notify parent to refresh the kidsList
+      onKidDeleted?.();
     } catch (err) {
       console.error(err);
       alert("Error Deleting Kid!");
     }
   };
+
   return (
-    <>
-      <div
-        key={kid.id}
-        className="border rounded shadow hover:shadow-lg transition-shadow bg-white p-4 flex gap-4 items-center mt-3"
+    <div className="relative border rounded-lg shadow hover:shadow-xl transition-shadow bg-white p-4 flex flex-col gap-4">
+      {/* Delete Icon */}
+      <button
+        onClick={handleDelete}
+        className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition"
+        title="Delete"
       >
-        {/* Kids Image */}
-        <div className="flex-shrink-0 w-32 h-32">
+        <FaTrash size={20} />
+      </button>
+
+      {/* Top: Image + Details */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Image */}
+        <div className="flex-shrink-0 w-20 h-20">
           <img
-            src={profileIcon} //! Remember to update this to show dynamic photos [profileIcon is static]
+            src={profileIcon}
             alt={`${kid.name}'s photo`}
-            className="w-full h-full object-cover rounded"
+            className="w-full h-full object-cover rounded-lg"
           />
-          <button
-            onClick={handleDelete}
-            className="mt-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-          >
-            Delete
-          </button>
         </div>
 
-        {/* Kids Details */}
-        <div className="flex flex-col gap-2">
-          <div className="font-semibold flex items-center gap-1 text-xl">
-            <CgProfile />
+        {/* Details */}
+        <div className="flex flex-col justify-center gap-2">
+          <div className="flex items-center gap-2 text-lg font-semibold text-gray-800">
+            <CgProfile className="text-blue-600" />
             {kid.name}
           </div>
 
-          <div className="flex items-center gap-1 font-bold">
-            <FaBirthdayCake />
-            {kid.birthday}
+          <div className="flex items-center gap-2 text-gray-700">
+            <FaBirthdayCake className="text-yellow-500" />
+            {new Date(kid.birthday).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
           </div>
 
-          <div className="text-gray-500 flex items-center gap-1">
-            <FaSchool />
+          <div className="flex items-center gap-2 text-gray-700">
+            <FaSchool className="text-green-500" />
             {kid.school}
-          </div>
-
-          <div>
-            <div className="flex items-center gap-1 font-semibold text-lg">
-              <FaPhoneAlt />
-              <a href={`tel:${kid.phone}`}>{kid.phone}</a>
-            </div>
-
-            <div className="flex items-center gap-1 font-semibold text-lg">
-              <MdContactPhone />
-
-              <a href={`tel:${kid.parent_phone}`}>
-                Parents No: {kid.parent_phone || "N/A"}
-              </a>
-            </div>
           </div>
         </div>
       </div>
-    </>
+
+      {/* Bottom: Phone Numbers */}
+      <div className="flex justify-between border-t pt-2 mt-2 text-gray-700">
+        <div className="flex items-center gap-1">
+          <FaPhoneAlt className="text-purple-500" />
+          <a href={`tel:${kid.phone}`} className="hover:underline">
+            {kid.phone}
+          </a>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <MdContactPhone className="text-indigo-500" />
+          <a href={`tel:${kid.parent_phone}`} className="hover:underline">
+            Parents No: {kid.parent_phone || "N/A"}
+          </a>
+        </div>
+      </div>
+    </div>
   );
 }
