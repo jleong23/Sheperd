@@ -37,7 +37,11 @@ export default function KidsList() {
       <AddKids onKidAdded={getKids} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mx-auto ">
         {kids.map((kid) => (
-          <KidsCard key={kid.id} kid={kid} />
+          <KidsCard
+            key={kid.id}
+            kid={kid}
+            onKidDeleted={() => setKids(kids.filter((k) => k.id !== kid.id))}
+          />
         ))}
       </div>
     </div>
