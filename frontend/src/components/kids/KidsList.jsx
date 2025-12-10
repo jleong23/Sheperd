@@ -8,6 +8,7 @@ export default function KidsList() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedKids, setSelectedKids] = useState([]);
+  const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
 
   const getKids = async () => {
     try {
@@ -24,13 +25,8 @@ export default function KidsList() {
     getKids();
   }, []);
 
-  if (isLoading) {
-    return <p className="text-center">Loading kids...</p>;
-  }
-
-  if (error) {
-    return <p className="text-center text-red-500">Error: {error}</p>;
-  }
+  if (isLoading) return <p className="text-center">Loading kids...</p>;
+  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
 
   const toggleSelectKid = (id) => {
     setSelectedKids((prev) =>
@@ -39,7 +35,11 @@ export default function KidsList() {
   };
 
   const handleDeleteSelected = async () => {
-    if (selectedKids.length === 0) return;
+    if (selectedKids.length === 0) {
+      // If no selection, just toggle bulk delete mode
+      setBulkDeleteMode(!bulkDeleteMode);
+      return;
+    }
 
     const confirmed = window.confirm(
       `Are you sure you want to delete ${selectedKids.length} kids?`
@@ -55,7 +55,8 @@ export default function KidsList() {
 
       alert(`${selectedKids.length} kids deleted successfully`);
       setSelectedKids([]);
-      getKids(); // refresh list
+      setBulkDeleteMode(false);
+      getKids();
     } catch (err) {
       console.error(err);
       alert("Error deleting kids");
@@ -66,13 +67,20 @@ export default function KidsList() {
     <div className="p-8">
       <h2 className="text-5xl font-bold text-center my-8">Year 9 Listing</h2>
       <AddKids onKidAdded={getKids} />
+
+      {/* Main Bulk Delete Button */}
       <button
         onClick={handleDeleteSelected}
-        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mb-4"
+        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mb-4 transition"
       >
-        Delete Selected
+        {bulkDeleteMode
+          ? selectedKids.length > 0
+            ? `Delete Selected (${selectedKids.length})`
+            : "Cancel Selection"
+          : "Delete Users"}
       </button>
 
+      {/* Kids Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 mx-auto mt-3">
         {kids.map((kid) => (
           <KidsCard
@@ -81,6 +89,7 @@ export default function KidsList() {
             onKidDeleted={getKids}
             isSelected={selectedKids.includes(kid.id)}
             onSelect={toggleSelectKid}
+            showCheckbox={bulkDeleteMode} // control checkbox visibility
           />
         ))}
       </div>

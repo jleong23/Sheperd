@@ -3,7 +3,13 @@ import { FaBirthdayCake, FaSchool, FaPhoneAlt, FaTrash } from "react-icons/fa";
 import { MdContactPhone } from "react-icons/md";
 import profileIcon from "../../assets/profileIcon.png";
 
-export default function KidsCard({ kid, onKidDeleted, isSelected, onSelect }) {
+export default function KidsCard({
+  kid,
+  onKidDeleted,
+  isSelected,
+  onSelect,
+  showCheckbox = false,
+}) {
   const handleDelete = async () => {
     const confirmed = window.confirm(
       `Are you sure you want to delete ${kid.name}? This action cannot be undone.`
@@ -30,15 +36,17 @@ export default function KidsCard({ kid, onKidDeleted, isSelected, onSelect }) {
 
   return (
     <div className="relative border rounded-xl shadow hover:shadow-2xl transition-shadow bg-white p-4 flex flex-col gap-4 group">
-      {/* Checkbox */}
-      <div className="absolute top-3 left-3">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => onSelect(kid.id)}
-          className="w-5 h-5 accent-blue-600"
-        />
-      </div>
+      {/* Checkbox only shows in bulk delete mode */}
+      {showCheckbox && (
+        <div className="absolute top-3 left-3">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelect(kid.id)}
+            className="w-5 h-5 accent-blue-600"
+          />
+        </div>
+      )}
 
       {/* Delete Icon - only visible on hover */}
       <button
