@@ -2,29 +2,38 @@
 import { CgProfile } from "react-icons/cg";
 import { FaBirthdayCake, FaSchool, FaPhoneAlt } from "react-icons/fa";
 import { MdContactPhone } from "react-icons/md";
-
-import { useState } from "react";
-import KidDetailModal from "../ui/Modals/KidDetailModal";
 import profileIcon from "../../assets/profileIcon.png";
 
-export default function KidsCard({ kid }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export default function KidsCard({ kid, onKidDeleted }) {
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${kid.name}? This action cannot be undone.`
+    );
+    if (!confirmed) return;
 
-  // function to open modal
-  const openModal = () => {
-    setIsModalOpen(true);
+    try {
+      const res = await fetch(`http://localhost:4000/kids/${kid.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Failed to delete kid");
+        return;
+      }
+
+      alert(`${kid.name} has been deleted Successfully`);
+      onKidDeleted?.(); // Notify parent to refresh the kidsList
+    } catch (err) {
+      console.error(err);
+      alert("Error Deleting Kid!");
+    }
   };
-
-  // function to close modal
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
-
   return (
     <>
       <div
         key={kid.id}
-        className="border rounded shadow hover:shadow-lg transition-shadow bg-white p-4 flex gap-4 items-center"
+        className="border rounded shadow hover:shadow-lg transition-shadow bg-white p-4 flex gap-4 items-center mt-3"
       >
         {/* Kids Image */}
         <div className="flex-shrink-0 w-32 h-32">
@@ -33,6 +42,12 @@ export default function KidsCard({ kid }) {
             alt={`${kid.name}'s photo`}
             className="w-full h-full object-cover rounded"
           />
+          <button
+            onClick={handleDelete}
+            className="mt-2 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+          >
+            Delete
+          </button>
         </div>
 
         {/* Kids Details */}
