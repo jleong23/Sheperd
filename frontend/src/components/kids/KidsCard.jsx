@@ -3,7 +3,7 @@ import { FaBirthdayCake, FaSchool, FaPhoneAlt, FaTrash } from "react-icons/fa";
 import { MdContactPhone } from "react-icons/md";
 import profileIcon from "../../assets/profileIcon.png";
 
-export default function KidsCard({ kid, onKidDeleted }) {
+export default function KidsCard({ kid, onKidDeleted, isSelected, onSelect }) {
   const handleDelete = async () => {
     const confirmed = window.confirm(
       `Are you sure you want to delete ${kid.name}? This action cannot be undone.`
@@ -30,6 +30,12 @@ export default function KidsCard({ kid, onKidDeleted }) {
 
   return (
     <div className="relative border rounded-lg shadow hover:shadow-xl transition-shadow bg-white p-4 flex flex-col gap-4">
+      <input
+        type="checkbox"
+        checked={isSelected}
+        onChange={() => onSelect(kid.id)}
+        className="mr-2"
+      />
       {/* Delete Icon */}
       <button
         onClick={handleDelete}
