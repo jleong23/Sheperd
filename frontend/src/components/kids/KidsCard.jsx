@@ -29,35 +29,39 @@ export default function KidsCard({ kid, onKidDeleted, isSelected, onSelect }) {
   };
 
   return (
-    <div className="relative border rounded-lg shadow hover:shadow-xl transition-shadow bg-white p-4 flex flex-col gap-4">
-      <input
-        type="checkbox"
-        checked={isSelected}
-        onChange={() => onSelect(kid.id)}
-        className="mr-2"
-      />
-      {/* Delete Icon */}
+    <div className="relative border rounded-xl shadow hover:shadow-2xl transition-shadow bg-white p-4 flex flex-col gap-4 group">
+      {/* Checkbox */}
+      <div className="absolute top-3 left-3">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onSelect(kid.id)}
+          className="w-5 h-5 accent-blue-600"
+        />
+      </div>
+
+      {/* Delete Icon - only visible on hover */}
       <button
         onClick={handleDelete}
-        className="absolute top-2 right-2 text-red-500 hover:text-red-700 transition"
+        className="absolute top-3 right-3 text-red-500 hover:text-red-700 transition-opacity opacity-0 group-hover:opacity-100"
         title="Delete"
       >
         <FaTrash size={20} />
       </button>
 
-      {/* Top: Image + Details */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Image */}
-        <div className="flex-shrink-0 w-20 h-20">
+      {/* Top: Image + Info */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+        {/* Profile Image */}
+        <div className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28">
           <img
             src={profileIcon}
             alt={`${kid.name}'s photo`}
-            className="w-full h-full object-cover rounded-lg"
+            className="w-full h-full object-cover rounded-lg border"
           />
         </div>
 
-        {/* Details */}
-        <div className="flex flex-col justify-center gap-2">
+        {/* Name, Birthday, School */}
+        <div className="flex flex-col justify-center gap-1 sm:gap-2 w-full">
           <div className="flex items-center gap-2 text-lg font-semibold text-gray-800">
             <CgProfile className="text-blue-600" />
             {kid.name}
@@ -80,15 +84,15 @@ export default function KidsCard({ kid, onKidDeleted, isSelected, onSelect }) {
       </div>
 
       {/* Bottom: Phone Numbers */}
-      <div className="flex justify-between border-t pt-2 mt-2 text-gray-700">
-        <div className="flex items-center gap-1">
+      <div className="flex flex-col sm:flex-row justify-between border-t pt-3 mt-3 text-gray-700 gap-2 sm:gap-0">
+        <div className="flex items-center gap-2">
           <FaPhoneAlt className="text-purple-500" />
           <a href={`tel:${kid.phone}`} className="hover:underline">
             {kid.phone}
           </a>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 sm:justify-end">
           <MdContactPhone className="text-indigo-500" />
           <a href={`tel:${kid.parent_phone}`} className="hover:underline">
             Parents No: {kid.parent_phone || "N/A"}
