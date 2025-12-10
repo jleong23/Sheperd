@@ -55,8 +55,10 @@ router.post("/", async (req, res) => {
 
     // Insert new kid into the database
     const result = await pool.query(
-      "INSERT INTO kids (name, birthday, school, phone, parent_phone, photo) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [name, birthday, school, phone, parent_phone, photo]
+      `INSERT INTO kids 
+   (name, school, phone, parent_phone, birthday, photo) 
+   VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [name, school, phone, parent_phone, birthday, photo]
     );
 
     res.status(201).json(result.rows[0]); // Return the newly created kid

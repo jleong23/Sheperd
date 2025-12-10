@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function AddKids({}) {
+export default function AddKids({ onKidAdded }) {
   const [name, setName] = useState("");
   const [birthday, setBirthday] = useState("");
   const [school, setSchool] = useState("");
@@ -28,6 +28,7 @@ export default function AddKids({}) {
       const data = await res.json();
       if (res.ok) {
         alert(`Added kid: ${data.name}`);
+        onKidAdded?.(); // refresh kids list
         setName("");
         setBirthday("");
         setSchool("");

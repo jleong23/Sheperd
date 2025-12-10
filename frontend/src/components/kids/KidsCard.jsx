@@ -29,7 +29,7 @@ export default function KidsCard({ kid }) {
         {/* Kids Image */}
         <div className="flex-shrink-0 w-32 h-32">
           <img
-            src={profileIcon}
+            src={profileIcon} //! Remember to update this to show dynamic photos [profileIcon is static]
             alt={`${kid.name}'s photo`}
             className="w-full h-full object-cover rounded"
           />
@@ -62,7 +62,7 @@ export default function KidsCard({ kid }) {
               <MdContactPhone />
 
               <a href={`tel:${kid.parent_phone}`}>
-                Parents No: {kid.parent_phone}
+                Parents No: {kid.parent_phone || "N/A"}
               </a>
             </div>
           </div>

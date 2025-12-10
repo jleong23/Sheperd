@@ -8,17 +8,18 @@ export default function KidsList() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    async function getKids() {
-      try {
-        const data = await fetchKids();
-        setKids(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
+  const getKids = async () => {
+    try {
+      const data = await fetchKids();
+      setKids(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
     getKids();
   }, []);
 
@@ -33,7 +34,7 @@ export default function KidsList() {
   return (
     <div className="p-8">
       <h2 className="text-5xl font-bold text-center my-8">Year 9 Listing</h2>
-      <AddKids />
+      <AddKids onKidAdded={getKids} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mx-auto ">
         {kids.map((kid) => (
           <KidsCard key={kid.id} kid={kid} />
