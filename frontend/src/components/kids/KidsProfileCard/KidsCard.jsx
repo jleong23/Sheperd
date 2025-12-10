@@ -3,14 +3,6 @@ import KidDetails from "./KidDetails";
 import KidPhones from "./KidPhones";
 import { KidProfileImage } from "./KidProfileImage";
 
-// KidsCard component
-
-// Props:
-// kid: object containing kid data
-// onKidDeleted: callback when kid is deleted
-// showCheckbox: whether to show checkbox (bulk delete mode)
-// isSelected: whether this kid is selected
-// onSelect: callback to toggle selection
 export default function KidsCard({
   kid,
   onKidDeleted,
