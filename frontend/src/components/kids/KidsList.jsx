@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import KidsCard from "./KidsCard";
-import { fetchKids } from "../../api/kids";
+import KidsCard from "./KidsProfileCard/KidsCard";
 import AddKids from "./AddKids";
+import { fetchKids } from "../../api/kids";
 
 export default function KidsList() {
   const [kids, setKids] = useState([]);
@@ -25,9 +25,6 @@ export default function KidsList() {
     getKids();
   }, []);
 
-  if (isLoading) return <p className="text-center">Loading kids...</p>;
-  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
-
   const toggleSelectKid = (id) => {
     setSelectedKids((prev) =>
       prev.includes(id) ? prev.filter((kidId) => kidId !== id) : [...prev, id]
@@ -36,7 +33,7 @@ export default function KidsList() {
 
   const handleDeleteSelected = async () => {
     if (selectedKids.length === 0) {
-      // If no selection, just toggle bulk delete mode
+      // If no selection, toggle bulk delete mode
       setBulkDeleteMode(!bulkDeleteMode);
       return;
     }
@@ -63,12 +60,16 @@ export default function KidsList() {
     }
   };
 
+  if (isLoading) return <p className="text-center">Loading kids...</p>;
+  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
+
   return (
     <div className="p-8">
       <h2 className="text-5xl font-bold text-center my-8">Year 9 Listing</h2>
+
       <AddKids onKidAdded={getKids} />
 
-      {/* Main Bulk Delete Button */}
+      {/* Bulk Delete Button */}
       <button
         onClick={handleDeleteSelected}
         className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mb-4 transition"
@@ -87,9 +88,9 @@ export default function KidsList() {
             key={kid.id}
             kid={kid}
             onKidDeleted={getKids}
+            showCheckbox={bulkDeleteMode}
             isSelected={selectedKids.includes(kid.id)}
             onSelect={toggleSelectKid}
-            showCheckbox={bulkDeleteMode} // control checkbox visibility
           />
         ))}
       </div>
