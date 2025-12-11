@@ -4,6 +4,10 @@ export function useBulkDelete(kids, refresh) {
   const [selected, setSelected] = useState([]);
   const [bulkMode, setBulkMode] = useState(false);
 
+  const enterBulkMode = () => {
+    setBulkMode(true);
+  };
+
   const toggleSelect = (id) => {
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((kidId) => kidId !== id) : [...prev, id]
@@ -44,5 +48,12 @@ export function useBulkDelete(kids, refresh) {
     setBulkMode(false); // exit bulk mode
   };
 
-  return { selected, bulkMode, toggleSelect, handleDelete, cancelSelection };
+  return {
+    selected,
+    bulkMode,
+    toggleSelect,
+    handleDelete,
+    cancelSelection,
+    enterBulkMode,
+  };
 }

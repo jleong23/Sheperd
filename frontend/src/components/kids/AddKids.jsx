@@ -96,7 +96,6 @@ export default function AddKids({ onKidAdded }) {
     }
   };
 
-  // click-outside to close
   useEffect(() => {
     const closeIfOutside = (e) => {
       if (open && modalRef.current && !modalRef.current.contains(e.target)) {
@@ -111,16 +110,20 @@ export default function AddKids({ onKidAdded }) {
     <div className="mb-8 text-center">
       <button
         onClick={() => setOpen(true)}
-        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition"
+        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 py-3 rounded-xl shadow-lg transition duration-200 transform hover:-translate-y-0.5"
       >
-        Add New Kid
+        Add New User
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)}>
-        <div ref={modalRef}>
-          <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">
+        <div
+          ref={modalRef}
+          className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-3xl transform transition-all duration-300 ease-out scale-100 opacity-100"
+        >
+          <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
             Add Kid Details
           </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {inputFields.map((f) => (
               <FormInput
@@ -134,6 +137,7 @@ export default function AddKids({ onKidAdded }) {
               />
             ))}
           </div>
+
           <FormActions
             onCancel={() => {
               resetForm();

@@ -6,6 +6,15 @@ export default {
       fontFamily: {
         dm: ["DM Sans", "sans-serif"],
       },
+      keyframes: {
+        openModal: {
+          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+      },
+      animation: {
+        openModal: "openModal 0.3s ease-out forwards",
+      },
     },
   },
   plugins: [require("@tailwindcss/line-clamp")],
