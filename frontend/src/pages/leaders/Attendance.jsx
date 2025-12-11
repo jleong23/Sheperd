@@ -11,9 +11,9 @@ export default function Attendance() {
   const [kids, setKids] = useState([]);
 
   // -----------------------------
-  // Fetch ALL attendance
+  // Fetch ALL attendance and kids
   // -----------------------------
-  const fetchAllAttendance = (newRecords) => {
+  const fetchAllAttendance = async (newRecords) => {
     if (newRecords) {
       const normalizedNewRecords = newRecords.map((r) => ({
         ...r,
@@ -30,25 +30,30 @@ export default function Attendance() {
       return;
     }
 
-    axios
-      .get("http://localhost:4000/attendance")
-      .then((res) => {
-        const normalized = res.data.map((r) => ({
-          ...r,
-          kidId: r.kidid ?? r.kidId,
-        }));
-        setAllAttendance(normalized);
-      })
-      .catch((err) => console.error("Failed to fetch attendance:", err));
+    try {
+      const res = await axios.get("http://localhost:4000/attendance");
+      const normalized = res.data.map((r) => ({
+        ...r,
+        kidId: r.kidid ?? r.kidId,
+      }));
+      setAllAttendance(normalized);
+    } catch (err) {
+      console.error("Failed to fetch attendance:", err);
+    }
   };
 
-  // Fetch on load
   useEffect(() => {
-    fetchAllAttendance();
-    axios
-      .get("http://localhost:4000/kids")
-      .then((res) => setKids(res.data))
-      .catch((err) => console.error("Failed to fetch kids:", err));
+    const fetchData = async () => {
+      await fetchAllAttendance();
+      try {
+        const res = await axios.get("http://localhost:4000/kids");
+        console.log("Fetched kids:", res.data); // DEBUG
+        setKids(res.data);
+      } catch (err) {
+        console.error("Failed to fetch kids:", err);
+      }
+    };
+    fetchData();
   }, []);
 
   // -----------------------------
@@ -79,7 +84,8 @@ export default function Attendance() {
   // Filter attendance by year + term
   // -----------------------------
   useEffect(() => {
-    if (!selectedYear || !selectedTerm) return;
+    // wait until kids are loaded
+    if (!selectedYear || !selectedTerm || kids.length === 0) return;
 
     const filtered = allAttendance
       .filter(
@@ -87,10 +93,14 @@ export default function Attendance() {
           a.year === Number(selectedYear) && a.term === Number(selectedTerm)
       )
       .map((record) => {
-        const kid = kids.find((k) => k.id === record.kidId);
+        const kid = kids.find(
+          (k) => Number(k.id) === Number(record.kidId ?? record.kidid)
+        );
         return {
           ...record,
-          name: kid ? kid.name : `Unknown (ID: ${record.kidId})`,
+          name: kid
+            ? kid.name
+            : `Unknown (ID: ${record.kidId ?? record.kidid})`,
           photo: kid?.photo ?? null,
         };
       })
@@ -111,7 +121,6 @@ export default function Attendance() {
         `http://localhost:4000/attendance/${recordId}`,
         { status: newStatus }
       );
-
       updateAttendanceRecord(updated.data);
     } catch (err) {
       console.error("Failed to update attendance:", err);
@@ -136,7 +145,6 @@ export default function Attendance() {
         `http://localhost:4000/attendance/${recordId}`,
         { reason: record.reason }
       );
-
       updateAttendanceRecord(updated.data);
       alert(`Reason for ${record.name} updated!`);
     } catch (err) {
@@ -150,8 +158,7 @@ export default function Attendance() {
   // -----------------------------
   const updateAttendanceRecord = (updatedRecord) => {
     const kidId = updatedRecord.kidid ?? updatedRecord.kidId;
-
-    const kid = kids.find((k) => k.id === kidId);
+    const kid = kids.find((k) => Number(k.id) === Number(kidId));
 
     const fullRecord = {
       ...updatedRecord,

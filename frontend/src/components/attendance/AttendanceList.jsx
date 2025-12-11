@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import profileIcon from "../../assets/profileIcon.png";
+import profileIcon from "/Users/jleong_23/Documents/Folders/dreamers-attendance-app/frontend/src/assets/profileIcon.png";
 
 export default function AttendanceList({
   currentAttendance,
@@ -33,12 +33,9 @@ export default function AttendanceList({
 
   const [openDropdowns, setOpenDropdowns] = useState({});
 
-  // Close ALL dropdowns when clicking anywhere outside
+  // Close ALL dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      setOpenDropdowns({});
-    };
-
+    const handleClickOutside = () => setOpenDropdowns({});
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -98,17 +95,13 @@ export default function AttendanceList({
                     {/* Header */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        {record.photo ? (
-                          <img
-                            src={profileIcon}
-                            alt={record.name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-gray-300" />
-                        )}
+                        <img
+                          src={record.photo || profileIcon}
+                          alt={record.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
                         <span className="font-semibold lg:text-xl">
-                          {record.name}
+                          {record.name} {/* <- Clean, always use name */}
                         </span>
                       </div>
 
@@ -153,7 +146,7 @@ export default function AttendanceList({
                             <button
                               key={option}
                               onClick={(e) => {
-                                e.stopPropagation(); // keep menu from closing too early
+                                e.stopPropagation();
                                 onStatusChange(record.id, option);
                                 setOpenDropdowns({});
                               }}
