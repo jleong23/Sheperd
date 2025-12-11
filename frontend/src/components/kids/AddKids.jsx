@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import Modal from "../ui/Modals/Modal";
+import FormInput from "./FormInput";
+import FormActions from "./FormActions";
 
 const DEFAULT_PHOTO = "https://pngtree.com/so/profile-icon";
 
 export default function AddKids({ onKidAdded }) {
-  // Use a single state object for all form fields
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     birthday: "",
@@ -13,9 +18,22 @@ export default function AddKids({ onKidAdded }) {
     photo: "",
   });
 
+  const [errors, setErrors] = useState({});
+  const modalRef = useRef(null);
+
+  const inputFields = [
+    { label: "Name", name: "name", type: "text" },
+    { label: "Birthday", name: "birthday", type: "date" },
+    { label: "School", name: "school", type: "text" },
+    { label: "Phone", name: "phone", type: "text" },
+    { label: "Parent Phone", name: "parentPhone", type: "text" },
+    { label: "Photo URL (Optional)", name: "photo", type: "text" },
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const resetForm = () => {
@@ -27,11 +45,26 @@ export default function AddKids({ onKidAdded }) {
       parentPhone: "",
       photo: "",
     });
+    setErrors({});
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = "Name is required.";
+    if (formData.phone && !/^\+?[\d\s-]+$/.test(formData.phone))
+      newErrors.phone = "Invalid phone format.";
+    if (formData.parentPhone && !/^\+?[\d\s-]+$/.test(formData.parentPhone))
+      newErrors.parentPhone = "Invalid parent phone format.";
+    if (formData.photo && !/^https?:\/\/.+/.test(formData.photo))
+      newErrors.photo = "Photo must be a valid URL.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleAddKid = async () => {
-    if (!formData.name.trim()) return alert("Enter a name");
+    if (!validate()) return;
 
+    setLoading(true);
     try {
       const response = await fetch("http://localhost:4000/kids", {
         method: "POST",
@@ -47,48 +80,70 @@ export default function AddKids({ onKidAdded }) {
       });
 
       const data = await response.json();
-
       if (!response.ok) {
         alert(data.error || "Failed to add kid");
+        setLoading(false);
         return;
       }
 
-      alert(`Added kid: ${data.name}`);
       onKidAdded?.();
       resetForm();
-    } catch (err) {
-      console.error(err);
+      setOpen(false);
+    } catch {
       alert("Error adding kid");
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="space-y-2 p-4 border rounded shadow-md bg-white">
-      {[
-        { label: "Name", name: "name", type: "text" },
-        { label: "Birthday", name: "birthday", type: "date" },
-        { label: "School", name: "school", type: "text" },
-        { label: "Phone", name: "phone", type: "text" },
-        { label: "Parent Phone", name: "parentPhone", type: "text" },
-        { label: "Photo URL (optional)", name: "photo", type: "text" },
-      ].map(({ label, name, type }) => (
-        <input
-          key={name}
-          type={type}
-          name={name}
-          placeholder={label}
-          value={formData[name]}
-          onChange={handleChange}
-          className="border px-2 py-1 w-full rounded"
-        />
-      ))}
+  // click-outside to close
+  useEffect(() => {
+    const closeIfOutside = (e) => {
+      if (open && modalRef.current && !modalRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", closeIfOutside);
+    return () => document.removeEventListener("mousedown", closeIfOutside);
+  }, [open]);
 
+  return (
+    <div className="mb-8 text-center">
       <button
-        onClick={handleAddKid}
-        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition"
+        onClick={() => setOpen(true)}
+        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow transition"
       >
-        Add Kid
+        Add New Kid
       </button>
+
+      <Modal open={open} onClose={() => setOpen(false)}>
+        <div ref={modalRef}>
+          <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">
+            Add Kid Details
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {inputFields.map((f) => (
+              <FormInput
+                key={f.name}
+                label={f.label}
+                name={f.name}
+                type={f.type}
+                value={formData[f.name]}
+                onChange={handleChange}
+                error={errors[f.name]}
+              />
+            ))}
+          </div>
+          <FormActions
+            onCancel={() => {
+              resetForm();
+              setOpen(false);
+            }}
+            onSubmit={handleAddKid}
+            loading={loading}
+          />
+        </div>
+      </Modal>
     </div>
   );
 }
