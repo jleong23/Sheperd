@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 export function useBulkDelete(kids, refresh) {
   const [selected, setSelected] = useState([]);
   const [bulkMode, setBulkMode] = useState(false);
@@ -11,7 +12,7 @@ export function useBulkDelete(kids, refresh) {
 
   const handleDelete = async () => {
     if (selected.length === 0) {
-      setBulkMode(!bulkMode);
+      setBulkMode(true); // enter bulk mode if none selected
       return;
     }
 
@@ -29,7 +30,7 @@ export function useBulkDelete(kids, refresh) {
 
       alert(`${selected.length} kids deleted successfully`);
       setSelected([]);
-      setBulkMode(false);
+      setBulkMode(false); // exit bulk mode after deletion
       refresh();
     } catch (err) {
       console.error(err);
@@ -37,5 +38,11 @@ export function useBulkDelete(kids, refresh) {
     }
   };
 
-  return { selected, bulkMode, toggleSelect, handleDelete };
+  // CANCEL selection and revert to normal state
+  const cancelSelection = () => {
+    setSelected([]);
+    setBulkMode(false); // exit bulk mode
+  };
+
+  return { selected, bulkMode, toggleSelect, handleDelete, cancelSelection };
 }
