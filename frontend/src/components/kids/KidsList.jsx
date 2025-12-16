@@ -22,15 +22,17 @@ export default function KidsList() {
     <div className="p-8">
       <h2 className="text-5xl font-bold text-center my-8">Year 9 Listing</h2>
 
-      <AddKids onKidAdded={getKids} />
+      <div className="flex gap-4 ">
+        <AddKids onKidAdded={getKids} />
 
-      <DeleteKids
-        bulkMode={bulkMode}
-        selected={selected}
-        enterBulkMode={enterBulkMode}
-        cancelSelection={cancelSelection}
-        handleDelete={handleDelete}
-      />
+        <DeleteKids
+          bulkMode={bulkMode}
+          selected={selected}
+          enterBulkMode={enterBulkMode}
+          cancelSelection={cancelSelection}
+          handleDelete={handleDelete}
+        />
+      </div>
 
       <KidsGrid
         kids={kids}

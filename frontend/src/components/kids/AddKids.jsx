@@ -107,7 +107,7 @@ export default function AddKids({ onKidAdded }) {
   }, [open]);
 
   return (
-    <div className="mb-8 text-center">
+    <div className="text-center">
       <button
         onClick={() => setOpen(true)}
         className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 py-3 rounded-xl shadow-lg transition duration-200 transform hover:-translate-y-0.5"
