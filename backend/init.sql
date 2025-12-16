@@ -1,12 +1,18 @@
 -- Drop tables if they exist
-DROP TYPE IF EXISTS attendance_status;
 DROP TABLE IF EXISTS attendance;
+DROP TABLE IF EXISTS events;
 DROP TABLE IF EXISTS kids;
+DROP TYPE IF EXISTS attendance_status;
+
 
 -- Create kids table
 CREATE TABLE kids (
     id SERIAL PRIMARY KEY, --Auto incrementing ID
     name TEXT NOT NULL, --name is required
+    birthday DATE,
+    school TEXT,
+    phone TEXT,
+    parent_phone TEXT,
     photo TEXT, --path/url of photo
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
@@ -29,4 +35,16 @@ CREATE TABLE attendance (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     FOREIGN KEY (kidId) REFERENCES kids(id) ON DELETE CASCADE --if kid is deleted, attendance records are also deleted
+);
+
+-- Create events table
+CREATE TABLE events (
+    EventID SERIAL PRIMARY KEY,
+    EventName TEXT NOT NULL,
+    EventStartDate DATE,
+    EventEndDate DATE,
+    EventStartTime TIME,
+    EventEndTime TIME,
+    EventPhoto TEXT,
+    EventAssignedPeople TEXT
 );
