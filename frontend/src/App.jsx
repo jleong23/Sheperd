@@ -17,7 +17,6 @@ function AppWithRouter() {
         <Route path="/kid-list" element={<Kids />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/events" element={<Events />} />
-        <Route path="/new-people" element={<NewPeople />} />
       </Routes>
     </>
   );
