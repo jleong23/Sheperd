@@ -123,15 +123,25 @@ router.patch("/:id", async (req, res) => {
     const { id } = req.params;
     const { status, reason } = req.body;
 
-    // Validate that at least one field is provided
     if (status === undefined && reason === undefined) {
       return res.status(400).json({
         error: "At least one field (status or reason) must be provided",
       });
     }
 
+    // Validate status enum
+    const validStatuses = ["coming", "maybe", "not coming"];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid attendance status" });
+    }
+
     const result = await pool.query(
-      "UPDATE attendance SET status = COALESCE($1, status), reason = COALESCE($2, reason), updated_at = NOW() WHERE id = $3 RETURNING *",
+      `UPDATE attendance SET 
+         status = COALESCE($1, status), 
+         reason = COALESCE($2, reason), 
+         updated_at = NOW() 
+       WHERE id = $3
+       RETURNING *`,
       [status, reason, id]
     );
 
