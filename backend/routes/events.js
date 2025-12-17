@@ -4,24 +4,83 @@ const pool = require("../db");
 
 /**
  * @route GET /events
- * @desc Get all events from the database
+ * @desc Get all events with optional filtering, sorting, and pagination
+ * Returns frontend-friendly fields and pagination metadata
  * @access Public
  */
 router.get("/", async (req, res) => {
   try {
-    const { year } = req.query;
-    let query = "SELECT * FROM events";
-    const params = [];
+    const { year, name, startDate, endDate, sortBy, order, page, limit } =
+      req.query;
 
-    if (year) {
+    const params = [];
+    let query = "SELECT * FROM events WHERE 1=1"; // 1=1 makes appending ANDs easier
+
+    // Filtering
+    if (year && !isNaN(Number(year))) {
       params.push(Number(year));
-      query += ` WHERE EXTRACT(YEAR FROM eventstartdate) = $${params.length}`;
+      query += ` AND EXTRACT(YEAR FROM eventstartdate) = $${params.length}`;
+    }
+    if (name) {
+      params.push(`%${name}%`);
+      query += ` AND eventname ILIKE $${params.length}`;
+    }
+    if (startDate && !isNaN(Date.parse(startDate))) {
+      params.push(startDate);
+      query += ` AND eventstartdate >= $${params.length}`;
+    }
+    if (endDate && !isNaN(Date.parse(endDate))) {
+      params.push(endDate);
+      query += ` AND eventenddate <= $${params.length}`;
     }
 
-    query += " ORDER BY eventstartdate DESC";
+    // Sorting
+    const allowedSort = ["eventname", "eventstartdate", "eventenddate"];
+    const sortColumn = allowedSort.includes(sortBy) ? sortBy : "eventstartdate";
+    const sortOrder = order === "asc" ? "ASC" : "DESC";
+    query += ` ORDER BY ${sortColumn} ${sortOrder}`;
+
+    // Pagination
+    const limitNum = parseInt(limit) || 20;
+    const pageNum = parseInt(page) || 1;
+    const offset = (pageNum - 1) * limitNum;
+    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limitNum, offset);
+
+    // Fetch total count for pagination metadata
+    const countResult = await pool.query(
+      "SELECT COUNT(*) FROM events WHERE 1=1" +
+        query.slice(query.indexOf(" AND")),
+      params.slice(0, params.length - 2)
+    );
+    const totalCount = parseInt(countResult.rows[0].count);
+    const totalPages = Math.ceil(totalCount / limitNum);
 
     const result = await pool.query(query, params);
-    res.json(result.rows);
+
+    // Frontend-friendly response
+    const rows = result.rows.map((r) => ({
+      ...r,
+      eventstartdate: r.eventstartdate?.toISOString().split("T")[0],
+      eventenddate: r.eventenddate?.toISOString().split("T")[0],
+      eventstarttime: r.eventstarttime?.slice(0, 5),
+      eventendtime: r.eventendtime?.slice(0, 5),
+      duration:
+        r.eventenddate && r.eventstartdate
+          ? (new Date(r.eventenddate) - new Date(r.eventstartdate)) /
+            (1000 * 60 * 60 * 24)
+          : null,
+    }));
+
+    res.json({
+      data: rows,
+      pagination: {
+        totalCount,
+        totalPages,
+        page: pageNum,
+        limit: limitNum,
+      },
+    });
   } catch (err) {
     console.error("Error fetching events:", err);
     res.status(500).json({ error: "Failed to fetch events" });
@@ -30,7 +89,7 @@ router.get("/", async (req, res) => {
 
 /**
  * @route GET /events/:id
- * @desc Get event record by ID
+ * @desc Get a single event by ID with frontend-friendly formatting
  * @access Public
  */
 router.get("/:id", async (req, res) => {
@@ -45,7 +104,22 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "Event record not found" });
     }
 
-    res.json(result.rows[0]);
+    const r = result.rows[0];
+
+    const row = {
+      ...r,
+      eventstartdate: r.eventstartdate?.toISOString().split("T")[0],
+      eventenddate: r.eventenddate?.toISOString().split("T")[0],
+      eventstarttime: r.eventstarttime?.slice(0, 5),
+      eventendtime: r.eventendtime?.slice(0, 5),
+      duration:
+        r.eventenddate && r.eventstartdate
+          ? (new Date(r.eventenddate) - new Date(r.eventstartdate)) /
+            (1000 * 60 * 60 * 24)
+          : null,
+    };
+
+    res.json(row);
   } catch (err) {
     console.error("Error fetching event record:", err);
     res.status(500).json({ error: "Failed to fetch event record" });
@@ -55,6 +129,7 @@ router.get("/:id", async (req, res) => {
 /**
  * @route POST /events
  * @desc Create a new event
+ * Validates required fields and date ranges
  * @access Public
  */
 router.post("/", async (req, res) => {
@@ -69,11 +144,22 @@ router.post("/", async (req, res) => {
       eventassignedpeople,
     } = req.body;
 
-    // Validate required fields
-    if (!eventname || !eventstartdate || !eventenddate) {
-      return res.status(400).json({
-        error: "eventname, eventstartdate, and eventenddate are required",
-      });
+    // Validation
+    if (!eventname || typeof eventname !== "string") {
+      return res.status(400).json({ error: "Invalid or missing eventname" });
+    }
+    if (!eventstartdate || isNaN(Date.parse(eventstartdate))) {
+      return res
+        .status(400)
+        .json({ error: "Invalid or missing eventstartdate" });
+    }
+    if (!eventenddate || isNaN(Date.parse(eventenddate))) {
+      return res.status(400).json({ error: "Invalid or missing eventenddate" });
+    }
+    if (new Date(eventenddate) < new Date(eventstartdate)) {
+      return res
+        .status(400)
+        .json({ error: "eventenddate cannot be before eventstartdate" });
     }
 
     const result = await pool.query(
@@ -92,7 +178,18 @@ router.post("/", async (req, res) => {
       ]
     );
 
-    res.status(201).json(result.rows[0]);
+    const r = result.rows[0];
+
+    res.status(201).json({
+      ...r,
+      eventstartdate: r.eventstartdate?.toISOString().split("T")[0],
+      eventenddate: r.eventenddate?.toISOString().split("T")[0],
+      eventstarttime: r.eventstarttime?.slice(0, 5),
+      eventendtime: r.eventendtime?.slice(0, 5),
+      duration:
+        (new Date(r.eventenddate) - new Date(r.eventstartdate)) /
+        (1000 * 60 * 60 * 24),
+    });
   } catch (err) {
     console.error("Error creating event:", err);
     res.status(500).json({ error: "Failed to create event" });
@@ -102,6 +199,7 @@ router.post("/", async (req, res) => {
 /**
  * @route PATCH /events/:id
  * @desc Update an event record (partial update)
+ * Validates at least one field is provided and date ranges
  * @access Public
  */
 router.patch("/:id", async (req, res) => {
@@ -117,7 +215,7 @@ router.patch("/:id", async (req, res) => {
       eventassignedpeople,
     } = req.body;
 
-    // Validate that at least one field is provided
+    // Validate at least one field is provided
     if (
       eventname === undefined &&
       eventstartdate === undefined &&
@@ -170,38 +268,63 @@ router.patch("/:id", async (req, res) => {
       return res.status(404).json({ error: "Event record not found" });
     }
 
-    res.json(result.rows[0]);
+    const r = result.rows[0];
+
+    res.json({
+      ...r,
+      eventstartdate: r.eventstartdate?.toISOString().split("T")[0],
+      eventenddate: r.eventenddate?.toISOString().split("T")[0],
+      eventstarttime: r.eventstarttime?.slice(0, 5),
+      eventendtime: r.eventendtime?.slice(0, 5),
+      duration:
+        r.eventenddate && r.eventstartdate
+          ? (new Date(r.eventenddate) - new Date(r.eventstartdate)) /
+            (1000 * 60 * 60 * 24)
+          : null,
+    });
   } catch (err) {
-    console.error("Error updating event record: ", err);
+    console.error("Error updating event record:", err);
     res.status(500).json({ error: "Failed to update event record" });
   }
 });
 
 /**
  * @route DELETE /events/:id
- * @desc Delete an event record
+ * @desc Delete a single event by ID
  * @access Public
  */
 router.delete("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query(
-      "DELETE FROM events WHERE eventid = $1 RETURNING *",
-      [id]
-    );
+  const { id } = req.params;
+  const result = await pool.query(
+    "DELETE FROM events WHERE eventid = $1 RETURNING *",
+    [id]
+  );
+  if (result.rows.length === 0)
+    return res.status(404).json({ error: "Event record not found" });
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Event record not found" });
-    }
+  res.json({ message: "Event deleted successfully", deleted: result.rows[0] });
+});
 
-    res.json({
-      message: "Event record deleted successfully",
-      deleted: result.rows[0],
-    });
-  } catch (err) {
-    console.error("Error deleting event: ", err);
-    res.status(500).json({ error: "Failed to delete event" });
-  }
+/**
+ * @route DELETE /events
+ * @desc Bulk delete events by array of IDs
+ * @access Public
+ */
+router.delete("/", async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0)
+    return res.status(400).json({ error: "No IDs provided" });
+
+  const result = await pool.query(
+    "DELETE FROM events WHERE eventid = ANY($1::int[]) RETURNING *",
+    [ids]
+  );
+
+  res.json({
+    message: "Events deleted successfully",
+    deletedCount: result.rows.length,
+    deleted: result.rows,
+  });
 });
 
 module.exports = router;
