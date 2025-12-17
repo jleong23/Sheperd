@@ -37,8 +37,19 @@ const fetchJSON = async (url, options = {}) => {
  * @param {number} params.limit
  */
 export const getEvents = async (params = {}) => {
-  const query = new URLSearchParams(params).toString();
-  return fetchJSON(`${BASE_URL}/events${query ? `?${query}` : ""}`);
+  try {
+    const query = new URLSearchParams(params).toString();
+    const url = `${BASE_URL}/events${query ? `?${query}` : ""}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    throw error; // re-throw for calling component to handle
+  }
 };
 
 /**

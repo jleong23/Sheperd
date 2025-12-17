@@ -6,19 +6,31 @@ export default function Events() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    name: "",
+    startDate: "",
+    endDate: "",
+  });
+  const [sortBy, setSortBy] = useState("eventstartdate");
+  const [order, setOrder] = useState("asc");
 
   const fetchEvents = useCallback(async () => {
     // Keep previous events while loading new ones to avoid flicker
-    // setLoading(true);
+    setLoading(true);
     try {
-      const data = await getEvents();
+      const data = await getEvents({
+        ...filters,
+        sortBy,
+        order,
+      });
       setEvents(data);
+      setError(null);
     } catch (err) {
       setError("Failed to Fetch Events");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters, sortBy, order]);
 
   const handleDelete = async (id) => {
     try {
