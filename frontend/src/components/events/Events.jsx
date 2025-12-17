@@ -9,7 +9,7 @@ export default function Events() {
 
   const fetchEvents = useCallback(async () => {
     // Keep previous events while loading new ones to avoid flicker
-    // setLoading(true); 
+    // setLoading(true);
     try {
       const data = await getEvents();
       setEvents(data);
@@ -19,6 +19,16 @@ export default function Events() {
       setLoading(false);
     }
   }, []);
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteEvent(id); // call backend
+      fetchEvents(); // refresh list
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete event");
+    }
+  };
 
   useEffect(() => {
     fetchEvents();
@@ -44,7 +54,8 @@ export default function Events() {
               <li key={event.eventid} className="p-4 hover:bg-gray-50">
                 <p className="font-semibold">{event.eventname}</p>
                 <p className="text-sm text-gray-600">
-                  {new Date(event.eventstartdate).toLocaleDateString()} - {new Date(event.eventenddate).toLocaleDateString()}
+                  {new Date(event.eventstartdate).toLocaleDateString()} -{" "}
+                  {new Date(event.eventenddate).toLocaleDateString()}
                 </p>
               </li>
             ))

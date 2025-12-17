@@ -79,7 +79,11 @@ export const updateEvent = async (id, updatedFields) => {
  * @param {number|string} id
  */
 export const deleteEvent = async (id) => {
-  return fetchJSON(`${BASE_URL}/events/${id}`, { method: "DELETE" });
+  const response = await fetch(`${BASE_URL}/events/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Failed to delete event");
+  return await response.json();
 };
 
 /**

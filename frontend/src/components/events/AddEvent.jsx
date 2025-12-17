@@ -48,13 +48,13 @@ export default function AddEvent({ onEventAdded }) {
             <form onSubmit={handleSubmit}>
               {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 
-              <Input label="Event Name" name="EventName" required />
-              <Input label="Start Date" name="EventStartDate" type="date" />
-              <Input label="End Date" name="EventEndDate" type="date" />
-              <Input label="Start Time" name="EventStartTime" type="time" />
-              <Input label="End Time" name="EventEndTime" type="time" />
-              <Input label="Photo URL" name="EventPhoto" />
-              <Input label="Assigned People" name="EventAssignedPeople" />
+              <Input label="Event Name" name="eventname" required />
+              <Input label="Start Date" name="eventstartdate" type="date" />
+              <Input label="End Date" name="eventenddate" type="date" />
+              <Input label="Start Time" name="eventstarttime" type="time" />
+              <Input label="End Time" name="eventendtime" type="time" />
+              <Input label="Photo URL" name="eventphoto" />
+              <Input label="Assigned People" name="eventassignedpeople" />
 
               <div className="flex items-center justify-between mt-6">
                 <button
@@ -71,6 +71,13 @@ export default function AddEvent({ onEventAdded }) {
                   className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
                 >
                   Cancel
+                </button>
+
+                <button
+                  onClick={() => handleDelete(event.eventid)}
+                  className="bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded text-sm"
+                >
+                  Delete
                 </button>
               </div>
             </form>
