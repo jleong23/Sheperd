@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getEvents, deleteEvent } from "../../api/events";
 import AddEvent from "./AddEvent";
 import DeleteEvent from "./DeleteEvent";
+import EventFilter from "./EventFilter";
 
 export default function EventList() {
   const [events, setEvents] = useState([]);
@@ -12,59 +13,69 @@ export default function EventList() {
     startDate: "",
     endDate: "",
   });
+  // Default sort by start date in descending order
   const [sortBy, setSortBy] = useState("eventstartdate");
-  const [order, setOrder] = useState("asc");
+  const [order, setOrder] = useState("desc");
 
-  // const fetchEvents = useCallback(async () => {
-  //   setLoading(true);
+  const handleFilterChange = (updatedFilters) => {
+    setFilters(updatedFilters);
+  };
 
-  //   try {
-  //     const params = {
-  //       sortBy,
-  //       order,
-  //     };
-
-  //     if (filters.name) params.name = filters.name;
-  //     if (filters.startDate) params.startDate = filters.startDate;
-  //     if (filters.endDate) params.endDate = filters.endDate;
-
-  //     const data = await getEvents(params);
-  //     setEvents(data);
-  //     setError(null);
-  //   } catch (err) {
-  //     setError("Failed to Fetch Events");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, [filters, sortBy, order]);
-
-  const fetchEvents = useCallback(async () => {
-    setLoading(true);
-
-    try {
-      const data = await getEvents();
-      console.log("Events API response:", data);
-
-      const eventsArray = Array.isArray(data?.data) ? data.data : [];
-
-      setEvents(eventsArray);
-      setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to fetch events");
-    } finally {
-      setLoading(false);
+  // Simplified sort handler
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    // Automatically set order based on the selected column
+    if (newSortBy === "eventname") {
+      setOrder("asc");
+    } else {
+      setOrder("desc");
     }
-  }, []);
+  };
 
+  const fetchEvents = useCallback(
+    async (currentFilters = {}) => {
+      setLoading(true);
+
+      try {
+        const params = {
+          sortBy,
+          order,
+          ...currentFilters,
+        };
+
+        // Clean up empty filter values so they aren't sent to the API
+        if (!params.name) delete params.name;
+        if (!params.startDate) delete params.startDate;
+        if (!params.endDate) delete params.endDate;
+
+        const response = await getEvents(params);
+
+        setEvents(Array.isArray(response?.data) ? response.data : []);
+        setError(null);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to fetch events");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [sortBy, order] // fetchEvents is recreated only when sorting changes
+  );
+
+  // Initial fetch on component mount and when sorting changes
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
 
+  // Manual search triggered by button
+  const handleSearch = () => {
+    fetchEvents(filters);
+  };
+
   const handleDelete = async (id) => {
     try {
       await deleteEvent(id); // call backend
-      fetchEvents(); // refresh list
+      fetchEvents(filters); // refresh list with current filters
     } catch (err) {
       console.error(err);
       alert("Failed to delete event");
@@ -78,8 +89,16 @@ export default function EventList() {
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Events</h1>
-        <AddEvent onEventAdded={fetchEvents} />
+        <AddEvent onEventAdded={() => fetchEvents(filters)} />
       </div>
+
+      <EventFilter
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
+        onSearch={handleSearch}
+      />
 
       <div className="bg-white shadow-md rounded-lg">
         <ul className="divide-y divide-gray-200 bg-white shadow rounded">

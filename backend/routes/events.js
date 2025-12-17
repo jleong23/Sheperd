@@ -14,51 +14,72 @@ router.get("/", async (req, res) => {
       req.query;
 
     const params = [];
-    let query = "SELECT * FROM events WHERE 1=1"; // 1=1 makes appending ANDs easier
+    let baseWhere = "WHERE 1=1";
 
+    // --------------------
     // Filtering
+    // --------------------
     if (year && !isNaN(Number(year))) {
       params.push(Number(year));
-      query += ` AND EXTRACT(YEAR FROM eventstartdate) = $${params.length}`;
-    }
-    if (name) {
-      params.push(`%${name}%`);
-      query += ` AND eventname ILIKE $${params.length}`;
-    }
-    if (startDate && !isNaN(Date.parse(startDate))) {
-      params.push(startDate);
-      query += ` AND eventstartdate >= $${params.length}`;
-    }
-    if (endDate && !isNaN(Date.parse(endDate))) {
-      params.push(endDate);
-      query += ` AND eventenddate <= $${params.length}`;
+      baseWhere += ` AND EXTRACT(YEAR FROM eventstartdate) = $${params.length}`;
     }
 
+    if (name) {
+      params.push(`%${name}%`);
+      baseWhere += ` AND eventname ILIKE $${params.length}`;
+    }
+
+    if (startDate && !isNaN(Date.parse(startDate))) {
+      params.push(startDate);
+      baseWhere += ` AND eventstartdate >= $${params.length}`;
+    }
+
+    if (endDate && !isNaN(Date.parse(endDate))) {
+      params.push(endDate);
+      baseWhere += ` AND eventenddate <= $${params.length}`;
+    }
+
+    // --------------------
     // Sorting
+    // --------------------
     const allowedSort = ["eventname", "eventstartdate", "eventenddate"];
     const sortColumn = allowedSort.includes(sortBy) ? sortBy : "eventstartdate";
     const sortOrder = order === "asc" ? "ASC" : "DESC";
-    query += ` ORDER BY ${sortColumn} ${sortOrder}`;
 
+    // --------------------
     // Pagination
+    // --------------------
     const limitNum = parseInt(limit) || 20;
     const pageNum = parseInt(page) || 1;
     const offset = (pageNum - 1) * limitNum;
-    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limitNum, offset);
 
-    // Fetch total count for pagination metadata
+    // --------------------
+    // Count query (NO limit / offset)
+    // --------------------
     const countResult = await pool.query(
-      "SELECT COUNT(*) FROM events WHERE 1=1" +
-        query.slice(query.indexOf(" AND")),
-      params.slice(0, params.length - 2)
+      `SELECT COUNT(*) FROM events ${baseWhere}`,
+      params
     );
-    const totalCount = parseInt(countResult.rows[0].count);
+
+    const totalCount = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalCount / limitNum);
 
-    const result = await pool.query(query, params);
+    // --------------------
+    // Data query
+    // --------------------
+    const dataQuery = `
+      SELECT * FROM events
+      ${baseWhere}
+      ORDER BY ${sortColumn} ${sortOrder}
+      LIMIT $${params.length + 1}
+      OFFSET $${params.length + 2}
+    `;
 
-    // Frontend-friendly response
+    const result = await pool.query(dataQuery, [...params, limitNum, offset]);
+
+    // --------------------
+    // Frontend-friendly formatting
+    // --------------------
     const rows = result.rows.map((r) => ({
       ...r,
       eventstartdate: r.eventstartdate?.toISOString().split("T")[0],
