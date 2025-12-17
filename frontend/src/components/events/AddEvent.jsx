@@ -72,13 +72,6 @@ export default function AddEvent({ onEventAdded }) {
                 >
                   Cancel
                 </button>
-
-                <button
-                  onClick={() => handleDelete(event.eventid)}
-                  className="bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded text-sm"
-                >
-                  Delete
-                </button>
               </div>
             </form>
           </div>

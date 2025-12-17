@@ -6,7 +6,7 @@ import NavBar from "./components/ui/NavBar";
 import LeaderHome from "./pages/leaders/Home";
 import Kids from "./pages/leaders/Kids";
 import Attendance from "./pages/leaders/Attendance";
-import Events from "./components/events/Events";
+import Events from "./pages/leaders/Events";
 
 function AppWithRouter() {
   return (
