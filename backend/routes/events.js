@@ -9,7 +9,7 @@ const pool = require("../db");
  */
 router.get("/", async (req, res) => {
   try {
-    const { year, term } = req.query;
+    const { year } = req.query;
     let query = "SELECT * FROM events";
     const params = [];
 
@@ -18,15 +18,7 @@ router.get("/", async (req, res) => {
       query += ` WHERE EXTRACT(YEAR FROM eventstartdate) = $${params.length}`;
     }
 
-    if (term) {
-      params.push(Number(term));
-      query +=
-        params.length === 1
-          ? ` WHERE term = $${params.length}`
-          : ` AND term = $${params.length}`;
-    }
-
-    query += " ORDER BY eventid DESC";
+    query += " ORDER BY eventstartdate DESC";
 
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -68,31 +60,35 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const {
-      EventName,
-      EventStartDate,
-      EventEndDate,
-      EventStartTime,
-      EventEndTime,
-      EventPhoto,
-      EventAssignedPeople,
+      eventname,
+      eventstartdate,
+      eventenddate,
+      eventstarttime,
+      eventendtime,
+      eventphoto,
+      eventassignedpeople,
     } = req.body;
 
-    if (!EventName) {
-      return res.status(400).json({ error: "Event name is required" });
+    // Validate required fields
+    if (!eventname || !eventstartdate || !eventenddate) {
+      return res.status(400).json({
+        error: "eventname, eventstartdate, and eventenddate are required",
+      });
     }
 
     const result = await pool.query(
-      `INSERT INTO events 
-   (eventname, eventstartdate, eventenddate, eventstarttime, eventendtime, eventphoto, eventassignedpeople) 
-   VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      `INSERT INTO events
+       (eventname, eventstartdate, eventenddate, eventstarttime, eventendtime, eventphoto, eventassignedpeople)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
       [
-        EventName,
-        EventStartDate,
-        EventEndDate,
-        EventStartTime,
-        EventEndTime,
-        EventPhoto,
-        EventAssignedPeople,
+        eventname,
+        eventstartdate,
+        eventenddate,
+        eventstarttime || null,
+        eventendtime || null,
+        eventphoto || null,
+        eventassignedpeople || null,
       ]
     );
 

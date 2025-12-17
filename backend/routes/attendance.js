@@ -69,45 +69,40 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   try {
-    const {
-      kidId,
-      name,
-      week,
-      status = "maybe",
-      reason = "",
-      photo = "",
-      term = 1,
-      year,
-    } = req.body;
+    const { kidId, week, status, reason, name, photo, term, year } = req.body;
 
-    // Validate required fields
     if (!kidId || !week) {
       return res.status(400).json({ error: "kidId and week are required" });
     }
 
-    // Check if kid exists
-    const kidCheck = await pool.query("SELECT * FROM kids WHERE id = $1", [
-      kidId,
-    ]);
+    const validStatuses = ["coming", "maybe", "not coming"];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid attendance status" });
+    }
+
+    const kidCheck = await pool.query(
+      "SELECT name, photo FROM kids WHERE id = $1",
+      [kidId]
+    );
+
     if (kidCheck.rows.length === 0) {
       return res.status(400).json({ error: "Kid not found" });
     }
 
-    // Use the kid's name from the database if not provided
-    const kidName = name || kidCheck.rows[0].name;
-    const kidPhoto = photo || kidCheck.rows[0].photo;
-
     const result = await pool.query(
-      "INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+      `INSERT INTO attendance
+       (kidid, name, week, status, reason, photo, term, year)
+       VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, DEFAULT), COALESCE($8, DEFAULT))
+       RETURNING *`,
       [
         kidId,
-        kidName,
+        name || kidCheck.rows[0].name,
         week,
-        status,
-        reason,
-        kidPhoto,
-        term,
-        year || new Date().getFullYear(),
+        status || null,
+        reason || null,
+        photo || kidCheck.rows[0].photo,
+        term || null,
+        year || null,
       ]
     );
 
