@@ -4,6 +4,7 @@ export default function EventFilter({
   onFilterChange,
   onSortChange,
   onSearch,
+  onClear,
 }) {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -18,7 +19,7 @@ export default function EventFilter({
 
   return (
     <div className="bg-white p-4 rounded shadow mb-4">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
         {/* Event Name */}
         <input
           type="text"
@@ -27,7 +28,7 @@ export default function EventFilter({
           value={filters.name}
           onChange={handleFilterChange}
           onKeyDown={handleKeyDown}
-          className="border rounded px-3 py-2 md:col-span-1"
+          className="border rounded px-3 py-2"
         />
 
         {/* Start Date */}
@@ -60,13 +61,21 @@ export default function EventFilter({
           <option value="eventname">Sort by Name</option>
         </select>
 
-        {/* Search Button */}
-        <button
-          onClick={onSearch}
-          className="bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600"
-        >
-          Search
-        </button>
+        {/* Action Buttons */}
+        <div className="flex gap-2 md:col-span-2">
+          <button
+            onClick={onSearch}
+            className="bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600 flex-1"
+          >
+            Search
+          </button>
+          <button
+            onClick={onClear}
+            className="bg-gray-300 text-gray-700 rounded px-4 py-2 hover:bg-gray-400 flex-1"
+          >
+            Clear
+          </button>
+        </div>
       </div>
     </div>
   );

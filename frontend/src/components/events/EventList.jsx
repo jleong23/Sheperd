@@ -72,6 +72,16 @@ export default function EventList() {
     fetchEvents(filters);
   };
 
+  // Clear filters and refresh the list
+  const handleClear = () => {
+    setFilters({
+      name: "",
+      startDate: "",
+      endDate: "",
+    });
+    fetchEvents({}); // Fetch with empty filters
+  };
+
   const handleDelete = async (id) => {
     try {
       await deleteEvent(id); // call backend
@@ -98,6 +108,7 @@ export default function EventList() {
         sortBy={sortBy}
         onSortChange={handleSortChange}
         onSearch={handleSearch}
+        onClear={handleClear}
       />
 
       <div className="bg-white shadow-md rounded-lg">

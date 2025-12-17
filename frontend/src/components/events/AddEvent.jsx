@@ -56,21 +56,20 @@ export default function AddEvent({ onEventAdded }) {
               <Input label="Photo URL" name="eventphoto" />
               <Input label="Assigned People" name="eventassignedpeople" />
 
-              <div className="flex items-center justify-between mt-6">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-blue-500 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded"
-                >
-                  {isSubmitting ? "Adding..." : "Add"}
-                </button>
-
+              <div className="flex gap-2 justify-end mt-6">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
                 >
                   Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-blue-500 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded"
+                >
+                  {isSubmitting ? "Adding..." : "Add"}
                 </button>
               </div>
             </form>
