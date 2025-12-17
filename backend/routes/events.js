@@ -99,4 +99,81 @@ router.post("/", async (req, res) => {
   }
 });
 
+/**
+ * @route PATCH /events/:id
+ * @desc Update an event record (partial update)
+ * @access Public
+ */
+router.patch("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      eventname,
+      eventstartdate,
+      eventenddate,
+      eventstarttime,
+      eventendtime,
+      eventphoto,
+      eventassignedpeople,
+    } = req.body;
+
+    // Validate that at least one field is provided
+    if (
+      eventname === undefined &&
+      eventstartdate === undefined &&
+      eventenddate === undefined &&
+      eventstarttime === undefined &&
+      eventendtime === undefined &&
+      eventphoto === undefined &&
+      eventassignedpeople === undefined
+    ) {
+      return res.status(400).json({
+        error: "At least one event field must be provided",
+      });
+    }
+
+    // Prevent invalid Date ranges
+    if (
+      eventstartdate &&
+      eventenddate &&
+      new Date(eventenddate) < new Date(eventstartdate)
+    ) {
+      return res.status(400).json({
+        error: "eventenddate cannot be before eventstartdate",
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE events SET 
+      eventname = COALESCE($1, eventname), 
+      eventstartdate = COALESCE($2, eventstartdate), 
+      eventenddate = COALESCE($3, eventenddate), 
+      eventstarttime = COALESCE($4, eventstarttime), 
+      eventendtime = COALESCE($5, eventendtime), 
+      eventphoto = COALESCE($6, eventphoto), 
+      eventassignedpeople = COALESCE($7, eventassignedpeople)
+      WHERE eventid = $8
+      RETURNING *`,
+      [
+        eventname,
+        eventstartdate,
+        eventenddate,
+        eventstarttime,
+        eventendtime,
+        eventphoto,
+        eventassignedpeople,
+        id,
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Event record not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error updating event record: ", err);
+    res.status(500).json({ error: "Failed to update event record" });
+  }
+});
 module.exports = router;
