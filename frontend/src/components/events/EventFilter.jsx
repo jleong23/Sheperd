@@ -10,6 +10,12 @@ export default function EventFilter({
     onFilterChange({ ...filters, [name]: value });
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      onSearch();
+    }
+  };
+
   return (
     <div className="bg-white p-4 rounded shadow mb-4">
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -20,6 +26,7 @@ export default function EventFilter({
           placeholder="Search by name"
           value={filters.name}
           onChange={handleFilterChange}
+          onKeyDown={handleKeyDown}
           className="border rounded px-3 py-2 md:col-span-1"
         />
 
@@ -29,6 +36,7 @@ export default function EventFilter({
           name="startDate"
           value={filters.startDate}
           onChange={handleFilterChange}
+          onKeyDown={handleKeyDown}
           className="border rounded px-3 py-2"
         />
 
@@ -38,6 +46,7 @@ export default function EventFilter({
           name="endDate"
           value={filters.endDate}
           onChange={handleFilterChange}
+          onKeyDown={handleKeyDown}
           className="border rounded px-3 py-2"
         />
 
