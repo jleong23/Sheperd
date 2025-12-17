@@ -176,4 +176,32 @@ router.patch("/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update event record" });
   }
 });
+
+/**
+ * @route DELETE /events/:id
+ * @desc Delete an event record
+ * @access Public
+ */
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "DELETE FROM events WHERE eventid = $1 RETURNING *",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Event record not found" });
+    }
+
+    res.json({
+      message: "Event record deleted successfully",
+      deleted: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error deleting event: ", err);
+    res.status(500).json({ error: "Failed to delete event" });
+  }
+});
+
 module.exports = router;
