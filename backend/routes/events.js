@@ -9,11 +9,54 @@ const pool = require("../db");
  */
 router.get("/", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM events ORDER BY eventid");
+    const { year, term } = req.query;
+    let query = "SELECT * FROM events";
+    const params = [];
+
+    if (year) {
+      params.push(Number(year));
+      query += ` WHERE EXTRACT(YEAR FROM eventstartdate) = $${params.length}`;
+    }
+
+    if (term) {
+      params.push(Number(term));
+      query +=
+        params.length === 1
+          ? ` WHERE term = $${params.length}`
+          : ` AND term = $${params.length}`;
+    }
+
+    query += " ORDER BY eventid DESC";
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching events:", err);
     res.status(500).json({ error: "Failed to fetch events" });
+  }
+});
+
+/**
+ * @route GET /events/:id
+ * @desc Get event record by ID
+ * @access Public
+ */
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query("SELECT * FROM events WHERE eventid = $1", [
+      id,
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Event record not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error fetching event record:", err);
+    res.status(500).json({ error: "Failed to fetch event record" });
   }
 });
 
