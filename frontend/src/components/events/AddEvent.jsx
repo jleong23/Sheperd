@@ -1,8 +1,7 @@
 import { addEvent } from "../../api/events";
 import { useState } from "react";
 
-export default function AddEvent({ onEventAdded }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export default function AddEvent({ open, onClose, onEventAdded }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({}); // Track errors per field
@@ -31,7 +30,7 @@ export default function AddEvent({ onEventAdded }) {
 
     try {
       await addEvent(event);
-      setIsModalOpen(false);
+      onClose(); // Close modal on success
       setFieldErrors({});
 
       if (onEventAdded) {
@@ -45,64 +44,57 @@ export default function AddEvent({ onEventAdded }) {
     }
   };
 
+  if (!open) {
+    return null;
+  }
+
   return (
-    <div>
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
-      >
-        Add Event
-      </button>
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+          Add New Event
+        </h3>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              Add New Event
-            </h3>
+        <form onSubmit={handleSubmit}>
+          {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 
-            <form onSubmit={handleSubmit}>
-              {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+          <Input
+            label="Event Name"
+            name="eventname"
+            required
+            error={fieldErrors.eventname}
+          />
+          <Input
+            label="Start Date"
+            name="eventstartdate"
+            type="date"
+            required
+            error={fieldErrors.eventstartdate}
+          />
+          <Input label="End Date" name="eventenddate" type="date" />
+          <Input label="Start Time" name="eventstarttime" type="time" />
+          <Input label="End Time" name="eventendtime" type="time" />
+          <Input label="Photo URL" name="eventphoto" />
+          <Input label="Assigned People" name="eventassignedpeople" />
 
-              <Input
-                label="Event Name"
-                name="eventname"
-                required
-                error={fieldErrors.eventname}
-              />
-              <Input
-                label="Start Date"
-                name="eventstartdate"
-                type="date"
-                required
-                error={fieldErrors.eventstartdate}
-              />
-              <Input label="End Date" name="eventenddate" type="date" />
-              <Input label="Start Time" name="eventstarttime" type="time" />
-              <Input label="End Time" name="eventendtime" type="time" />
-              <Input label="Photo URL" name="eventphoto" />
-              <Input label="Assigned People" name="eventassignedpeople" />
-
-              <div className="flex gap-2 justify-end mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-blue-500 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded"
-                >
-                  {isSubmitting ? "Adding..." : "Add"}
-                </button>
-              </div>
-            </form>
+          <div className="flex gap-2 justify-end mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-blue-500 hover:bg-blue-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded"
+            >
+              {isSubmitting ? "Adding..." : "Add"}
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </div>
     </div>
   );
 }

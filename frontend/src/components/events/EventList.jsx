@@ -19,6 +19,7 @@ export default function EventList() {
   const [order, setOrder] = useState("desc");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   const handleFilterChange = (updatedFilters) => setFilters(updatedFilters);
   const handleSortChange = (newSortBy) =>
@@ -75,7 +76,12 @@ export default function EventList() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Events</h1>
-        <AddEvent onEventAdded={() => fetchEvents(filters)} />
+        <button
+          onClick={() => setAddOpen(true)}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Add Event
+        </button>
       </div>
 
       {/* Filters */}
@@ -91,14 +97,14 @@ export default function EventList() {
       {/* Event Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {events.length === 0 ? (
-          <div className="col-span-full p-6 text-center text-gray-500 bg-pink-50 rounded-lg shadow-2xl">
+          <div className="col-span-full p-6 text-center text-gray-500 bg-blue-50 rounded-lg shadow-lg">
             No events found
           </div>
         ) : (
           events.map((event) => (
             <div
               key={event.eventid}
-              className="bg-gradient-to-br from-indigo-100 via-pink-100 to-yellow-100 rounded-xl shadow-2xl transform hover:scale-105 transition p-5 flex flex-col justify-between"
+              className="bg-white rounded-xl shadow-lg transform hover:scale-105 transition p-5 flex flex-col justify-between border border-gray-200"
             >
               {/* Event Image */}
               {event.eventphoto && (
@@ -111,7 +117,7 @@ export default function EventList() {
 
               {/* Event Details */}
               <div className="mb-4 space-y-1">
-                <h2 className="text-xl font-bold text-purple-800">
+                <h2 className="text-xl font-bold text-blue-800">
                   {event.eventname}
                 </h2>
                 <p className="text-gray-700 text-sm">
@@ -121,17 +127,17 @@ export default function EventList() {
                 </p>
                 <p className="text-gray-700 text-sm">
                   <span className="font-semibold">Times:</span>{" "}
-                  <span className="bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded">
+                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
                     {event.eventstarttime || "N/A"}
                   </span>{" "}
                   -{" "}
-                  <span className="bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded">
+                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
                     {event.eventendtime || "N/A"}
                   </span>
                 </p>
                 <p className="text-gray-700 text-sm">
                   <span className="font-semibold">Assigned:</span>{" "}
-                  <span className="bg-pink-200 text-pink-800 px-2 py-0.5 rounded">
+                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
                     {event.eventassignedpeople || "None"}
                   </span>
                 </p>
@@ -150,24 +156,31 @@ export default function EventList() {
                     setSelectedEvent(event);
                     setEditOpen(true);
                   }}
-                  className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm"
+                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm"
                 >
                   Edit
                 </button>
                 <DeleteEvent eventId={event.eventid} onDeleted={handleDelete} />
               </div>
-
-              {/* Edit Modal */}
-              <EditEventModal
-                open={editOpen && selectedEvent?.eventid === event.eventid}
-                event={selectedEvent}
-                onClose={() => setEditOpen(false)}
-                onUpdated={fetchEvents}
-              />
             </div>
           ))
         )}
       </div>
+
+      {/* Add Modal */}
+      <AddEvent
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onEventAdded={() => fetchEvents(filters)}
+      />
+
+      {/* Edit Modal */}
+      <EditEventModal
+        open={editOpen}
+        event={selectedEvent}
+        onClose={() => setEditOpen(false)}
+        onUpdated={fetchEvents}
+      />
     </div>
   );
 }

@@ -96,11 +96,11 @@ export default function AttendanceList({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img
-                          src={record.photo || profileIcon}
+                          src={profileIcon}
                           alt={record.name}
-                          className="w-12 h-12 rounded-full object-cover"
+                          className="w-10 h-10 rounded-full object-cover"
                         />
-                        <span className="font-semibold lg:text-xl">
+                        <span className="font-semibold text-sm 2xl:text-lg">
                           {record.name} {/* <- Clean, always use name */}
                         </span>
                       </div>
