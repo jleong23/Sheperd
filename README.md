@@ -1,4 +1,4 @@
-# Dreamers Attendance App
+# Sheperd
 
 A web application for tracking attendance of kids, built with React (frontend) and Express/PostgreSQL (backend).
 
