@@ -43,7 +43,8 @@ export default function EventList() {
         console.error(err);
         setError("Failed to fetch events");
       } finally {
-        setLoading(false);
+        // Add a delay for debugging purposes
+        setTimeout(() => setLoading(false), 2000);
       }
     },
     [sortBy, order]
