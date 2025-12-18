@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import AttendanceList from "../../components/attendance/AttendanceList.jsx";
 import AttendanceSort from "../../components/attendance/AttendanceSort.jsx";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.jsx";
 
 export default function Attendance() {
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
   const [allAttendance, setAllAttendance] = useState([]);
   const [currentAttendance, setCurrentAttendance] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [kids, setKids] = useState([]);
 
   // -----------------------------
@@ -44,6 +46,7 @@ export default function Attendance() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       await fetchAllAttendance();
       try {
         const res = await axios.get("http://localhost:4000/kids");
@@ -51,6 +54,8 @@ export default function Attendance() {
         setKids(res.data);
       } catch (err) {
         console.error("Failed to fetch kids:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -196,6 +201,8 @@ export default function Attendance() {
   // -----------------------------
   // Render
   // -----------------------------
+  if (loading) return <LoadingSpinner fullPage={true} />;
+
   return (
     <div className="p-8">
       <AttendanceSort

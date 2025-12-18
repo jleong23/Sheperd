@@ -2,6 +2,7 @@ import { BsCardChecklist } from "react-icons/bs";
 import { IoCheckboxOutline } from "react-icons/io5";
 import { useState, useEffect } from "react";
 import { getEvents } from "../../api/events";
+import LoadingSpinner from "../../components/ui/LoadingSpinner";
 
 export default function Home() {
   const [events, setEvents] = useState([]);
@@ -117,7 +118,7 @@ export default function Home() {
           Upcoming Events
         </h2>
         {loading ? (
-          <p>Loading events...</p>
+          <LoadingSpinner />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {events.map((event) => (

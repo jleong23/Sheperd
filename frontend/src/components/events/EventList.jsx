@@ -5,6 +5,7 @@ import DeleteEvent from "./DeleteEvent";
 import EventFilter from "./EventFilter";
 import EditEventModal from "./EditEventModal";
 import { toast } from "react-hot-toast";
+import LoadingSpinner from "../ui/LoadingSpinner";
 
 export default function EventList() {
   const [events, setEvents] = useState([]);
@@ -68,7 +69,7 @@ export default function EventList() {
     }
   };
 
-  if (loading) return <div>Loading events...</div>;
+  if (loading) return <LoadingSpinner fullPage={true} />;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
