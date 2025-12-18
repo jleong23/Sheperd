@@ -15,46 +15,26 @@ export default function EventList() {
     startDate: "",
     endDate: "",
   });
-  // Default sort by start date in descending order
   const [sortBy, setSortBy] = useState("eventstartdate");
   const [order, setOrder] = useState("desc");
-
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
 
-  const handleFilterChange = (updatedFilters) => {
-    setFilters(updatedFilters);
-  };
-
-  // Simplified sort handler
-  const handleSortChange = (newSortBy) => {
-    setSortBy(newSortBy);
-    // Automatically set order based on the selected column
-    if (newSortBy === "eventname") {
-      setOrder("asc");
-    } else {
-      setOrder("desc");
-    }
-  };
+  const handleFilterChange = (updatedFilters) => setFilters(updatedFilters);
+  const handleSortChange = (newSortBy) =>
+    setSortBy(newSortBy) ||
+    setOrder(newSortBy === "eventname" ? "asc" : "desc");
 
   const fetchEvents = useCallback(
     async (currentFilters = {}) => {
       setLoading(true);
-
       try {
-        const params = {
-          sortBy,
-          order,
-          ...currentFilters,
-        };
-
-        // Clean up empty filter values so they aren't sent to the API
+        const params = { sortBy, order, ...currentFilters };
         if (!params.name) delete params.name;
         if (!params.startDate) delete params.startDate;
         if (!params.endDate) delete params.endDate;
 
         const response = await getEvents(params);
-
         setEvents(Array.isArray(response?.data) ? response.data : []);
         setError(null);
       } catch (err) {
@@ -64,33 +44,22 @@ export default function EventList() {
         setLoading(false);
       }
     },
-    [sortBy, order] // fetchEvents is recreated only when sorting changes
+    [sortBy, order]
   );
 
-  // Initial fetch on component mount and when sorting changes
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
-
-  // Manual search triggered by button
-  const handleSearch = () => {
-    fetchEvents(filters);
-  };
-
-  // Clear filters and refresh the list
+  const handleSearch = () => fetchEvents(filters);
   const handleClear = () => {
-    setFilters({
-      name: "",
-      startDate: "",
-      endDate: "",
-    });
-    fetchEvents({}); // Fetch with empty filters
+    setFilters({ name: "", startDate: "", endDate: "" });
+    fetchEvents({});
   };
 
   const handleDelete = async (id) => {
     try {
-      await deleteEvent(id); // call backend
-      fetchEvents(filters); // refresh list with current filters
+      await deleteEvent(id);
+      fetchEvents(filters);
       toast.success("Event deleted successfully!");
     } catch (err) {
       console.error(err);
@@ -102,12 +71,14 @@ export default function EventList() {
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Events</h1>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Events</h1>
         <AddEvent onEventAdded={() => fetchEvents(filters)} />
       </div>
 
+      {/* Filters */}
       <EventFilter
         filters={filters}
         onFilterChange={handleFilterChange}
@@ -117,40 +88,85 @@ export default function EventList() {
         onClear={handleClear}
       />
 
-      <div className="bg-white shadow-md rounded-lg">
-        <ul className="divide-y divide-gray-200 bg-white shadow rounded">
-          {events.length === 0 && (
-            <li className="p-4 text-center text-gray-500">No events found</li>
-          )}
-
-          {events.map((event) => (
-            <li
+      {/* Event Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {events.length === 0 ? (
+          <div className="col-span-full p-6 text-center text-gray-500 bg-pink-50 rounded-lg shadow-2xl">
+            No events found
+          </div>
+        ) : (
+          events.map((event) => (
+            <div
               key={event.eventid}
-              onClick={() => {
-                setSelectedEvent(event);
-                setEditOpen(true);
-              }}
-              className="p-4 hover:bg-gray-50 flex justify-between"
+              className="bg-gradient-to-br from-indigo-100 via-pink-100 to-yellow-100 rounded-xl shadow-2xl transform hover:scale-105 transition p-5 flex flex-col justify-between"
             >
-              <div>
-                <p className="font-semibold">{event.eventname}</p>
-                <p className="text-sm text-gray-600">
+              {/* Event Image */}
+              {event.eventphoto && (
+                <img
+                  src={event.eventphoto}
+                  alt={event.eventname}
+                  className="w-full h-40 object-cover rounded-lg mb-4 shadow-lg"
+                />
+              )}
+
+              {/* Event Details */}
+              <div className="mb-4 space-y-1">
+                <h2 className="text-xl font-bold text-purple-800">
+                  {event.eventname}
+                </h2>
+                <p className="text-gray-700 text-sm">
+                  <span className="font-semibold">Dates:</span>{" "}
                   {new Date(event.eventstartdate).toLocaleDateString()} -{" "}
                   {new Date(event.eventenddate).toLocaleDateString()}
                 </p>
+                <p className="text-gray-700 text-sm">
+                  <span className="font-semibold">Times:</span>{" "}
+                  <span className="bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded">
+                    {event.eventstarttime || "N/A"}
+                  </span>{" "}
+                  -{" "}
+                  <span className="bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded">
+                    {event.eventendtime || "N/A"}
+                  </span>
+                </p>
+                <p className="text-gray-700 text-sm">
+                  <span className="font-semibold">Assigned:</span>{" "}
+                  <span className="bg-pink-200 text-pink-800 px-2 py-0.5 rounded">
+                    {event.eventassignedpeople || "None"}
+                  </span>
+                </p>
+                <p className="text-gray-500 text-xs mt-1">
+                  Last updated:{" "}
+                  {event.updated_at
+                    ? new Date(event.updated_at).toLocaleString()
+                    : "N/A"}
+                </p>
               </div>
 
-              <DeleteEvent eventId={event.eventid} onDeleted={handleDelete} />
+              {/* Actions */}
+              <div className="flex justify-end gap-2 mt-2">
+                <button
+                  onClick={() => {
+                    setSelectedEvent(event);
+                    setEditOpen(true);
+                  }}
+                  className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition text-sm"
+                >
+                  Edit
+                </button>
+                <DeleteEvent eventId={event.eventid} onDeleted={handleDelete} />
+              </div>
 
+              {/* Edit Modal */}
               <EditEventModal
-                open={editOpen}
+                open={editOpen && selectedEvent?.eventid === event.eventid}
                 event={selectedEvent}
                 onClose={() => setEditOpen(false)}
                 onUpdated={fetchEvents}
               />
-            </li>
-          ))}
-        </ul>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
