@@ -1,7 +1,30 @@
 import { BsCardChecklist } from "react-icons/bs";
 import { IoCheckboxOutline } from "react-icons/io5";
+import { useState, useEffect } from "react";
+import { getEvents } from "../../api/events";
 
 export default function Home() {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUpcomingEvents = async () => {
+      try {
+        // Fetch events sorted by start date, limit to a few upcoming ones
+        const response = await getEvents({
+          sortBy: "eventstartdate",
+          order: "asc",
+          limit: 5,
+        });
+        setEvents(Array.isArray(response?.data) ? response.data : []);
+      } catch (err) {
+        console.error("Failed to fetch events:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUpcomingEvents();
+  }, []);
   return (
     <div className="p-8 space-y-16 max-w-7xl mx-auto">
       {/* Attendance + New People checklist */}
@@ -88,45 +111,33 @@ export default function Home() {
       </section>
 
       {/* Events */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-12">
-        {[
-          {
-            title: "Dreamers Got Talent",
-            date: "28/9/2025",
-            desc: "Showcase your skills and creativity! Dreamers Got Talent is a fun-filled event where youth can perform, inspire, and celebrate each other’s talents.",
-          },
-          {
-            title: "Youth Alive Conference",
-            date: "28/9/2025",
-            desc: "Join us for an engaging conference designed to empower and inspire youth through dynamic workshops, worship sessions, and interactive activities.",
-          },
-          {
-            title: "Boys Overnight Sleepovers",
-            date: "28/9/2025",
-            desc: "Experience adventure and fellowship with overnight activities, games, and bonding experiences designed specifically for boys in a safe and fun environment.",
-          },
-          {
-            title: "Dream Team",
-            date: "28/9/2025",
-            desc: "Experience adventure and fellowship with overnight activities, games, and bonding experiences designed specifically for boys in a safe and fun environment.",
-          },
-          {
-            title: "Term Planning",
-            date: "28/9/2025",
-            desc: "Experience adventure and fellowship with overnight activities, games, and bonding experiences designed specifically for boys in a safe and fun environment.",
-          },
-        ].map(({ title, date, desc }, idx) => (
-          <div
-            key={idx}
-            className="bg-white rounded-xl shadow-lg p-8 border text-center hover:shadow-2xl transition cursor-pointer"
-          >
-            <h2 className="font-extrabold text-3xl text-blue-900 mb-3">
-              {title}
-            </h2>
-            <p className="text-muted text-lg mb-3">{date}</p>
-            <p className="text-gray-700 text-xl">{desc}</p>
+
+      <section className="xl:col-span-2">
+        <h2 className="text-4xl font-bold text-center mb-8 text-blue-900">
+          Upcoming Events
+        </h2>
+        {loading ? (
+          <p>Loading events...</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {events.map((event) => (
+              <div
+                key={event.eventid}
+                className="bg-white rounded-xl shadow-lg p-8 border text-center hover:shadow-2xl transition cursor-pointer flex flex-col"
+              >
+                <h3 className="font-extrabold text-2xl text-blue-900 mb-2">
+                  {event.eventname}
+                </h3>
+                <p className="text-gray-500 text-md mb-4">
+                  {new Date(event.eventstartdate).toLocaleDateString()}
+                </p>
+                <p className="text-gray-700 text-lg">
+                  A brief description for {event.eventname} would go here.
+                </p>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </section>
 
       {/* Reminders */}
