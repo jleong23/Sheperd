@@ -13,12 +13,14 @@ function AppWithRouter() {
   return (
     <>
       <NavBar />
-      <Routes>
-        <Route path="/" element={<LeaderHome />} />
-        <Route path="/kid-list" element={<Kids />} />
-        <Route path="/attendance" element={<Attendance />} />
-        <Route path="/events" element={<Events />} />
-      </Routes>
+      <main className="pt-24">
+        <Routes>
+          <Route path="/" element={<LeaderHome />} />
+          <Route path="/kid-list" element={<Kids />} />
+          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/events" element={<Events />} />
+        </Routes>
+      </main>
       <Toaster position="top-right" />
     </>
   );
