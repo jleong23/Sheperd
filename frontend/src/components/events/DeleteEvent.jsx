@@ -1,7 +1,8 @@
 export default function DeleteEvent({ eventId, onDeleted }) {
-  const handleClick = () => {
-    if (window.confirm("Delete this Event?")) {
-      onDeleted(eventId);
+  const handleClick = async (e) => {
+    e.stopPropagation(); // <-- prevent parent <li> click
+    if (confirm("Are you sure you want to delete this event?")) {
+      await onDeleted(eventId);
     }
   };
   return (

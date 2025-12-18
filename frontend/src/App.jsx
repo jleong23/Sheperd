@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 // NavBar
 import NavBar from "./components/ui/NavBar";
+import { toast, Toaster } from "react-hot-toast";
 
 // Leader Pages
 import LeaderHome from "./pages/leaders/Home";
@@ -18,6 +19,7 @@ function AppWithRouter() {
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/events" element={<Events />} />
       </Routes>
+      <Toaster position="top-right" />
     </>
   );
 }

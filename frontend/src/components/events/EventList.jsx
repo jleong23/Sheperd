@@ -3,6 +3,8 @@ import { getEvents, deleteEvent } from "../../api/events";
 import AddEvent from "./AddEvent";
 import DeleteEvent from "./DeleteEvent";
 import EventFilter from "./EventFilter";
+import EditEventModal from "./EditEventModal";
+import { toast } from "react-hot-toast";
 
 export default function EventList() {
   const [events, setEvents] = useState([]);
@@ -16,6 +18,9 @@ export default function EventList() {
   // Default sort by start date in descending order
   const [sortBy, setSortBy] = useState("eventstartdate");
   const [order, setOrder] = useState("desc");
+
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const handleFilterChange = (updatedFilters) => {
     setFilters(updatedFilters);
@@ -86,9 +91,10 @@ export default function EventList() {
     try {
       await deleteEvent(id); // call backend
       fetchEvents(filters); // refresh list with current filters
+      toast.success("Event deleted successfully!");
     } catch (err) {
       console.error(err);
-      alert("Failed to delete event");
+      toast.error("Failed to delete event.");
     }
   };
 
@@ -120,6 +126,10 @@ export default function EventList() {
           {events.map((event) => (
             <li
               key={event.eventid}
+              onClick={() => {
+                setSelectedEvent(event);
+                setEditOpen(true);
+              }}
               className="p-4 hover:bg-gray-50 flex justify-between"
             >
               <div>
@@ -131,6 +141,13 @@ export default function EventList() {
               </div>
 
               <DeleteEvent eventId={event.eventid} onDeleted={handleDelete} />
+
+              <EditEventModal
+                open={editOpen}
+                event={selectedEvent}
+                onClose={() => setEditOpen(false)}
+                onUpdated={fetchEvents}
+              />
             </li>
           ))}
         </ul>

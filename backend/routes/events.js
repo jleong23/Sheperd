@@ -86,6 +86,7 @@ router.get("/", async (req, res) => {
       eventenddate: r.eventenddate?.toISOString().split("T")[0],
       eventstarttime: r.eventstarttime?.slice(0, 5),
       eventendtime: r.eventendtime?.slice(0, 5),
+      updated_at: r.updated_at?.toISOString(),
       duration:
         r.eventenddate && r.eventstartdate
           ? (new Date(r.eventenddate) - new Date(r.eventstartdate)) /
@@ -133,6 +134,7 @@ router.get("/:id", async (req, res) => {
       eventenddate: r.eventenddate?.toISOString().split("T")[0],
       eventstarttime: r.eventstarttime?.slice(0, 5),
       eventendtime: r.eventendtime?.slice(0, 5),
+      updated_at: r.updated_at?.toISOString(),
       duration:
         r.eventenddate && r.eventstartdate
           ? (new Date(r.eventenddate) - new Date(r.eventstartdate)) /
@@ -270,7 +272,8 @@ router.patch("/:id", async (req, res) => {
       eventstarttime = COALESCE($4, eventstarttime), 
       eventendtime = COALESCE($5, eventendtime), 
       eventphoto = COALESCE($6, eventphoto), 
-      eventassignedpeople = COALESCE($7, eventassignedpeople)
+      eventassignedpeople = COALESCE($7, eventassignedpeople),
+      updated_at = CURRENT_TIMESTAMP
       WHERE eventid = $8
       RETURNING *`,
       [
