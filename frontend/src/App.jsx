@@ -8,6 +8,7 @@ import LeaderHome from "./pages/leaders/Home";
 import Kids from "./pages/leaders/Kids";
 import Attendance from "./pages/leaders/Attendance";
 import Events from "./pages/leaders/Events";
+import Catchups from "./pages/leaders/Catchups";
 
 function AppWithRouter() {
   return (
@@ -19,6 +20,7 @@ function AppWithRouter() {
           <Route path="/kid-list" element={<Kids />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/catchups" element={<Catchups />} />
         </Routes>
       </main>
       <Toaster position="top-right" />

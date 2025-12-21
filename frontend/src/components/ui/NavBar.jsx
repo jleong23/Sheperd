@@ -11,7 +11,7 @@ export default function NavBar() {
     { to: "/attendance", label: "Attendance" },
     { to: "/kid-list", label: "Kid List" },
     { to: "/events", label: "Events" },
-    { to: "/new-people", label: "New People" },
+    { to: "/catchups", label: "Catchups" },
   ];
 
   const linkClass = ({ isActive }) =>
