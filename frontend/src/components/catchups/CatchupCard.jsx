@@ -4,6 +4,12 @@ export function CatchupCard({ catchup, onClick }) {
       onClick={onClick}
       className="cursor-pointer rounded-lg border p-4 shadow-sm transition hover:shadow-md hover:bg-gray-50"
     >
+      <h2 className="font-bold">{catchup.kidName}</h2>
+      <p className="font-medium text-gray-800">Purpose: {catchup.purpose}</p>
+
+      <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+        Comments: {catchup.comments}
+      </p>
       <div className="flex justify-between mb-1">
         <span className="font-semibold">
           {new Date(catchup.catchupDate).toLocaleDateString()}
@@ -12,12 +18,6 @@ export function CatchupCard({ catchup, onClick }) {
           {catchup.startTime} – {catchup.endTime}
         </span>
       </div>
-
-      <p className="font-medium text-gray-800">{catchup.purpose}</p>
-
-      <p className="mt-1 text-sm text-gray-600 line-clamp-2">
-        {catchup.comments}
-      </p>
     </div>
   );
 }
