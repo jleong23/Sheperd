@@ -105,7 +105,7 @@ export default function EventList() {
         ) : (
           events.map((event) => (
             <div
-              key={event.eventid}
+              key={event.eventId}
               className="bg-white rounded-xl shadow-lg transform hover:scale-105 transition p-5 flex flex-col justify-between border border-gray-200"
             >
               {/* Event Image */}
@@ -124,8 +124,14 @@ export default function EventList() {
                 </h2>
                 <p className="text-gray-700 text-sm">
                   <span className="font-semibold">Dates:</span>{" "}
-                  {new Date(event.eventstartdate).toLocaleDateString()} -{" "}
-                  {new Date(event.eventenddate).toLocaleDateString()}
+                  {new Date(event.eventstartdate).toLocaleDateString(
+                    undefined,
+                    { timeZone: "UTC" }
+                  )}{" "}
+                  -{" "}
+                  {new Date(event.eventenddate).toLocaleDateString(undefined, {
+                    timeZone: "UTC",
+                  })}
                 </p>
                 <p className="text-gray-700 text-sm">
                   <span className="font-semibold">Times:</span>{" "}

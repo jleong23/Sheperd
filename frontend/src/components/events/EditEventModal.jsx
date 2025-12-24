@@ -13,7 +13,16 @@ export default function EditEventModal({
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
   useEffect(() => {
-    if (event) setFormData(event);
+    if (event)
+      setFormData({
+        ...event,
+        eventstartdate: event.eventstartdate
+          ? event.eventstartdate.split("T")[0]
+          : "",
+        eventenddate: event.eventenddate
+          ? event.eventenddate.split("T")[0]
+          : "",
+      });
   }, [event]);
 
   if (!event) return null;
@@ -26,7 +35,16 @@ export default function EditEventModal({
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateEvent(event.eventid, formData);
+      const payload = { ...formData };
+      // Ensure dates are saved as UTC ISO strings to prevent timezone shifts
+      if (payload.eventstartdate && !payload.eventstartdate.includes("T")) {
+        payload.eventstartdate = `${payload.eventstartdate}T00:00:00.000Z`;
+      }
+      if (payload.eventenddate && !payload.eventenddate.includes("T")) {
+        payload.eventenddate = `${payload.eventenddate}T00:00:00.000Z`;
+      }
+
+      await updateEvent(event.eventid, payload);
       toast.success("Event updated successfully");
       onUpdated(); // refresh list
       onClose();
@@ -49,6 +67,14 @@ export default function EditEventModal({
           onChange={handleChange}
           className="border p-2 rounded"
           placeholder="Event name"
+        />
+
+        <input
+          name="eventassignedpeople"
+          value={formData.eventassignedpeople || ""}
+          onChange={handleChange}
+          className="border p-2 rounded"
+          placeholder="Assigned people"
         />
 
         <input
@@ -81,14 +107,6 @@ export default function EditEventModal({
           value={formData.eventendtime || ""}
           onChange={handleChange}
           className="border p-2 rounded"
-        />
-
-        <input
-          name="eventassignedpeople"
-          value={formData.eventassignedpeople || ""}
-          onChange={handleChange}
-          className="border p-2 rounded"
-          placeholder="Assigned people"
         />
       </div>
 

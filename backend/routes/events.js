@@ -2,6 +2,17 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
+// Helper to format Date objects to YYYY-MM-DD using local time
+// This prevents timezone shifts that occur when using toISOString() on a local Date object
+const formatDate = (d) => {
+  if (!d) return null;
+  const date = new Date(d);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 /**
  * @route GET /events
  * @desc Get all events with optional filtering, sorting, and pagination
@@ -82,8 +93,8 @@ router.get("/", async (req, res) => {
     // --------------------
     const rows = result.rows.map((r) => ({
       ...r,
-      eventstartdate: r.eventstartdate?.toISOString().split("T")[0],
-      eventenddate: r.eventenddate?.toISOString().split("T")[0],
+      eventstartdate: formatDate(r.eventstartdate),
+      eventenddate: formatDate(r.eventenddate),
       eventstarttime: r.eventstarttime?.slice(0, 5),
       eventendtime: r.eventendtime?.slice(0, 5),
       updated_at: r.updated_at?.toISOString(),
@@ -130,8 +141,8 @@ router.get("/:id", async (req, res) => {
 
     const row = {
       ...r,
-      eventstartdate: r.eventstartdate?.toISOString().split("T")[0],
-      eventenddate: r.eventenddate?.toISOString().split("T")[0],
+      eventstartdate: formatDate(r.eventstartdate),
+      eventenddate: formatDate(r.eventenddate),
       eventstarttime: r.eventstarttime?.slice(0, 5),
       eventendtime: r.eventendtime?.slice(0, 5),
       updated_at: r.updated_at?.toISOString(),
@@ -205,8 +216,8 @@ router.post("/", async (req, res) => {
 
     res.status(201).json({
       ...r,
-      eventstartdate: r.eventstartdate?.toISOString().split("T")[0],
-      eventenddate: r.eventenddate?.toISOString().split("T")[0],
+      eventstartdate: formatDate(r.eventstartdate),
+      eventenddate: formatDate(r.eventenddate),
       eventstarttime: r.eventstarttime?.slice(0, 5),
       eventendtime: r.eventendtime?.slice(0, 5),
       duration:
@@ -296,8 +307,8 @@ router.patch("/:id", async (req, res) => {
 
     res.json({
       ...r,
-      eventstartdate: r.eventstartdate?.toISOString().split("T")[0],
-      eventenddate: r.eventenddate?.toISOString().split("T")[0],
+      eventstartdate: formatDate(r.eventstartdate),
+      eventenddate: formatDate(r.eventenddate),
       eventstarttime: r.eventstarttime?.slice(0, 5),
       eventendtime: r.eventendtime?.slice(0, 5),
       duration:
