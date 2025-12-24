@@ -31,22 +31,22 @@ router.get("/", async (req, res) => {
     // --------------------
     if (kidid && !isNaN(Number(kidid))) {
       params.push(Number(kidid));
-      baseWhere += ` AND kidid = $${params.length}`;
+      baseWhere += ` AND c.kidid = $${params.length}`;
     }
 
     if (purpose) {
       params.push(`%${purpose}%`);
-      baseWhere += ` AND catchuppurpose ILIKE $${params.length}`;
+      baseWhere += ` AND c.catchuppurpose ILIKE $${params.length}`;
     }
 
     if (startDate && !isNaN(Date.parse(startDate))) {
       params.push(startDate);
-      baseWhere += ` AND catchupdate >= $${params.length}`;
+      baseWhere += ` AND c.catchupdate >= $${params.length}`;
     }
 
     if (endDate && !isNaN(Date.parse(endDate))) {
       params.push(endDate);
-      baseWhere += ` AND catchupdate <= $${params.length}`;
+      baseWhere += ` AND c.catchupdate <= $${params.length}`;
     }
 
     // --------------------
@@ -67,7 +67,7 @@ router.get("/", async (req, res) => {
     // Count query
     // --------------------
     const countResult = await pool.query(
-      `SELECT COUNT(*) FROM catchups ${baseWhere}`,
+      `SELECT COUNT(*) FROM catchups c ${baseWhere}`,
       params
     );
 
@@ -75,10 +75,12 @@ router.get("/", async (req, res) => {
     const totalPages = Math.ceil(totalCount / limitNum);
 
     // --------------------
-    // Data query
+    // Data query with JOIN to get kid name
     // --------------------
     const dataQuery = `
-      SELECT * FROM catchups
+      SELECT c.*, k.name AS kidName
+      FROM catchups c
+      JOIN kids k ON c.kidid = k.id
       ${baseWhere}
       ORDER BY ${sortColumn} ${sortOrder}
       LIMIT $${params.length + 1}
