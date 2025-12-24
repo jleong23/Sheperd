@@ -19,25 +19,23 @@ export function CatchupModal({ catchup, onClose }) {
 
         <div className="space-y-2 text-sm">
           <p>
-            <strong>Catchup ID:</strong> {catchup.catchupId}
+            <strong>Kid:</strong> {catchup.kidname} (ID: {catchup.kidid})
           </p>
           <p>
-            <strong>Kid:</strong> {catchup.kidName} (ID: {catchup.kidId})
+            <strong>Date:</strong> {catchup.catchupdate}
           </p>
           <p>
-            <strong>Date:</strong> {catchup.catchupDate}
+            <strong>Time:</strong> {catchup.catchupstarttime} –{" "}
+            {catchup.catchupendtime}
           </p>
           <p>
-            <strong>Time:</strong> {catchup.startTime} – {catchup.endTime}
-          </p>
-          <p>
-            <strong>Purpose:</strong> {catchup.purpose}
+            <strong>Purpose:</strong> {catchup.catchuppurpose}
           </p>
 
           <div>
             <strong>Comments:</strong>
             <p className="mt-1 whitespace-pre-wrap text-gray-700">
-              {catchup.comments}
+              {catchup.catchupcomments}
             </p>
           </div>
         </div>
