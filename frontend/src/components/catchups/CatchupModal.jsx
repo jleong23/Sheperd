@@ -5,7 +5,13 @@ import { addCatchup, updateCatchup, deleteCatchup } from "../../api/catchups";
 import toast from "react-hot-toast";
 import { CatchupForm } from "./CatchupForm";
 
-export function CatchupModal({ open, catchup, onClose, onSaved }) {
+export function CatchupModal({
+  open,
+  catchup,
+  onClose,
+  onSaved,
+  defaultKidId,
+}) {
   const isEdit = Boolean(catchup);
   const [kids, setKids] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
