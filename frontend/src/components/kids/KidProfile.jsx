@@ -87,17 +87,17 @@ export default function KidProfile() {
               Date of Birth
             </span>
             <span className="block text-gray-900 mt-1">
-              {kid.dateofbirth || "N/A"}
+              {kid.birthday
+                ? new Date(kid.birthday).toLocaleDateString({
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  })
+                : "N/A"}
             </span>
           </div>
-          <div>
-            <span className="block text-sm font-medium text-gray-500">
-              Grade
-            </span>
-            <span className="block text-gray-900 mt-1">
-              {kid.grade || "N/A"}
-            </span>
-          </div>
+
           <div>
             <span className="block text-sm font-medium text-gray-500">
               School
@@ -119,7 +119,15 @@ export default function KidProfile() {
               Contact
             </span>
             <span className="block text-gray-900 mt-1">
-              {kid.parentcontact || "N/A"}
+              {kid.phone || "N/A"}
+            </span>
+          </div>
+          <div>
+            <span className="block text-sm font-medium text-gray-500">
+              Parent Contact
+            </span>
+            <span className="block text-gray-900 mt-1">
+              {kid.parent_phone || "N/A"}
             </span>
           </div>
           <div>
