@@ -4,6 +4,7 @@ import { CatchupCard } from "./CatchupCard";
 import { CatchupModal } from "./CatchupModal";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { toast } from "react-toastify";
+import AddCatchup from "./AddCatchup";
 
 export default function CatchupList() {
   const [catchups, setCatchups] = useState([]);
@@ -13,6 +14,7 @@ export default function CatchupList() {
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const fetchCatchups = useCallback(async () => {
     setLoading(true);
@@ -64,6 +66,9 @@ export default function CatchupList() {
     <div className="p-6">
       <h1 className="mb-4 text-2xl font-semibold">Catchup History</h1>
 
+      {/* Add Catchups */}
+      <AddCatchup onClick={() => setIsAddOpen(true)} />
+
       {/* Search & Filters */}
       <div className="grid gap-4 md:grid-cols-3 mb-2">
         <input
@@ -113,12 +118,20 @@ export default function CatchupList() {
           ))}
         </div>
       )}
-
-      <CatchupModal
-        catchup={selectedCatchup}
-        onClose={() => setSelectedCatchup(null)}
-        onSaved={fetchCatchups} // refresh after editing
-      />
+      {(isAddOpen || selectedCatchup) && (
+        <CatchupModal
+          catchup={selectedCatchup}
+          onClose={() => {
+            setSelectedCatchup(null);
+            setIsAddOpen(false);
+          }}
+          onSaved={() => {
+            fetchCatchups();
+            setSelectedCatchup(null);
+            setIsAddOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
