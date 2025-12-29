@@ -35,24 +35,23 @@ export default function KidsCard({
 
   return (
     <div className="relative border rounded-xl shadow hover:shadow-2xl transition-shadow bg-white p-4 flex flex-col gap-4 group">
+      {showCheckbox && (
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onSelect(kid.id)}
+          className="absolute top-3 left-3 w-5 h-5 accent-blue-600"
+        />
+      )}
+
+      <button
+        onClick={handleDelete}
+        className="absolute top-3 right-3 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition"
+        title="Delete"
+      >
+        <FaTrash size={20} />
+      </button>
       <Link key={kid.id} to={`/kids/${kid.id}`}>
-        {showCheckbox && (
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => onSelect(kid.id)}
-            className="absolute top-3 left-3 w-5 h-5 accent-blue-600"
-          />
-        )}
-
-        <button
-          onClick={handleDelete}
-          className="absolute top-3 right-3 text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition"
-          title="Delete"
-        >
-          <FaTrash size={20} />
-        </button>
-
         <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
           <KidProfileImage photo={kid.photo} name={kid.name} />
           <KidDetails
