@@ -22,7 +22,7 @@ export default function CatchupList() {
   } = useCatchups();
 
   const [selectedCatchup, setSelectedCatchup] = useState(null);
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (loading) return <LoadingSpinner fullPage />;
   if (error) return <div className="text-red-500">{error}</div>;
@@ -31,7 +31,12 @@ export default function CatchupList() {
     <div className="p-6">
       <h1 className="mb-4 text-2xl font-semibold">Catchup History</h1>
 
-      <AddCatchup onClick={() => setIsAddOpen(true)} />
+      <AddCatchup
+        onClick={() => {
+          setSelectedCatchup(null);
+          setIsModalOpen(true);
+        }}
+      />
 
       <CatchupToolbar
         searchTerm={searchTerm}
@@ -53,16 +58,17 @@ export default function CatchupList() {
         onDelete={removeCatchup}
       />
 
-      {(isAddOpen || selectedCatchup) && (
+      {(isModalOpen || selectedCatchup) && (
         <CatchupModal
+          open={true}
           catchup={selectedCatchup}
           onClose={() => {
-            setIsAddOpen(false);
+            setIsModalOpen(false);
             setSelectedCatchup(null);
           }}
           onSaved={() => {
             fetchCatchups();
-            setIsAddOpen(false);
+            setIsModalOpen(false);
             setSelectedCatchup(null);
           }}
         />
