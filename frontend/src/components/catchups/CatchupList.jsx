@@ -48,17 +48,6 @@ export default function CatchupList() {
       .sort((a, b) => new Date(b.catchupdate) - new Date(a.catchupdate));
   }, [catchups, searchTerm]);
 
-  const handleDelete = async (id) => {
-    try {
-      await deleteCatchup(id);
-      toast.success("Catchup deleted successfully!");
-      fetchCatchups(); // refresh list
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete catchup.");
-    }
-  };
-
   if (loading) return <LoadingSpinner fullPage={true} />;
   if (error) return <div className="text-red-500">{error}</div>;
 
@@ -113,7 +102,7 @@ export default function CatchupList() {
               key={catchup.catchupid}
               catchup={catchup}
               onClick={() => setSelectedCatchup(catchup)}
-              onDelete={() => handleDelete(catchup.catchupid)}
+              onDeleted={() => handleDelete(catchup.catchupid)}
             />
           ))}
         </div>

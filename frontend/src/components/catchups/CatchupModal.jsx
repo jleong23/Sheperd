@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { addCatchup, updateCatchup } from "../../api/catchups";
+import { addCatchup, updateCatchup, deleteCatchup } from "../../api/catchups";
 import { fetchKids } from "../../api/kids";
 import toast from "react-hot-toast";
 export function CatchupModal({ catchup, onClose, onSaved }) {
@@ -80,6 +80,18 @@ export function CatchupModal({ catchup, onClose, onSaved }) {
     }
   };
 
+  const handleDelete = async (id) => {
+    try {
+      await deleteCatchup(id);
+      toast.success("Catchup deleted successfully!");
+      onSaved();
+      onClose();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete catchup.");
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md space-y-4">
@@ -138,6 +150,22 @@ export function CatchupModal({ catchup, onClose, onSaved }) {
         />
 
         <div className="flex justify-end gap-2">
+          {isEdit && (
+            <button
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Are you sure you want to delete this catchup?"
+                  )
+                ) {
+                  handleDelete(catchup.catchupid);
+                }
+              }}
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              Delete
+            </button>
+          )}
           <button onClick={onClose} className="px-4 py-2 border rounded">
             Cancel
           </button>
