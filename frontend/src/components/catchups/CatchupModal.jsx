@@ -68,7 +68,7 @@ export function CatchupModal({
             kids={kids}
             isEdit={isEdit}
             initialData={{
-              kidid: catchup?.kidid,
+              kidid: catchup?.kidid || defaultKidId,
               purpose: catchup?.catchuppurpose,
               comments: catchup?.catchupcomments,
               date: catchup?.catchupdate,

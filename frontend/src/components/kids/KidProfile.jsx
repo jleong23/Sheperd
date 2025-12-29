@@ -70,13 +70,66 @@ export default function KidProfile() {
       </button>
 
       {/* Kid Details Header */}
-      <div className="bg-white rounded-xl shadow-sm border p-6 mb-8 flex items-center gap-4">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl font-bold text-blue-600">
-          {kid.name?.charAt(0).toUpperCase()}
+      <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl font-bold text-blue-600">
+            {kid.name?.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{kid.name}</h1>
+            <p className="text-gray-500">Student Profile</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{kid.name}</h1>
-          <p className="text-gray-500">Student Profile</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6 border-t border-gray-100">
+          <div>
+            <span className="block text-sm font-medium text-gray-500">
+              Date of Birth
+            </span>
+            <span className="block text-gray-900 mt-1">
+              {kid.dateofbirth || "N/A"}
+            </span>
+          </div>
+          <div>
+            <span className="block text-sm font-medium text-gray-500">
+              Grade
+            </span>
+            <span className="block text-gray-900 mt-1">
+              {kid.grade || "N/A"}
+            </span>
+          </div>
+          <div>
+            <span className="block text-sm font-medium text-gray-500">
+              School
+            </span>
+            <span className="block text-gray-900 mt-1">
+              {kid.school || "N/A"}
+            </span>
+          </div>
+          <div>
+            <span className="block text-sm font-medium text-gray-500">
+              Parent Name
+            </span>
+            <span className="block text-gray-900 mt-1">
+              {kid.parentname || "N/A"}
+            </span>
+          </div>
+          <div>
+            <span className="block text-sm font-medium text-gray-500">
+              Contact
+            </span>
+            <span className="block text-gray-900 mt-1">
+              {kid.parentcontact || "N/A"}
+            </span>
+          </div>
+          <div>
+            <span className="block text-sm font-medium text-gray-500">
+              Address
+            </span>
+            <span className="block text-gray-900 mt-1">
+              {kid.address || "N/A"}
+            </span>
+          </div>
         </div>
       </div>
 
