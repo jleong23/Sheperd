@@ -44,7 +44,7 @@ export default function EventList() {
         setError("Failed to fetch events");
       } finally {
         // Add a delay for debugging purposes
-        setTimeout(() => setLoading(false), 2000);
+        setTimeout(() => setLoading(false), 100);
       }
     },
     [sortBy, order]
@@ -105,7 +105,7 @@ export default function EventList() {
         ) : (
           events.map((event) => (
             <div
-              key={event.eventId}
+              key={event.eventid}
               className="bg-white rounded-xl shadow-lg transform hover:scale-105 transition p-5 flex flex-col justify-between border border-gray-200"
             >
               {/* Event Image */}
