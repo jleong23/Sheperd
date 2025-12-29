@@ -1,4 +1,4 @@
-export default function DeleteCatchup(catchupId, onDeleted) {
+export default function DeleteCatchup({ catchupId, onDeleted }) {
   const handleClick = async (e) => {
     e.stopPropagation(); // <-- prevent parent <li> click
     if (confirm("Are you sure you want to delete this event?")) {

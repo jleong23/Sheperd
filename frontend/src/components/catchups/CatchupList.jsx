@@ -1,123 +1,69 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { getCatchups, deleteCatchup } from "../../api/catchups";
-import { CatchupCard } from "./CatchupCard";
-import { CatchupModal } from "./CatchupModal";
+import { useState } from "react";
 import LoadingSpinner from "../ui/LoadingSpinner";
-import { toast } from "react-toastify";
 import AddCatchup from "./AddCatchup";
+import CatchupToolbar from "./CatchupToolBar";
+import CatchupResults from "./CatchupResults";
+import { CatchupModal } from "./CatchupModal";
+import { useCatchups } from "../../hooks/useCatchups";
 
 export default function CatchupList() {
-  const [catchups, setCatchups] = useState([]);
+  const {
+    loading,
+    error,
+    filteredCatchups,
+    searchTerm,
+    setSearchTerm,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    fetchCatchups,
+    removeCatchup,
+  } = useCatchups();
+
   const [selectedCatchup, setSelectedCatchup] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
-  const fetchCatchups = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
-
-      const response = await getCatchups(params);
-      setCatchups(response?.data || []);
-      setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to fetch catchups");
-    } finally {
-      setLoading(false);
-    }
-  }, [startDate, endDate]);
-
-  useEffect(() => {
-    fetchCatchups();
-  }, [fetchCatchups]);
-
-  const filteredCatchups = useMemo(() => {
-    return catchups
-      .filter((c) => {
-        const text =
-          `${c.catchuppurpose || ""} ${c.catchupcomments || ""}`.toLowerCase();
-        return text.includes(searchTerm.toLowerCase());
-      })
-      .sort((a, b) => new Date(b.catchupdate) - new Date(a.catchupdate));
-  }, [catchups, searchTerm]);
-
-  if (loading) return <LoadingSpinner fullPage={true} />;
+  if (loading) return <LoadingSpinner fullPage />;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
     <div className="p-6">
       <h1 className="mb-4 text-2xl font-semibold">Catchup History</h1>
 
-      {/* Add Catchups */}
       <AddCatchup onClick={() => setIsAddOpen(true)} />
 
-      {/* Search & Filters */}
-      <div className="grid gap-4 md:grid-cols-3 mb-2">
-        <input
-          type="text"
-          placeholder="Search by purpose or comments..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring"
-        />
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring"
-        />
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring"
-        />
-      </div>
-
-      <button
-        onClick={() => {
+      <CatchupToolbar
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
+        onClear={() => {
           setSearchTerm("");
           setStartDate("");
           setEndDate("");
         }}
-        className="bg-blue-500 text-sm text-white rounded-md px-4 py-2 mb-4 hover:bg-blue-700 transition"
-      >
-        Clear filters
-      </button>
+      />
 
-      {/* Results */}
-      {filteredCatchups.length === 0 ? (
-        <p className="text-gray-500">No matching catchups found.</p>
-      ) : (
-        <div className="grid gap-4">
-          {filteredCatchups.map((catchup) => (
-            <CatchupCard
-              key={catchup.catchupid}
-              catchup={catchup}
-              onClick={() => setSelectedCatchup(catchup)}
-              onDeleted={() => handleDelete(catchup.catchupid)}
-            />
-          ))}
-        </div>
-      )}
+      <CatchupResults
+        catchups={filteredCatchups}
+        onSelect={setSelectedCatchup}
+        onDelete={removeCatchup}
+      />
+
       {(isAddOpen || selectedCatchup) && (
         <CatchupModal
           catchup={selectedCatchup}
           onClose={() => {
-            setSelectedCatchup(null);
             setIsAddOpen(false);
+            setSelectedCatchup(null);
           }}
           onSaved={() => {
             fetchCatchups();
-            setSelectedCatchup(null);
             setIsAddOpen(false);
+            setSelectedCatchup(null);
           }}
         />
       )}
