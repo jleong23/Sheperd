@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { addCatchup, updateCatchup } from "../../api/catchups";
+import { fetchKids } from "../../api/kids";
 import toast from "react-hot-toast";
 export function CatchupModal({ catchup, onClose, onSaved }) {
   const isEdit = Boolean(catchup);
-  const [kidid, setkidid] = useState("");
+  const [kids, setKids] = useState([]);
+  const [kidid, setKidid] = useState("");
   const [kidname, setkidname] = useState("");
   const [purpose, setPurpose] = useState("");
   const [comments, setComments] = useState("");
@@ -11,9 +13,24 @@ export function CatchupModal({ catchup, onClose, onSaved }) {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
+  // Fetch kids
+  useEffect(() => {
+    const getKids = async () => {
+      try {
+        const res = await fetchKids();
+        setKids(res);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to fetch kids");
+      }
+    };
+    getKids();
+  }, []);
+
+  // Populate form
   useEffect(() => {
     if (catchup) {
-      setkidid(catchup.kidid);
+      setKidid(catchup.kidid);
       setkidname(catchup.kidname);
       setPurpose(catchup.catchuppurpose || "");
       setComments(catchup.catchupcomments || "");
@@ -22,7 +39,7 @@ export function CatchupModal({ catchup, onClose, onSaved }) {
       setEndTime(catchup.catchupendtime || "");
     } else {
       // reset for Add mode
-      setkidid("");
+      setKidid("");
       setkidname("");
       setPurpose("");
       setComments("");
@@ -34,7 +51,7 @@ export function CatchupModal({ catchup, onClose, onSaved }) {
 
   const handleSubmit = async () => {
     if (!kidid || !date) {
-      toast.error("Name and date are required");
+      toast.error("Kidid and date are required");
       return;
     }
 
@@ -70,13 +87,18 @@ export function CatchupModal({ catchup, onClose, onSaved }) {
           {isEdit ? "Edit Catchup" : "Add Catchup"}
         </h2>
 
-        <input
-          type="number"
-          placeholder="Kid ID"
+        <select
           value={kidid}
-          onChange={(e) => setkidid(e.target.value)}
+          onChange={(e) => setKidid(e.target.value)}
           className="w-full border rounded p-2"
-        />
+        >
+          <option value="">Select a kid</option>
+          {kids.map((kid) => (
+            <option key={kid.id} value={kid.id}>
+              {kid.name}
+            </option>
+          ))}
+        </select>
 
         <input
           type="date"
