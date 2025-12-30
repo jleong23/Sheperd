@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { KidSelect } from "./KidSelect";
 import { TimeRangeInput } from "./CatchupTimeRangeInput";
 import { CatchupActions } from "./CatchupActions";
@@ -10,13 +10,33 @@ export function CatchupForm({
   onSubmit,
   onCancel,
   onDelete,
+  onChange,
 }) {
+  const initial = useMemo(
+    () => ({
+      kidid: initialData.kidid || "",
+      date: initialData.date || "",
+      purpose: initialData.purpose || "",
+      comments: initialData.comments || "",
+      startTime: initialData.startTime || "",
+      endTime: initialData.endTime || "",
+    }),
+    [initialData]
+  );
   const [kidid, setKidid] = useState(initialData.kidid || "");
   const [purpose, setPurpose] = useState(initialData.purpose || "");
   const [comments, setComments] = useState(initialData.comments || "");
   const [date, setDate] = useState(initialData.date || "");
   const [startTime, setStartTime] = useState(initialData.startTime || "");
   const [endTime, setEndTime] = useState(initialData.endTime || "");
+
+  const hasChanges =
+    kidid !== initial.kidid ||
+    date !== initial.date ||
+    purpose !== initial.purpose ||
+    comments !== initial.comments ||
+    startTime !== initial.startTime ||
+    endTime !== initial.endTime;
 
   return (
     <>
@@ -60,7 +80,9 @@ export function CatchupForm({
         isEdit={isEdit}
         onDelete={onDelete}
         onCancel={onCancel}
-        onSave={() =>
+        onChange={hasChanges}
+        onSave={() => {
+          if (!hasChanges) return;
           onSubmit({
             kidid,
             catchupdate: date,
@@ -68,8 +90,8 @@ export function CatchupForm({
             catchupcomments: comments,
             catchupstarttime: startTime,
             catchupendtime: endTime,
-          })
-        }
+          });
+        }}
       />
     </>
   );
