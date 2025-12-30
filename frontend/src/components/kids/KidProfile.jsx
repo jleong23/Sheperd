@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchKids } from "../../api/kids";
+import { fetchKids, updateKid } from "../../api/kids";
 import { getCatchups } from "../../api/catchups";
 import LoadingSpinner from "../ui/LoadingSpinner";
+import Modal from "../ui/Modals/Modal";
 import { CatchupModal } from "../catchups/CatchupModal";
 
 export default function KidProfile() {
@@ -15,6 +16,18 @@ export default function KidProfile() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCatchup, setSelectedCatchup] = useState(null);
+
+  // Edit Profile State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    birthday: "",
+    school: "",
+    parentname: "",
+    phone: "",
+    parent_phone: "",
+    address: "",
+  });
 
   const loadData = async () => {
     try {
@@ -57,6 +70,42 @@ export default function KidProfile() {
     setSelectedCatchup(null);
   };
 
+  const handleEditClick = () => {
+    const formatDate = (dateString) => {
+      if (!dateString) return "";
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
+    };
+
+    setEditFormData({
+      name: kid.name || "",
+      birthday: formatDate(kid.birthday),
+      school: kid.school || "",
+      parentname: kid.parentname || "",
+      phone: kid.phone || "",
+      parent_phone: kid.parent_phone || "",
+      address: kid.address || "",
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await updateKid(kid.id, editFormData);
+      await loadData(); // Refresh data from server to ensure UI is in sync
+      setIsEditModalOpen(false);
+    } catch (err) {
+      console.error("Failed to update kid", err);
+      alert("Failed to update profile. Please check the console for details.");
+    }
+  };
+
   if (loading) return <LoadingSpinner fullPage />;
   if (!kid) return <div className="p-6">Kid not found.</div>;
 
@@ -71,14 +120,22 @@ export default function KidProfile() {
 
       {/* Kid Details Header */}
       <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl font-bold text-blue-600">
-            {kid.name?.charAt(0).toUpperCase()}
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-2xl font-bold text-blue-600">
+              {kid.name?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{kid.name}</h1>
+              <p className="text-gray-500">Student Profile</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{kid.name}</h1>
-            <p className="text-gray-500">Student Profile</p>
-          </div>
+          <button
+            onClick={handleEditClick}
+            className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            Edit Profile
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6 border-t border-gray-100">
@@ -200,6 +257,118 @@ export default function KidProfile() {
           handleCloseModal();
         }}
       />
+
+      {/* Edit Profile Modal */}
+      <Modal
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Student Profile"
+      >
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={editFormData.name}
+              onChange={handleEditChange}
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Date of Birth
+            </label>
+            <input
+              type="date"
+              name="birthday"
+              value={editFormData.birthday}
+              onChange={handleEditChange}
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              School
+            </label>
+            <input
+              type="text"
+              name="school"
+              value={editFormData.school}
+              onChange={handleEditChange}
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Parent Name
+            </label>
+            <input
+              type="text"
+              name="parentname"
+              value={editFormData.parentname}
+              onChange={handleEditChange}
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Contact
+              </label>
+              <input
+                type="text"
+                name="phone"
+                value={editFormData.phone}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Parent Contact
+              </label>
+              <input
+                type="text"
+                name="parent_phone"
+                value={editFormData.parent_phone}
+                onChange={handleEditChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Address
+            </label>
+            <textarea
+              name="address"
+              value={editFormData.address}
+              onChange={handleEditChange}
+              rows="3"
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
