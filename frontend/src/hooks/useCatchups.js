@@ -13,11 +13,7 @@ export function useCatchups() {
   const fetchCatchups = useCallback(async () => {
     setLoading(true);
     try {
-      const params = {};
-      if (startDate) params.startDate = startDate;
-      if (endDate) params.endDate = endDate;
-
-      const res = await getCatchups(params);
+      const res = await getCatchups();
       setCatchups(res?.data || []);
       setError(null);
     } catch (err) {
@@ -26,7 +22,7 @@ export function useCatchups() {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, []);
 
   useEffect(() => {
     fetchCatchups();
@@ -34,13 +30,30 @@ export function useCatchups() {
 
   const filteredCatchups = useMemo(() => {
     return catchups
-      .filter((c) =>
-        `${c.catchuppurpose || ""} ${c.catchupcomments || ""}`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
-      )
+      .filter((c) => {
+        // text filter
+        const textMatch =
+          `${c.catchuppurpose || ""} ${c.catchupcommentes || ""}`
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase());
+
+        // date filter
+        const catchupDate = new Date(c.catchupDate);
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+
+        // make end date inclusive
+        if (end) {
+          end.setHours(23, 59, 59, 999);
+        }
+        const startMatch = !start || catchupDate >= start;
+        const endMatch = !end || catchupDate <= end;
+
+        return textMatch && startMatch && endMatch;
+      })
+
       .sort((a, b) => new Date(b.catchupdate) - new Date(a.catchupdate));
-  }, [catchups, searchTerm]);
+  }, [catchups, searchTerm, startDate, endDate]);
 
   const removeCatchup = async (id) => {
     try {
