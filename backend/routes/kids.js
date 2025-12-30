@@ -47,7 +47,16 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   try {
-    const { name, birthday, school, phone, parent_phone, photo } = req.body; // Extract data from request body
+    const {
+      name,
+      birthday,
+      school,
+      phone,
+      parent_phone,
+      photo,
+      parentname,
+      address,
+    } = req.body; // Extract data from request body
 
     if (!name) {
       return res.status(400).json({ error: "Name is required" }); // Validate input
@@ -56,9 +65,18 @@ router.post("/", async (req, res) => {
     // Insert new kid into the database
     const result = await pool.query(
       `INSERT INTO kids 
-   (name, school, phone, parent_phone, birthday, photo) 
-   VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [name, school, phone, parent_phone, birthday, photo]
+   (name, school, phone, parent_phone, birthday, photo, parentname, address) 
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [
+        name,
+        school,
+        phone,
+        parent_phone,
+        birthday,
+        photo,
+        parentname || null,
+        address || null,
+      ]
     );
 
     res.status(201).json(result.rows[0]); // Return the newly created kid
@@ -76,7 +94,16 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, photo } = req.body;
+    const {
+      name,
+      birthday,
+      school,
+      parentname,
+      phone,
+      parent_phone,
+      address,
+      photo,
+    } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: "Name is required" });
@@ -84,8 +111,29 @@ router.put("/:id", async (req, res) => {
 
     // Update kid's data in the database
     const result = await pool.query(
-      "UPDATE kids SET name = $1, photo = $2, updated_at = NOW() WHERE id = $3 RETURNING *",
-      [name, photo || "", id]
+      `UPDATE kids 
+       SET name = $1, 
+           birthday = $2, 
+           school = $3, 
+           parentname = $4, 
+           phone = $5, 
+           parent_phone = $6, 
+           address = $7, 
+           photo = $8, 
+           updated_at = NOW() 
+       WHERE id = $9 
+       RETURNING *`,
+      [
+        name,
+        birthday || null,
+        school,
+        parentname,
+        phone,
+        parent_phone,
+        address,
+        photo || "",
+        id,
+      ]
     );
 
     if (result.rows.length === 0) {

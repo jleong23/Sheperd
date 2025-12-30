@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchKids, updateKid } from "../../api/kids";
+import { fetchKids } from "../../api/kids";
 import { getCatchups } from "../../api/catchups";
 import LoadingSpinner from "../ui/LoadingSpinner";
-import Modal from "../ui/Modals/Modal";
 import { CatchupModal } from "../catchups/CatchupModal";
+import EditKidProfileModal from "./EditKidProfileModal";
 
 export default function KidProfile() {
   const { id } = useParams();
@@ -19,15 +19,6 @@ export default function KidProfile() {
 
   // Edit Profile State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState({
-    name: "",
-    birthday: "",
-    school: "",
-    parentname: "",
-    phone: "",
-    parent_phone: "",
-    address: "",
-  });
 
   const loadData = async () => {
     try {
@@ -71,39 +62,7 @@ export default function KidProfile() {
   };
 
   const handleEditClick = () => {
-    const formatDate = (dateString) => {
-      if (!dateString) return "";
-      const date = new Date(dateString);
-      return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
-    };
-
-    setEditFormData({
-      name: kid.name || "",
-      birthday: formatDate(kid.birthday),
-      school: kid.school || "",
-      parentname: kid.parentname || "",
-      phone: kid.phone || "",
-      parent_phone: kid.parent_phone || "",
-      address: kid.address || "",
-    });
     setIsEditModalOpen(true);
-  };
-
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await updateKid(kid.id, editFormData);
-      await loadData(); // Refresh data from server to ensure UI is in sync
-      setIsEditModalOpen(false);
-    } catch (err) {
-      console.error("Failed to update kid", err);
-      alert("Failed to update profile. Please check the console for details.");
-    }
   };
 
   if (loading) return <LoadingSpinner fullPage />;
@@ -259,116 +218,12 @@ export default function KidProfile() {
       />
 
       {/* Edit Profile Modal */}
-      <Modal
+      <EditKidProfileModal
         open={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        title="Edit Student Profile"
-      >
-        <form onSubmit={handleEditSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={editFormData.name}
-              onChange={handleEditChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Date of Birth
-            </label>
-            <input
-              type="date"
-              name="birthday"
-              value={editFormData.birthday}
-              onChange={handleEditChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              School
-            </label>
-            <input
-              type="text"
-              name="school"
-              value={editFormData.school}
-              onChange={handleEditChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Parent Name
-            </label>
-            <input
-              type="text"
-              name="parentname"
-              value={editFormData.parentname}
-              onChange={handleEditChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Contact
-              </label>
-              <input
-                type="text"
-                name="phone"
-                value={editFormData.phone}
-                onChange={handleEditChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Parent Contact
-              </label>
-              <input
-                type="text"
-                name="parent_phone"
-                value={editFormData.parent_phone}
-                onChange={handleEditChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Address
-            </label>
-            <textarea
-              name="address"
-              value={editFormData.address}
-              onChange={handleEditChange}
-              rows="3"
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => setIsEditModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-            >
-              Save Changes
-            </button>
-          </div>
-        </form>
-      </Modal>
+        kid={kid}
+        onSaved={loadData}
+      />
     </div>
   );
 }
