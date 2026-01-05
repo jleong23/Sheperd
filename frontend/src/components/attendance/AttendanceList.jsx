@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import profileIcon from "/Users/jleong_23/Documents/Folders/dreamers-attendance-app/frontend/src/assets/profileIcon.png";
+import profileIcon from "../../assets/profileIcon.png";
 
 export default function AttendanceList({
   currentAttendance,
