@@ -3,9 +3,10 @@ import AddKids from "./AddKids";
 import DeleteKids from "./DeleteKids";
 import { useKids } from "../../hooks/useKids";
 import { useBulkDelete } from "../../hooks/useBulkDelete";
+import KidStatusFilter from "./KidStatusFilter";
 
 export default function KidsList() {
-  const { kids, isLoading, error, getKids } = useKids();
+  const { kids, isLoading, error, getKids, status, setStatus } = useKids();
   const {
     selected,
     bulkMode,
@@ -33,6 +34,7 @@ export default function KidsList() {
           handleDelete={handleDelete}
         />
       </div>
+      <KidStatusFilter value={status} onChange={setStatus} />
 
       <KidsGrid
         kids={kids}

@@ -9,9 +9,20 @@ const pool = require("../db"); // Import the PostgreSQL connection pool
  */
 router.get("/", async (req, res) => {
   try {
-    // Query all kids, ordered by ID
-    const result = await pool.query("SELECT * FROM kids ORDER BY id");
-    res.json(result.rows); // Send the array of kids as JSON
+    const { status } = req.query;
+
+    let query = "SELECT * FROM kids ";
+    const values = [];
+
+    if (status && ["CORE", "FRINGE", "NP"].includes(status)) {
+      query += " WHERE status_code = $1";
+      values.push(status);
+    }
+
+    query += " ORDER BY id";
+
+    const result = await pool.query(query, values);
+    res.json(result.rows);
   } catch (err) {
     console.error("Error fetching kids:", err);
     res.status(500).json({ error: "Failed to fetch kids" }); // Handle errors

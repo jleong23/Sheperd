@@ -1,10 +1,14 @@
 const BASE_URL = "http://localhost:4000";
 
-export async function fetchKids() {
-  const res = await fetch(`${BASE_URL}/kids`);
+export async function fetchKids(status = "ALL") {
+  const query = status && status !== "ALL" ? `?status=${status}` : "";
+
+  const res = await fetch(`${BASE_URL}/kids${query}`);
+
   if (!res.ok) {
     throw new Error("Failed to fetch kids");
   }
+
   return res.json();
 }
 

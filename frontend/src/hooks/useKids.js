@@ -4,11 +4,12 @@ import { fetchKids } from "../api/kids";
 export function useKids() {
   const [kids, setKids] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [status, setStatus] = useState("ALL");
   const [error, setError] = useState(null);
 
   const getKids = async () => {
     try {
-      const data = await fetchKids();
+      const data = await fetchKids(status);
       setKids(data);
     } catch (err) {
       setError(err.message);
@@ -19,7 +20,7 @@ export function useKids() {
 
   useEffect(() => {
     getKids();
-  }, []);
+  }, [status]);
 
-  return { kids, isLoading, error, getKids };
+  return { kids, isLoading, error, status, setStatus, getKids };
 }
