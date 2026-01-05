@@ -11,6 +11,7 @@ export default function EditKidProfileModal({ open, onClose, kid, onSaved }) {
     phone: "",
     parent_phone: "",
     address: "",
+    status_code: "NP",
   });
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export default function EditKidProfileModal({ open, onClose, kid, onSaved }) {
         phone: kid.phone || "",
         parent_phone: kid.parent_phone || "",
         address: kid.address || "",
+        status_code: kid.status_code || "",
       });
     }
   }, [kid, open]);
@@ -67,6 +69,23 @@ export default function EditKidProfileModal({ open, onClose, kid, onSaved }) {
             required
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Status Code
+          </label>
+          <select
+            name="status_code"
+            value={formData.status_code}
+            onChange={handleChange}
+            className="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          >
+            <option value="CORE">Core</option>
+            <option value="FRINGE">Fringe</option>
+            <option value="NP">New People</option>
+          </select>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Date of Birth

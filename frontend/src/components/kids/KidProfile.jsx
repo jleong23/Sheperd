@@ -86,7 +86,12 @@ export default function KidProfile() {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{kid.name}</h1>
-              <p className="text-gray-500">Student Profile</p>
+              <span className="flex gap-2">
+                <p className="text-gray-500">Student Profile</p>
+                <p className="border px-2 bg-yellow-400 text-sm rounded-lg">
+                  {kid.status_code}
+                </p>
+              </span>
             </div>
           </div>
           <button
