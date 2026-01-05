@@ -56,6 +56,7 @@ router.post("/", async (req, res) => {
       photo,
       parentname,
       address,
+      status_code,
     } = req.body; // Extract data from request body
 
     if (!name) {
@@ -65,8 +66,8 @@ router.post("/", async (req, res) => {
     // Insert new kid into the database
     const result = await pool.query(
       `INSERT INTO kids 
-   (name, school, phone, parent_phone, birthday, photo, parentname, address) 
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+   (name, school, phone, parent_phone, birthday, photo, parentname, address, status_code) 
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
       [
         name,
         school,
@@ -76,6 +77,7 @@ router.post("/", async (req, res) => {
         photo,
         parentname || null,
         address || null,
+        status_code || "NP",
       ]
     );
 
@@ -103,6 +105,7 @@ router.put("/:id", async (req, res) => {
       parent_phone,
       address,
       photo,
+      status_code,
     } = req.body;
 
     if (!name) {
@@ -120,8 +123,9 @@ router.put("/:id", async (req, res) => {
            parent_phone = $6, 
            address = $7, 
            photo = $8, 
+           status_code = $9,
            updated_at = NOW() 
-       WHERE id = $9 
+       WHERE id = $10 
        RETURNING *`,
       [
         name,
@@ -132,6 +136,7 @@ router.put("/:id", async (req, res) => {
         parent_phone,
         address,
         photo || "",
+        status_code,
         id,
       ]
     );
