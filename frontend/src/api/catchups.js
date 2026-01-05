@@ -26,14 +26,28 @@ const fetchJSON = async (url, options = {}) => {
  * Get all catchups with optional filtering, sorting, pagination
  */
 export const getCatchups = async (params = {}) => {
+  console.log("DEBUG: getCatchups params input:", params);
+
   // remove undefined values
   const cleanParams = {};
   for (const key in params) {
-    if (params[key] !== undefined) cleanParams[key] = params[key];
+    if (
+      params[key] !== undefined &&
+      params[key] !== null &&
+      params[key] !== ""
+    ) {
+      // Fix: Convert Date objects to ISO string to ensure backend readability
+      if (params[key] instanceof Date) {
+        cleanParams[key] = params[key].toISOString();
+      } else {
+        cleanParams[key] = params[key];
+      }
+    }
   }
 
   const query = new URLSearchParams(cleanParams).toString();
   const url = `${BASE_URL}/catchups${query ? `?${query}` : ""}`;
+  console.log("DEBUG: getCatchups URL:", url); // Log the generated URL to debug
   return fetchJSON(url);
 };
 

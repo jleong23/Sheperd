@@ -20,8 +20,19 @@ const formatDate = (d) => {
  */
 router.get("/", async (req, res) => {
   try {
-    const { kidid, purpose, startDate, endDate, sortBy, order, page, limit } =
-      req.query;
+    console.log("DEBUG: Backend received query:", req.query); // Log incoming params
+
+    const {
+      kidid,
+      purpose,
+      startDate,
+      endDate,
+      catchupdate,
+      sortBy,
+      order,
+      page,
+      limit,
+    } = req.query;
 
     const params = [];
     let baseWhere = "WHERE 1=1";
@@ -47,6 +58,12 @@ router.get("/", async (req, res) => {
     if (endDate && !isNaN(Date.parse(endDate))) {
       params.push(endDate);
       baseWhere += ` AND c.catchupdate <= $${params.length}`;
+    }
+
+    // Fix: Allow filtering by exact catchupdate date
+    if (catchupdate && !isNaN(Date.parse(catchupdate))) {
+      params.push(catchupdate);
+      baseWhere += ` AND c.catchupdate = $${params.length}`;
     }
 
     // --------------------
