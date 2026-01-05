@@ -26,8 +26,6 @@ const fetchJSON = async (url, options = {}) => {
  * Get all catchups with optional filtering, sorting, pagination
  */
 export const getCatchups = async (params = {}) => {
-  console.log("DEBUG: getCatchups params input:", params);
-
   // remove undefined values
   const cleanParams = {};
   for (const key in params) {
@@ -47,7 +45,6 @@ export const getCatchups = async (params = {}) => {
 
   const query = new URLSearchParams(cleanParams).toString();
   const url = `${BASE_URL}/catchups${query ? `?${query}` : ""}`;
-  console.log("DEBUG: getCatchups URL:", url); // Log the generated URL to debug
   return fetchJSON(url);
 };
 

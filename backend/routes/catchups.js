@@ -20,8 +20,6 @@ const formatDate = (d) => {
  */
 router.get("/", async (req, res) => {
   try {
-    console.log("DEBUG: Backend received query:", req.query); // Log incoming params
-
     const {
       kidid,
       purpose,
