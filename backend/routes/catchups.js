@@ -93,7 +93,7 @@ router.get("/", async (req, res) => {
     // Data query with JOIN to get kid name
     // --------------------
     const dataQuery = `
-      SELECT c.*, k.name AS kidName
+      SELECT c.*, k.name AS kidName, k.status_code AS kidStatus
       FROM catchups c
       JOIN kids k ON c.kidid = k.id
       ${baseWhere}
