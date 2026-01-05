@@ -5,6 +5,7 @@ import { getCatchups } from "../../api/catchups";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { CatchupModal } from "../catchups/CatchupModal";
 import EditKidProfileModal from "./EditKidProfileModal";
+import KidStatusBadge from "../ui/KidStatusBadge";
 
 export default function KidProfile() {
   const { id } = useParams();
@@ -88,9 +89,7 @@ export default function KidProfile() {
               <h1 className="text-3xl font-bold text-gray-900">{kid.name}</h1>
               <span className="flex gap-2">
                 <p className="text-gray-500">Student Profile</p>
-                <p className="border px-2 bg-yellow-400 text-sm rounded-lg">
-                  {kid.status_code}
-                </p>
+                <KidStatusBadge status={kid.status_code} />
               </span>
             </div>
           </div>

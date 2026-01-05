@@ -1,6 +1,7 @@
 import { CgProfile } from "react-icons/cg";
 import { FaBirthdayCake, FaSchool } from "react-icons/fa";
 import { GrStatusDisabled } from "react-icons/gr";
+import KidStatusBadge from "../../ui/KidStatusBadge";
 
 export default function KidDetails({ name, birthday, school, status_code }) {
   return (
@@ -20,7 +21,7 @@ export default function KidDetails({ name, birthday, school, status_code }) {
         <FaSchool className="text-green-500" /> {school}
       </div>
       <div className="flex items-center gap-2 text-gray-700">
-        <GrStatusDisabled className="text-red-500" /> {status_code}
+        <KidStatusBadge status={status_code} />
       </div>
     </div>
   );
