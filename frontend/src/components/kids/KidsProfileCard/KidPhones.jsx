@@ -9,7 +9,7 @@ export default function KidPhones({ phone, parentPhone }) {
           onClick={() => (window.location.href = `tel:${phone}`)}
           className="hover:underline cursor-pointer"
         >
-          {phone}
+          {phone || "N/A"}
         </span>
       </div>
       <div className="flex items-center gap-2 sm:justify-end">

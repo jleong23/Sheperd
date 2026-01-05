@@ -58,6 +58,7 @@ export default function KidsCard({
             name={kid.name}
             birthday={kid.birthday}
             school={kid.school}
+            status_code={kid.status_code}
           />
         </div>
       </Link>

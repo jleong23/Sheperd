@@ -1,7 +1,8 @@
 import { CgProfile } from "react-icons/cg";
 import { FaBirthdayCake, FaSchool } from "react-icons/fa";
+import { GrStatusDisabled } from "react-icons/gr";
 
-export default function KidDetails({ name, birthday, school }) {
+export default function KidDetails({ name, birthday, school, status_code }) {
   return (
     <div className="flex flex-col justify-center gap-1 sm:gap-2 w-full">
       <div className="flex items-center gap-2 text-lg font-semibold text-gray-800">
@@ -17,6 +18,9 @@ export default function KidDetails({ name, birthday, school }) {
       </div>
       <div className="flex items-center gap-2 text-gray-700">
         <FaSchool className="text-green-500" /> {school}
+      </div>
+      <div className="flex items-center gap-2 text-gray-700">
+        <GrStatusDisabled className="text-red-500" /> {status_code}
       </div>
     </div>
   );
