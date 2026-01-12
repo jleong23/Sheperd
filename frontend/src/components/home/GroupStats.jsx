@@ -1,4 +1,4 @@
-export default function GroupStats() {
+export default function GroupStats({ yearLevel }) {
   return (
     <section className="bg-gray-200 p-12 rounded-xl shadow-lg max-w-5xl mx-auto">
       <h2 className="text-5xl font-bold text-center mb-10 text-blue-900">
@@ -13,7 +13,9 @@ export default function GroupStats() {
           </div>
           <div>
             <p className="text-gray-500 font-medium text-lg">Year Level</p>
-            <p className="text-3xl font-bold text-[#E07B13]">9</p>
+            <p className="text-3xl font-bold text-[#E07B13]">
+              {yearLevel || "11"}
+            </p>
           </div>
         </div>
 
