@@ -1,76 +1,62 @@
-import { useEffect, useState, useCallback } from "react";
-import { getEvents, deleteEvent } from "../../api/events";
+import { useEffect, useState } from "react";
+import { deleteEvent } from "../../api/events";
+import { toast } from "react-hot-toast";
+// Component Imports
 import AddEvent from "./AddEvent";
 import DeleteEvent from "./DeleteEvent";
 import EventFilter from "./EventFilter";
 import EditEventModal from "./EditEventModal";
-import { toast } from "react-hot-toast";
+
 import LoadingSpinner from "../ui/LoadingSpinner";
+import useEvents from "../../hooks/useEvents";
 
 export default function EventList() {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { events, loading, error, fetchEvents } = useEvents({
+    sortBy: "eventstartdate",
+    order: "desc",
+  });
+
   const [filters, setFilters] = useState({
     name: "",
     startDate: "",
     endDate: "",
   });
   const [sortBy, setSortBy] = useState("eventstartdate");
-  const [order, setOrder] = useState("desc");
+
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
 
-  const handleFilterChange = (updatedFilters) => setFilters(updatedFilters);
-  const handleSortChange = (newSortBy) =>
-    setSortBy(newSortBy) ||
-    setOrder(newSortBy === "eventname" ? "asc" : "desc");
-
-  const fetchEvents = useCallback(
-    async (currentFilters = {}) => {
-      setLoading(true);
-      try {
-        const params = { sortBy, order, ...currentFilters };
-        if (!params.name) delete params.name;
-        if (!params.startDate) delete params.startDate;
-        if (!params.endDate) delete params.endDate;
-
-        const response = await getEvents(params);
-        setEvents(Array.isArray(response?.data) ? response.data : []);
-        setError(null);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to fetch events");
-      } finally {
-        // Add a delay for debugging purposes
-        setTimeout(() => setLoading(false), 100);
-      }
-    },
-    [sortBy, order]
-  );
-
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
-  const handleSearch = () => fetchEvents(filters);
+
+  const handleFilterChange = (newFilters) => setFilters(newFilters);
+
+  const handleSortChange = (newSort) => {
+    setSortBy(newSort);
+    fetchEvents({ ...filters, sortBy: newSort });
+  };
+
+  const handleSearch = () => fetchEvents({ ...filters, sortBy });
+
   const handleClear = () => {
     setFilters({ name: "", startDate: "", endDate: "" });
-    fetchEvents({});
+    setSortBy("eventstartdate");
+    fetchEvents({ sortBy: "eventstartdate" });
   };
 
   const handleDelete = async (id) => {
     try {
       await deleteEvent(id);
-      fetchEvents(filters);
+      handleSearch();
       toast.success("Event deleted successfully!");
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Failed to delete event.");
     }
   };
 
-  if (loading) return <LoadingSpinner fullPage={true} />;
+  if (loading) return <LoadingSpinner fullPage />;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
@@ -179,7 +165,7 @@ export default function EventList() {
       <AddEvent
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        onEventAdded={() => fetchEvents(filters)}
+        onEventAdded={handleSearch}
       />
 
       {/* Edit Modal */}
@@ -187,7 +173,7 @@ export default function EventList() {
         open={editOpen}
         event={selectedEvent}
         onClose={() => setEditOpen(false)}
-        onUpdated={fetchEvents}
+        onUpdated={handleSearch}
       />
     </div>
   );
