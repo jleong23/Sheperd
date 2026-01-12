@@ -1,10 +1,9 @@
-import { BsCardChecklist } from "react-icons/bs";
 import { IoCheckboxOutline } from "react-icons/io5";
 import { useState, useEffect } from "react";
 import { getEvents } from "../../api/events";
-import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import Welcome from "../../components/home/Welcome";
 import GroupStats from "../../components/home/GroupStats";
+import UpcomingEvents from "../../components/home/UpcomingEvents";
 
 export default function Home() {
   const [events, setEvents] = useState([]);
@@ -33,38 +32,11 @@ export default function Home() {
       {/* Welcome + Attendance & New People Page Btn */}
       <Welcome />
 
-      {/* Leader Stats */}
+      {/* Group Stats */}
       <GroupStats />
 
       {/* Events */}
-
-      <section className="xl:col-span-2">
-        <h2 className="text-4xl font-bold text-center mb-8 text-blue-900">
-          Upcoming Events
-        </h2>
-        {loading ? (
-          <LoadingSpinner />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {events.map((event) => (
-              <div
-                key={event.eventid}
-                className="bg-white rounded-xl shadow-lg p-8 border text-center hover:shadow-2xl transition cursor-pointer flex flex-col"
-              >
-                <h3 className="font-extrabold text-2xl text-blue-900 mb-2">
-                  {event.eventname}
-                </h3>
-                <p className="text-gray-500 text-md mb-4">
-                  {new Date(event.eventstartdate).toLocaleDateString()}
-                </p>
-                <p className="text-gray-700 text-lg">
-                  A brief description for {event.eventname} would go here.
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <UpcomingEvents events={events} loading={loading} />
 
       {/* Reminders */}
       <section className="bg-blue-900 text-white p-12 rounded-xl shadow-lg max-w-5xl mx-auto">
