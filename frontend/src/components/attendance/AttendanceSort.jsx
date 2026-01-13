@@ -15,7 +15,7 @@ export default function AttendanceSort({
   const { yearLevel } = useUser(1);
 
   return (
-    <div className="mb-8 px-4 md:px-8">
+    <div className="mb-8 ">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
