@@ -12,6 +12,8 @@ export default function EditKidProfileModal({ open, onClose, kid, onSaved }) {
     parent_phone: "",
     address: "",
     status_code: "NP",
+    baptised: false,
+    sunday_regulars: false,
   });
 
   useEffect(() => {
@@ -31,6 +33,8 @@ export default function EditKidProfileModal({ open, onClose, kid, onSaved }) {
         parent_phone: kid.parent_phone || "",
         address: kid.address || "",
         status_code: kid.status_code || "",
+        baptised: kid.baptised ?? false,
+        sunday_regulars: kid.sunday_regulars ?? false,
       });
     }
   }, [kid, open]);
@@ -69,6 +73,7 @@ export default function EditKidProfileModal({ open, onClose, kid, onSaved }) {
             required
           />
         </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Status Code
@@ -84,6 +89,55 @@ export default function EditKidProfileModal({ open, onClose, kid, onSaved }) {
             <option value="FRINGE">Fringe</option>
             <option value="NP">New People</option>
           </select>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            Participation
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.baptised}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    baptised: e.target.checked,
+                  }))
+                }
+                className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-800">Baptised</p>
+                <p className="text-xs text-gray-500">
+                  Has completed water baptism
+                </p>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.sunday_regulars}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    sunday_regulars: e.target.checked,
+                  }))
+                }
+                className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  Sunday Regular
+                </p>
+                <p className="text-xs text-gray-500">
+                  Attends Sunday services consistently
+                </p>
+              </div>
+            </label>
+          </div>
         </div>
 
         <div>
