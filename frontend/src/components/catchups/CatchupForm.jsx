@@ -73,6 +73,7 @@ export function CatchupForm({
         placeholder="Comments"
         value={comments}
         onChange={(e) => setComments(e.target.value)}
+        rows={3}
         className="w-full border rounded p-2"
       />
 

@@ -1,6 +1,6 @@
 import KidStatusBadge from "../ui/KidStatusBadge";
+import KidFlagBadge from "../ui/KidFlagBadge";
 
-KidStatusBadge;
 export function CatchupCard({ catchup, onClick }) {
   return (
     <div
@@ -8,7 +8,11 @@ export function CatchupCard({ catchup, onClick }) {
       className="cursor-pointer rounded-lg border p-4 shadow-sm transition hover:shadow-md hover:bg-gray-50"
     >
       <h2 className="font-bold">{catchup.kidname}</h2>
-      <KidStatusBadge status={catchup.kidstatus} />
+      <div className="flex flex-wrap gap-2 my-1">
+        <KidStatusBadge status={catchup.kidstatus} />
+        {catchup.baptised && <KidFlagBadge flag="BAPTISED" />}
+        {catchup.sunday_regulars && <KidFlagBadge flag="SUNDAY_REGULAR" />}
+      </div>
       <h5 className="text-sm">Kid ID: {catchup.kidid}</h5>
       <p className="font-medium text-gray-800">
         Purpose: {catchup.catchuppurpose}
