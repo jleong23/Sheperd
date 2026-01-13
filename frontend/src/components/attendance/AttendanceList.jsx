@@ -18,16 +18,28 @@ export default function AttendanceList({
     .map(Number)
     .sort((a, b) => a - b);
 
-  const getStatusPillClass = (status) => {
+  const getStatusStyles = (status) => {
     switch (status) {
       case "coming":
-        return "bg-green-200 text-green-800";
+        return {
+          container: "border-l-4 border-l-green-500 bg-white",
+          badge: "bg-green-100 text-green-800",
+        };
       case "not coming":
-        return "bg-red-200 text-red-800";
+        return {
+          container: "border-l-4 border-l-red-500 bg-white",
+          badge: "bg-red-100 text-red-800",
+        };
       case "maybe":
-        return "bg-yellow-200 text-yellow-800";
+        return {
+          container: "border-l-4 border-l-yellow-500 bg-white",
+          badge: "bg-yellow-100 text-yellow-800",
+        };
       default:
-        return "bg-gray-200 text-gray-800";
+        return {
+          container: "border-l-4 border-l-gray-300 bg-white",
+          badge: "bg-gray-100 text-gray-800",
+        };
     }
   };
 
@@ -74,29 +86,37 @@ export default function AttendanceList({
         const isWeekOpen = !!openWeeks[week];
 
         return (
-          <div key={week} className="bg-white rounded-xl shadow-md p-4">
+          <div
+            key={week}
+            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+          >
             {/* Week Header */}
-            <h3
+            <div
               onClick={() => toggleWeek(week)}
-              className="text-3xl text-center font-bold mb-4 cursor-pointer flex justify-center items-center gap-3 select-none"
+              className="bg-gray-50 px-6 py-4 cursor-pointer flex justify-between items-center hover:bg-gray-100 transition-colors select-none"
             >
-              Week {week}
-              <svg
-                className={`w-6 h-6 transition-transform duration-300 ${
-                  isWeekOpen ? "rotate-180" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </h3>
+              <h3 className="text-lg font-bold text-gray-800">Week {week}</h3>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-500 font-medium">
+                  {weekRecords.length} Students
+                </span>
+                <svg
+                  className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                    isWeekOpen ? "rotate-180" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </div>
 
             {/* Week Content */}
             <div
@@ -105,39 +125,43 @@ export default function AttendanceList({
               }`}
             >
               {/* Summary */}
-              <div className="flex justify-center gap-4 mb-4 text-lg font-semibold">
-                <span className="text-green-700">Coming: {summary.coming}</span>
-                <span className="text-yellow-700">Maybe: {summary.maybe}</span>
-                <span className="text-red-700">
+              <div className="px-6 py-3 border-b border-gray-100 flex flex-wrap gap-4 text-sm font-medium bg-white">
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-100">
+                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                  Coming: {summary.coming}
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-100">
+                  <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                  Maybe: {summary.maybe}
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-100">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
                   Not Coming: {summary.notComing}
-                </span>
+                </div>
               </div>
 
               {/* Records Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 bg-slate-100 p-6 rounded-xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6 bg-gray-50">
                 {weekRecords.map((record) => {
                   const isOpen = !!openDropdowns[record.id];
+                  const styles = getStatusStyles(record.status);
 
                   return (
                     <div
                       key={record.id}
-                      className={`border shadow-md rounded-xl p-4 flex flex-col gap-3 ${
-                        record.status === "coming"
-                          ? "bg-green-100"
-                          : record.status === "not coming"
-                            ? "bg-red-100"
-                            : "bg-yellow-100"
-                      }`}
+                      className={`border shadow-sm rounded-lg p-4 flex flex-col gap-3 transition-all hover:shadow-md ${styles.container}`}
                     >
                       {/* Header */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <img
-                            src={profileIcon}
-                            alt={record.name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                          <span className="font-semibold text-sm 2xl:text-lg">
+                          <div className="relative">
+                            <img
+                              src={profileIcon}
+                              alt={record.name}
+                              className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                            />
+                          </div>
+                          <span className="font-semibold text-gray-800 text-sm">
                             {record.name}
                           </span>
                         </div>
@@ -149,9 +173,7 @@ export default function AttendanceList({
                               e.stopPropagation();
                               toggleDropdown(record.id);
                             }}
-                            className={`px-3 py-1 rounded-full font-semibold text-sm w-28 text-left flex justify-between items-center ${getStatusPillClass(
-                              record.status
-                            )}`}
+                            className={`px-3 py-1.5 rounded-md font-medium text-xs uppercase tracking-wide w-32 text-left flex justify-between items-center transition-colors ${styles.badge}`}
                           >
                             <span>{record.status}</span>
                             <svg
@@ -187,7 +209,7 @@ export default function AttendanceList({
                                   onStatusChange(record.id, option);
                                   setOpenDropdowns({});
                                 }}
-                                className={`block w-full text-left px-2 py-1 hover:bg-gray-100 ${
+                                className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-50 ${
                                   record.status === option ? "font-bold" : ""
                                 }`}
                               >
@@ -201,22 +223,27 @@ export default function AttendanceList({
                       {/* Reason Box */}
                       {(record.status === "not coming" ||
                         record.status === "maybe") && (
-                        <div className="flex gap-2">
-                          <textarea
-                            placeholder="Reason..."
-                            value={record.reason || ""}
-                            onChange={(e) =>
-                              onReasonChange(record.id, e.target.value)
-                            }
-                            rows={2}
-                            className="border w-full rounded-md px-2 py-1 text-gray-700 resize-none"
-                          />
-                          <button
-                            className="bg-green-200 hover:bg-green-400 px-3 rounded-md"
-                            onClick={() => onReasonSubmit(record.id)}
-                          >
-                            Done
-                          </button>
+                        <div className="mt-2 pt-3 border-t border-gray-100">
+                          <label className="text-xs font-bold text-gray-400 uppercase mb-1.5 block">
+                            Reason
+                          </label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="Add a note..."
+                              value={record.reason || ""}
+                              onChange={(e) =>
+                                onReasonChange(record.id, e.target.value)
+                              }
+                              className="flex-1 border border-gray-300 rounded-md px-2 py-1.5 text-sm text-gray-700 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all"
+                            />
+                            <button
+                              className="bg-gray-900 hover:bg-black text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                              onClick={() => onReasonSubmit(record.id)}
+                            >
+                              Save
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>

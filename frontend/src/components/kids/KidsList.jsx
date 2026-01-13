@@ -21,7 +21,7 @@ export default function KidsList() {
 
   return (
     <div className="p-8">
-      <h2 className="text-5xl font-bold text-center my-8">Year 9 Listing</h2>
+      <h1 className="mb-4 text-3xl font-semibold">Catchup History</h1>
 
       <div className="flex gap-4 ">
         <AddKids onKidAdded={getKids} />

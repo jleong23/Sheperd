@@ -62,8 +62,8 @@ export default function EventList() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Events</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className=" text-3xl font-semibold">Events</h1>
         <button
           onClick={() => setAddOpen(true)}
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
