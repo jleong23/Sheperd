@@ -10,8 +10,8 @@ export function CatchupCard({ catchup, onClick }) {
       <h2 className="font-bold">{catchup.kidname}</h2>
       <div className="flex flex-wrap gap-2 my-1">
         <KidStatusBadge status={catchup.kidstatus} />
-        {catchup.baptised && <KidFlagBadge flag="BAPTISED" />}
-        {catchup.sunday_regulars && <KidFlagBadge flag="SUNDAY_REGULAR" />}
+        {!!catchup.kidbaptised && <KidFlagBadge flag="BAPTISED" />}
+        {!!catchup.kidsundayregulars && <KidFlagBadge flag="SUNDAY_REGULAR" />}
       </div>
       <h5 className="text-sm">Kid ID: {catchup.kidid}</h5>
       <p className="font-medium text-gray-800">
