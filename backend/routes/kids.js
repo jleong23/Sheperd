@@ -30,6 +30,29 @@ router.get("/", async (req, res) => {
 });
 
 /**
+ * @route GET /kids/stats
+ * @desc Get statistics for kids (Total, Regulars, etc.)
+ * @access Public
+ */
+router.get("/stats", async (req, res) => {
+  try {
+    // Count total kids, regulars, and baptised using the new columns
+    const query = `
+      SELECT 
+        COUNT(*) as total_kids,
+        COUNT(*) FILTER (WHERE sunday_regulars = true) as regular_kids,
+        COUNT(*) FILTER (WHERE baptised = true) as baptised_kids
+      FROM kids;
+    `;
+    const result = await pool.query(query);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error fetching kid stats:", err);
+    res.status(500).json({ error: "Failed to fetch kid stats" });
+  }
+});
+
+/**
  * @route GET /kids/:id
  * @desc Get a single kid by their ID
  * @access Public
@@ -68,6 +91,8 @@ router.post("/", async (req, res) => {
       parentname,
       address,
       status_code,
+      baptised,
+      sunday_regulars,
     } = req.body; // Extract data from request body
 
     if (!name) {
@@ -76,9 +101,9 @@ router.post("/", async (req, res) => {
 
     // Insert new kid into the database
     const result = await pool.query(
-      `INSERT INTO kids 
-   (name, school, phone, parent_phone, birthday, photo, parentname, address, status_code) 
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      `INSERT INTO kids
+   (name, school, phone, parent_phone, birthday, photo, parentname, address, status_code, baptised, sunday_regulars)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
       [
         name,
         school,
@@ -89,6 +114,8 @@ router.post("/", async (req, res) => {
         parentname || null,
         address || null,
         status_code || "NP",
+        baptised || false,
+        sunday_regulars || false,
       ]
     );
 
@@ -117,6 +144,8 @@ router.put("/:id", async (req, res) => {
       address,
       photo,
       status_code,
+      baptised,
+      sunday_regulars,
     } = req.body;
 
     if (!name) {
@@ -135,8 +164,10 @@ router.put("/:id", async (req, res) => {
            address = $7, 
            photo = $8, 
            status_code = $9,
-           updated_at = NOW() 
-       WHERE id = $10 
+           baptised = $10,
+           sunday_regulars = $11,
+           updated_at = NOW()
+       WHERE id = $12
        RETURNING *`,
       [
         name,
@@ -148,6 +179,8 @@ router.put("/:id", async (req, res) => {
         address,
         photo || "",
         status_code,
+        baptised || false,
+        sunday_regulars || false,
         id,
       ]
     );

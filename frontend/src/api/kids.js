@@ -34,3 +34,11 @@ export async function fetchKidById(id) {
   }
   return res.json();
 }
+
+export async function fetchKidStats() {
+  const res = await fetch(`${BASE_URL}/kids/stats`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch kid stats");
+  }
+  return res.json();
+}

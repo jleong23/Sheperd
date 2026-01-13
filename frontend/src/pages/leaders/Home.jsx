@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import useEvents from "../../hooks/useEvents";
 import useUser from "../../hooks/useUser";
+import { fetchKidStats } from "../../api/kids";
 
 // Component Imports
 import Welcome from "../../components/home/Welcome";
@@ -18,8 +19,21 @@ export default function Home() {
   // Fetch user profile (ID 1 hardcoded for now)
   const { yearLevel } = useUser(1);
 
+  const [stats, setStats] = useState({
+    total_kids: 0,
+    regular_kids: 0,
+    baptised_kids: 0, // Placeholder until column exists
+  });
+
   useEffect(() => {
     fetchEvents();
+
+    // Fetch dynamic stats
+    fetchKidStats()
+      .then((data) => {
+        setStats(data);
+      })
+      .catch((err) => console.error("Failed to fetch stats:", err));
   }, [fetchEvents]);
 
   return (
@@ -28,7 +42,7 @@ export default function Home() {
       <Welcome />
 
       {/* Group Stats */}
-      <GroupStats yearLevel={yearLevel || "11"} />
+      <GroupStats yearLevel={yearLevel || "11"} stats={stats} />
 
       {/* Events */}
       <UpcomingEvents events={events} loading={loading} />

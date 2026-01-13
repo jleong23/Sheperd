@@ -1,4 +1,4 @@
-export default function GroupStats({ yearLevel }) {
+export default function GroupStats({ yearLevel, stats }) {
   return (
     <section className="bg-gray-200 p-12 rounded-xl shadow-lg max-w-5xl mx-auto">
       <h2 className="text-5xl font-bold text-center mb-10 text-blue-900">
@@ -14,7 +14,7 @@ export default function GroupStats({ yearLevel }) {
           <div>
             <p className="text-gray-500 font-medium text-lg">Year Level</p>
             <p className="text-3xl font-bold text-[#E07B13]">
-              {yearLevel || "11"}
+              {yearLevel ?? "Unavailable"}
             </p>
           </div>
         </div>
@@ -28,7 +28,9 @@ export default function GroupStats({ yearLevel }) {
             <p className="text-gray-500 font-medium text-lg">
               Number of kids in this group
             </p>
-            <p className="text-3xl font-bold text-[#E07B13]">13</p>
+            <p className="text-3xl font-bold text-[#E07B13]">
+              {stats?.total_kids ?? "Unavailable"}
+            </p>
           </div>
         </div>
 
@@ -39,7 +41,9 @@ export default function GroupStats({ yearLevel }) {
           </div>
           <div>
             <p className="text-gray-500 font-medium text-lg">Kids Baptised</p>
-            <p className="text-3xl font-bold text-[#E07B13]">12</p>
+            <p className="text-3xl font-bold text-[#E07B13]">
+              {stats?.baptised_kids ?? "Unavailable"}
+            </p>
           </div>
         </div>
 
@@ -52,7 +56,9 @@ export default function GroupStats({ yearLevel }) {
             <p className="text-gray-500 font-medium text-lg">
               Comes Sunday Service
             </p>
-            <p className="text-3xl font-bold text-[#E07B13]">5</p>
+            <p className="text-3xl font-bold text-[#E07B13]">
+              {stats?.regular_kids ?? "Unavailable"}
+            </p>
           </div>
         </div>
       </div>
