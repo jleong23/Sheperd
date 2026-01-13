@@ -9,6 +9,17 @@ export const KID_STATUS = {
   },
   NP: {
     label: "New People",
-    className: "text-gray-8s00 bg-slate-200",
+    className: "text-gray-800 bg-slate-200",
+  },
+};
+
+export const KID_FLAGS = {
+  BAPTISED: {
+    label: "Baptised",
+    className: "text-blue-700 bg-blue-100",
+  },
+  SUNDAY_REGULAR: {
+    label: "Sunday Regular",
+    className: "text-purple-700 bg-purple-100",
   },
 };

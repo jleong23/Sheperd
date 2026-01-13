@@ -34,7 +34,7 @@ export default function KidsCard({
   };
 
   return (
-    <div className="relative border rounded-xl shadow hover:shadow-2xl transition-shadow bg-white p-4 flex flex-col gap-4 group">
+    <div className="relative h-full border rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 bg-white p-5 flex flex-col gap-4 group">
       {showCheckbox && (
         <input
           type="checkbox"
@@ -59,6 +59,8 @@ export default function KidsCard({
             birthday={kid.birthday}
             school={kid.school}
             status_code={kid.status_code}
+            baptised={kid.baptised}
+            sunday_regulars={kid.sunday_regulars}
           />
         </div>
       </Link>
