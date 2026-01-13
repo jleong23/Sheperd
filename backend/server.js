@@ -15,6 +15,7 @@ const kidsRoutes = require("./routes/kids");
 const attendanceRoutes = require("./routes/attendance");
 const eventsRouter = require("./routes/events");
 const catchupRouter = require("./routes/catchups");
+const usersRouter = require("./routes/users");
 
 const app = express(); // Creating express app instance
 const PORT = process.env.PORT || 4000; // uses the env variabel Port, else defaults to 4000
@@ -31,8 +32,9 @@ app.use(express.json());
 // API Routes comes after middleware
 app.use("/kids", kidsRoutes);
 app.use("/attendance", attendanceRoutes);
-app.use("/events", eventsRouter); //
-app.use("/catchups", catchupRouter); //
+app.use("/events", eventsRouter);
+app.use("/catchups", catchupRouter);
+app.use("/users", usersRouter);
 
 // Root route
 app.get("/", (_, res) => {
