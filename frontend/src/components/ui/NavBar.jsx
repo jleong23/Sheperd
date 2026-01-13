@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { X, Menu } from "lucide-react";
-import logo from "../../assets/logo.jpg";
 
 export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -15,22 +14,27 @@ export default function NavBar() {
   ];
 
   const linkClass = ({ isActive }) =>
-    `block text-gray-800 font-semibold text-lg transition-colors duration-200 hover:text-blue-500 ${
-      isActive ? "text-blue-600" : ""
-    }`;
+    `relative inline-block text-white font-semibold text-lg
+   transition-all duration-200 ease-out
+   hover:-translate-y-1 hover:text-blue-400
+   ${
+     isActive
+       ? "text-blue-500 after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-blue-500"
+       : ""
+   }`;
 
   return (
-    <nav className="bg-white shadow-md fixed w-full z-50">
+    <nav className="bg-black shadow-md fixed w-full z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-24">
           {/* Logo and Title */}
           <Link to="/" className="flex items-center gap-4">
             <img
-              src={logo}
+              src={"/dreamersLogo.png"}
               alt="Dreamers Logo"
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-full"
             />
-            <span className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-wide">
+            <span className="text-3xl sm:text-4xl font-bold text-white tracking-wide">
               Dreamers Youth
             </span>
           </Link>
@@ -48,7 +52,7 @@ export default function NavBar() {
 
           {/* Mobile Hamburger */}
           <button
-            className="lg:hidden p-2 rounded-md text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition"
+            className="lg:hidden p-2 rounded-md text-white hover:bg-gray-900 hover:text-gray-300 transition"
             onClick={() => setMenuOpen(!menuOpen)}
           >
             {menuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -58,7 +62,7 @@ export default function NavBar() {
 
       {/* Mobile Menu */}
       <div
-        className={`lg:hidden bg-white shadow-md overflow-hidden transition-all duration-300 ${
+        className={`lg:hidden bg-black shadow-md overflow-hidden transition-all duration-300 ${
           menuOpen ? "max-h-96 opacity-100 py-4" : "max-h-0 opacity-0"
         }`}
       >
