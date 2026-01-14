@@ -4,6 +4,7 @@ import DeleteKids from "./DeleteKids";
 import { useKids } from "../../hooks/useKids";
 import { useBulkDelete } from "../../hooks/useBulkDelete";
 import KidStatusFilter from "./KidStatusFilter";
+import LoadingSpinner from "../ui/LoadingSpinner";
 
 export default function KidsList() {
   const { kids, isLoading, error, getKids, status, setStatus } = useKids();
@@ -16,7 +17,7 @@ export default function KidsList() {
     enterBulkMode,
   } = useBulkDelete(kids, getKids);
 
-  if (isLoading) return <p className="text-center">Loading kids...</p>;
+  if (isLoading) return <LoadingSpinner />;
   if (error) return <p className="text-center text-red-500">Error: {error}</p>;
 
   return (

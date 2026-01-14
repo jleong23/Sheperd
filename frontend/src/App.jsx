@@ -10,6 +10,7 @@ import Attendance from "./pages/leaders/Attendance";
 import Events from "./pages/leaders/Events";
 import Catchups from "./pages/leaders/Catchups";
 import KidProfile from "./components/kids/KidProfile";
+import Footer from "./components/ui/Footer";
 
 function AppWithRouter() {
   return (
@@ -26,6 +27,7 @@ function AppWithRouter() {
         </Routes>
       </main>
       <Toaster position="top-right" />
+      <Footer />
     </>
   );
 }
