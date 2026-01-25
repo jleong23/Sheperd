@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { fetchNewPeopleKids, updateKid } from "../../api/kids";
+import { fetchNewPeopleKids, updateKid, deleteKid } from "../../api/kids";
+import { FaTrash } from "react-icons/fa";
 
 export default function NewPeople() {
   const [kids, setKids] = useState([]);
@@ -54,6 +55,18 @@ export default function NewPeople() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this person?")) return;
+
+    try {
+      await deleteKid(id);
+      setKids((prev) => prev.filter((k) => k.id !== id));
+    } catch (err) {
+      console.error("Failed to delete:", err);
+      alert("Failed to delete person. Please try again.");
+    }
+  };
+
   if (loading) return <div className="p-4">Loading...</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
 
@@ -79,8 +92,17 @@ export default function NewPeople() {
                   </p>
                   <p className="text-gray-600">Schol: {kid.school}</p>
                 </div>
-                <div className="text-sm font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                  {kid.status_code}
+                <div className="flex flex-col items-end gap-2">
+                  <div className="text-sm font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                    {kid.status_code}
+                  </div>
+                  <button
+                    onClick={() => handleDelete(kid.id)}
+                    className="text-red-500 hover:text-red-700 transition-colors p-1"
+                    title="Delete"
+                  >
+                    <FaTrash size={18} />
+                  </button>
                 </div>
               </div>
 

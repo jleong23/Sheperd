@@ -54,3 +54,13 @@ export async function fetchNewPeopleKids(status = "NP") {
 
   return res.json();
 }
+
+export async function deleteKid(id) {
+  const res = await fetch(`${BASE_URL}/kids/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to delete kid with id ${id}`);
+  }
+  return res.json();
+}
