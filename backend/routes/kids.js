@@ -93,6 +93,10 @@ router.post("/", async (req, res) => {
       status_code,
       baptised,
       sunday_regulars,
+      first_call,
+      second_call,
+      first_call_feedback,
+      second_call_feedback,
     } = req.body; // Extract data from request body
 
     if (!name) {
@@ -102,8 +106,8 @@ router.post("/", async (req, res) => {
     // Insert new kid into the database
     const result = await pool.query(
       `INSERT INTO kids
-   (name, school, phone, parent_phone, birthday, photo, parentname, address, status_code, baptised, sunday_regulars)
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+   (name, school, phone, parent_phone, birthday, photo, parentname, address, status_code, baptised, sunday_regulars, first_call, second_call, first_call_feedback, second_call_feedback)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
       [
         name,
         school,
@@ -116,7 +120,11 @@ router.post("/", async (req, res) => {
         status_code || "NP",
         baptised || false,
         sunday_regulars || false,
-      ]
+        first_call || false,
+        second_call || false,
+        first_call_feedback || "",
+        second_call_feedback || "",
+      ],
     );
 
     res.status(201).json(result.rows[0]); // Return the newly created kid
@@ -146,6 +154,10 @@ router.put("/:id", async (req, res) => {
       status_code,
       baptised,
       sunday_regulars,
+      first_call,
+      second_call,
+      first_call_feedback,
+      second_call_feedback,
     } = req.body;
 
     if (!name) {
@@ -166,8 +178,12 @@ router.put("/:id", async (req, res) => {
            status_code = $9,
            baptised = $10,
            sunday_regulars = $11,
+           first_call = $12,
+           second_call = $13,
+           first_call_feedback = $14,
+           second_call_feedback = $15,
            updated_at = NOW()
-       WHERE id = $12
+       WHERE id = $16
        RETURNING *`,
       [
         name,
@@ -181,8 +197,12 @@ router.put("/:id", async (req, res) => {
         status_code,
         baptised || false,
         sunday_regulars || false,
+        first_call || false,
+        second_call || false,
+        first_call_feedback || "",
+        second_call_feedback || "",
         id,
-      ]
+      ],
     );
 
     if (result.rows.length === 0) {
@@ -208,7 +228,7 @@ router.delete("/:id", async (req, res) => {
     // Delete the kid and return the deleted record
     const result = await pool.query(
       "DELETE FROM kids WHERE id = $1 RETURNING *",
-      [id]
+      [id],
     );
 
     if (result.rows.length === 0) {

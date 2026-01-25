@@ -42,3 +42,15 @@ export async function fetchKidStats() {
   }
   return res.json();
 }
+
+export async function fetchNewPeopleKids(status = "NP") {
+  const query = status ? `?status=${status}` : "";
+
+  const res = await fetch(`${BASE_URL}/kids${query}`);
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch new people kids");
+  }
+
+  return res.json();
+}
