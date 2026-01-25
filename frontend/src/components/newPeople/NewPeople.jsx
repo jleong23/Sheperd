@@ -77,6 +77,7 @@ export default function NewPeople() {
                   <p className="text-gray-600">
                     Parent: {kid.parentname} ({kid.parent_phone || "N/A"})
                   </p>
+                  <p className="text-gray-600">Schol: {kid.school}</p>
                 </div>
                 <div className="text-sm font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
                   {kid.status_code}
