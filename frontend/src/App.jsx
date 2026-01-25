@@ -11,6 +11,7 @@ import Events from "./pages/leaders/Events";
 import Catchups from "./pages/leaders/Catchups";
 import KidProfile from "./components/kids/KidProfile";
 import Footer from "./components/ui/Footer";
+import NewPeople from "./components/newPeople/NewPeople";
 
 function AppWithRouter() {
   return (
@@ -24,6 +25,7 @@ function AppWithRouter() {
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/events" element={<Events />} />
           <Route path="/catchups" element={<Catchups />} />
+          <Route path="/new-people" element={<NewPeople />} />
         </Routes>
       </main>
       <Toaster position="top-right" />
