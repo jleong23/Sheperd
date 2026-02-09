@@ -1,18 +1,31 @@
 import { useState } from "react";
-import { NavLink, Link } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { X, Menu } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+
+function ProfileAvatar({ email }) {
+  const initial = email?.charAt(0).toUpperCase() || "?";
+
+  return (
+    <div
+      className="flex items-center justify-center rounded-full bg-indigo-600 text-white font-semibold
+                    w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12"
+    >
+      {initial}
+    </div>
+  );
+}
 
 export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
-  const { user, logout } = useAuth(); // Get the user and logout function
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate("/login"); // Redirect to login page
+    navigate("/login");
   };
 
   const links = [
@@ -26,26 +39,26 @@ export default function NavBar() {
 
   const linkClass = ({ isActive }) =>
     `relative inline-block text-white font-semibold text-lg
-   transition-all duration-200 ease-out
-   hover:-translate-y-1 hover:text-blue-400
-   ${
-     isActive
-       ? "text-blue-500 after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-blue-500"
-       : ""
-   }`;
+     transition-all duration-200 ease-out
+     hover:-translate-y-1 hover:text-blue-400
+     ${
+       isActive
+         ? "text-blue-500 after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-blue-500"
+         : ""
+     }`;
 
   return (
-    <nav className="bg-black shadow-md fixed w-full z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="bg-black fixed w-full z-50 shadow-md">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-24">
-          {/* Logo and Title */}
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-4">
             <img
-              src={"/dreamersLogo.png"}
+              src="/dreamersLogo.png"
               alt="Dreamers Logo"
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full"
+              className="w-14 h-14 rounded-full"
             />
-            <span className="text-3xl sm:text-4xl font-bold text-white tracking-wide">
+            <span className="text-3xl font-bold text-white">
               Dreamers Youth
             </span>
           </Link>
@@ -61,21 +74,44 @@ export default function NavBar() {
             ))}
           </ul>
 
-          <div className="hidden lg:flex items-center gap-4">
-            {user && (
-              <span className="text-sm text-gray-300">{user.email}</span>
-            )}
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-            >
-              Log Out
-            </button>
-          </div>
+          {/* Desktop Profile */}
+          {user && (
+            <div className="hidden lg:relative lg:flex items-center gap-3">
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-3 text-white hover:text-blue-400"
+              >
+                <ProfileAvatar email={user.email} />
+              </button>
 
-          {/* Mobile Hamburger */}
+              {profileOpen && (
+                <div className="absolute right-0 top-14 w-48 rounded-md bg-gray-800 shadow-lg">
+                  <p className="block w-full px-4 py-2 text-left text-sm text-gray-300">
+                    {user.email}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setProfileOpen(false);
+                      navigate("/profile");
+                    }}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700"
+                  >
+                    Profile
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-700"
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mobile Toggle */}
           <button
-            className="lg:hidden p-2 rounded-md text-white hover:bg-white/10 transition"
+            className="lg:hidden text-white"
             onClick={() => setMenuOpen(!menuOpen)}
           >
             {menuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -84,34 +120,32 @@ export default function NavBar() {
       </div>
 
       {/* Mobile Menu */}
-      <div
-        className={`lg:hidden bg-black shadow-md overflow-hidden transition-all duration-300 ${
-          menuOpen ? "max-h-96 opacity-100 py-4" : "max-h-0 opacity-0"
-        }`}
-      >
-        <ul className="flex flex-col gap-4 px-4">
+      {menuOpen && (
+        <div className="lg:hidden bg-black px-4 py-6 space-y-4">
           {links.map(({ to, label }) => (
-            <li key={to}>
-              <NavLink
-                to={to}
-                className={linkClass}
-                onClick={() => setMenuOpen(false)}
-              >
-                {label}
-              </NavLink>
-            </li>
-          ))}
-          {/* Logout button for mobile */}
-          <li className="pt-4">
-            <button
-              onClick={handleLogout}
-              className="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            <NavLink
+              key={to}
+              to={to}
+              className="block text-white text-lg"
+              onClick={() => setMenuOpen(false)}
             >
-              Log Out
-            </button>
-          </li>
-        </ul>
-      </div>
+              {label}
+            </NavLink>
+          ))}
+
+          {user && (
+            <>
+              <div className="text-sm text-gray-400 mt-4">{user.email}</div>
+              <button
+                onClick={handleLogout}
+                className="w-full mt-2 bg-red-500 text-white py-2 rounded"
+              >
+                Log out
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </nav>
   );
 }
