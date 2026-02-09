@@ -1,28 +1,4 @@
-// src/api/events.js
-const BASE_URL = "http://localhost:4000";
-
-/**
- * Helper function to handle fetch requests
- * @param {string} url - Endpoint URL
- * @param {object} options - Fetch options (method, headers, body)
- */
-const fetchJSON = async (url, options = {}) => {
-  try {
-    const response = await fetch(url, options);
-    const isJSON = response.headers
-      .get("content-type")
-      ?.includes("application/json");
-    const data = isJSON ? await response.json() : null;
-
-    if (!response.ok) {
-      throw new Error(data?.error || `HTTP error! status: ${response.status}`);
-    }
-    return data;
-  } catch (error) {
-    console.error("API fetch error:", error);
-    throw error;
-  }
-};
+import axios from "axios";
 
 /**
  * Fetch all events with optional query parameters
@@ -37,11 +13,8 @@ const fetchJSON = async (url, options = {}) => {
  * @param {number} params.limit
  */
 export const getEvents = async (params = {}) => {
-  const query = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}/events${query ? `?${query}` : ""}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  return await response.json();
+  const response = await axios.get("/events", { params });
+  return response.data;
 };
 
 /**
@@ -49,7 +22,8 @@ export const getEvents = async (params = {}) => {
  * @param {number|string} id
  */
 export const getEventById = async (id) => {
-  return fetchJSON(`${BASE_URL}/events/${id}`);
+  const response = await axios.get(`/events/${id}`);
+  return response.data;
 };
 
 /**
@@ -57,11 +31,8 @@ export const getEventById = async (id) => {
  * @param {object} event - Event object
  */
 export const addEvent = async (event) => {
-  return fetchJSON(`${BASE_URL}/events`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(event),
-  });
+  const response = await axios.post("/events", event);
+  return response.data;
 };
 
 /**
@@ -70,11 +41,8 @@ export const addEvent = async (event) => {
  * @param {object} updatedFields - Partial event object
  */
 export const updateEvent = async (id, updatedFields) => {
-  return fetchJSON(`${BASE_URL}/events/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updatedFields),
-  });
+  const response = await axios.patch(`/events/${id}`, updatedFields);
+  return response.data;
 };
 
 /**
@@ -82,11 +50,8 @@ export const updateEvent = async (id, updatedFields) => {
  * @param {number|string} id
  */
 export const deleteEvent = async (id) => {
-  const response = await fetch(`${BASE_URL}/events/${id}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) throw new Error("Failed to delete event");
-  return await response.json();
+  const response = await axios.delete(`/events/${id}`);
+  return response.data;
 };
 
 /**
@@ -94,9 +59,7 @@ export const deleteEvent = async (id) => {
  * @param {Array<number|string>} ids
  */
 export const bulkDeleteEvents = async (ids) => {
-  return fetchJSON(`${BASE_URL}/events`, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ids }),
-  });
+  // For DELETE with body, axios uses the `data` property
+  const response = await axios.delete("/events", { data: { ids } });
+  return response.data;
 };

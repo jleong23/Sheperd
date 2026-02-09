@@ -24,8 +24,8 @@ router.get("/", async (req, res) => {
     const { year, name, startDate, endDate, sortBy, order, page, limit } =
       req.query;
 
-    const params = [];
-    let baseWhere = "WHERE 1=1";
+    const params = [req.userId];
+    let baseWhere = "WHERE user_id = $1";
 
     // --------------------
     // Filtering
@@ -69,7 +69,7 @@ router.get("/", async (req, res) => {
     // --------------------
     const countResult = await pool.query(
       `SELECT COUNT(*) FROM events ${baseWhere}`,
-      params
+      params,
     );
 
     const totalCount = parseInt(countResult.rows[0].count, 10);
@@ -129,9 +129,10 @@ router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query("SELECT * FROM events WHERE eventid = $1", [
-      id,
-    ]);
+    const result = await pool.query(
+      "SELECT * FROM events WHERE eventid = $1 AND user_id = $2",
+      [id, req.userId],
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Event record not found" });
@@ -198,8 +199,8 @@ router.post("/", async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO events
-       (eventname, eventstartdate, eventenddate, eventstarttime, eventendtime, eventphoto, eventassignedpeople)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       (eventname, eventstartdate, eventenddate, eventstarttime, eventendtime, eventphoto, eventassignedpeople, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
         eventname,
@@ -209,7 +210,8 @@ router.post("/", async (req, res) => {
         eventendtime || null,
         eventphoto || null,
         eventassignedpeople || null,
-      ]
+        req.userId,
+      ],
     );
 
     const r = result.rows[0];
@@ -285,7 +287,7 @@ router.patch("/:id", async (req, res) => {
       eventphoto = COALESCE($6, eventphoto), 
       eventassignedpeople = COALESCE($7, eventassignedpeople),
       updated_at = CURRENT_TIMESTAMP
-      WHERE eventid = $8
+      WHERE eventid = $8 AND user_id = $9
       RETURNING *`,
       [
         eventname,
@@ -296,7 +298,8 @@ router.patch("/:id", async (req, res) => {
         eventphoto,
         eventassignedpeople,
         id,
-      ]
+        req.userId,
+      ],
     );
 
     if (result.rows.length === 0) {
@@ -331,8 +334,8 @@ router.patch("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   const result = await pool.query(
-    "DELETE FROM events WHERE eventid = $1 RETURNING *",
-    [id]
+    "DELETE FROM events WHERE eventid = $1 AND user_id = $2 RETURNING *",
+    [id, req.userId],
   );
   if (result.rows.length === 0)
     return res.status(404).json({ error: "Event record not found" });
@@ -351,8 +354,8 @@ router.delete("/", async (req, res) => {
     return res.status(400).json({ error: "No IDs provided" });
 
   const result = await pool.query(
-    "DELETE FROM events WHERE eventid = ANY($1::int[]) RETURNING *",
-    [ids]
+    "DELETE FROM events WHERE eventid = ANY($1::int[]) AND user_id = $2 RETURNING *",
+    [ids, req.userId],
   );
 
   res.json({

@@ -1,9 +1,19 @@
 import { useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { X, Menu } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const { user, logout } = useAuth(); // Get the user and logout function
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login"); // Redirect to login page
+  };
 
   const links = [
     { to: "/", label: "Home" },
@@ -51,6 +61,18 @@ export default function NavBar() {
             ))}
           </ul>
 
+          <div className="hidden lg:flex items-center gap-4">
+            {user && (
+              <span className="text-sm text-gray-300">{user.email}</span>
+            )}
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Log Out
+            </button>
+          </div>
+
           {/* Mobile Hamburger */}
           <button
             className="lg:hidden p-2 rounded-md text-white hover:bg-white/10 transition"
@@ -79,6 +101,15 @@ export default function NavBar() {
               </NavLink>
             </li>
           ))}
+          {/* Logout button for mobile */}
+          <li className="pt-4">
+            <button
+              onClick={handleLogout}
+              className="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Log Out
+            </button>
+          </li>
         </ul>
       </div>
     </nav>

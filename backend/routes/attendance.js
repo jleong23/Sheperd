@@ -11,25 +11,22 @@ router.get("/", async (req, res) => {
   try {
     const { year, term } = req.query;
 
-    let query = "SELECT * FROM attendance";
-    const params = [];
+    let query = "SELECT * FROM attendance WHERE user_id = $1";
+    const params = [req.userId];
 
     // Filter by year if provided
     if (year) {
       params.push(Number(year));
-      query += ` WHERE EXTRACT(YEAR FROM created_at) = $${params.length}`;
+      query += ` AND year = $${params.length}`;
     }
 
     // Filter by term if provided
     if (term) {
       params.push(Number(term));
-      query +=
-        params.length === 1
-          ? ` WHERE term = $${params.length}`
-          : ` AND term = $${params.length}`;
+      query += ` AND term = $${params.length}`;
     }
 
-    query += " ORDER BY week DESC, kidId";
+    query += " ORDER BY week DESC, kidid";
 
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -47,9 +44,10 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query("SELECT * FROM attendance WHERE id = $1", [
-      id,
-    ]);
+    const result = await pool.query(
+      "SELECT * FROM attendance WHERE id = $1 AND user_id = $2",
+      [id, req.userId],
+    );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Attendance record not found" });
@@ -81,18 +79,20 @@ router.post("/", async (req, res) => {
     }
 
     const kidCheck = await pool.query(
-      "SELECT name, photo FROM kids WHERE id = $1",
-      [kidId]
+      "SELECT name, photo FROM kids WHERE id = $1 AND user_id = $2",
+      [kidId, req.userId],
     );
 
     if (kidCheck.rows.length === 0) {
-      return res.status(400).json({ error: "Kid not found" });
+      return res
+        .status(404)
+        .json({ error: "Kid not found or does not belong to this user" });
     }
 
     const result = await pool.query(
       `INSERT INTO attendance
-       (kidid, name, week, status, reason, photo, term, year)
-       VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, DEFAULT), COALESCE($8, DEFAULT))
+       (kidid, name, week, status, reason, photo, term, year, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, DEFAULT), COALESCE($8, DEFAULT), $9)
        RETURNING *`,
       [
         kidId,
@@ -103,7 +103,8 @@ router.post("/", async (req, res) => {
         photo || kidCheck.rows[0].photo,
         term || null,
         year || null,
-      ]
+        req.userId || null,
+      ],
     );
 
     res.status(201).json(result.rows[0]);
@@ -140,9 +141,9 @@ router.patch("/:id", async (req, res) => {
          status = COALESCE($1, status), 
          reason = COALESCE($2, reason), 
          updated_at = NOW() 
-       WHERE id = $3
+       WHERE id = $3 AND user_id = $4
        RETURNING *`,
-      [status, reason, id]
+      [status, reason, id, req.userId],
     );
 
     if (result.rows.length === 0) {
@@ -165,8 +166,8 @@ router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      "DELETE FROM attendance WHERE id = $1 RETURNING *",
-      [id]
+      "DELETE FROM attendance WHERE id = $1 AND user_id = $2 RETURNING *",
+      [id, req.userId],
     );
 
     if (result.rows.length === 0) {
@@ -194,15 +195,18 @@ router.post("/year", async (req, res) => {
 
     // Check if the year already exists
     const yearCheck = await pool.query(
-      "SELECT 1 FROM attendance WHERE year = $1 LIMIT 1",
-      [year]
+      "SELECT 1 FROM attendance WHERE year = $1 AND user_id = $2 LIMIT 1",
+      [year, req.userId],
     );
     if (yearCheck.rows.length > 0) {
       return res.status(400).json({ error: `Year ${year} already exists.` });
     }
 
-    // Fetch all kids
-    const kidsResult = await pool.query("SELECT id, name, photo FROM kids");
+    // Fetch all kids for the current user
+    const kidsResult = await pool.query(
+      "SELECT id, name, photo FROM kids WHERE user_id = $1",
+      [req.userId],
+    );
     const kids = kidsResult.rows;
 
     // By default, term 1 and 10 weeks
@@ -222,14 +226,15 @@ router.post("/year", async (req, res) => {
           kid.photo,
           term,
           year,
+          req.userId,
         ]);
       }
     }
 
     // Insert into attendance table
     const insertQuery = `
-    INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
+    INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year, user_id)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`;
 
     const createdRecords = [];
     for (const record of records) {
@@ -259,8 +264,11 @@ router.post("/term", async (req, res) => {
     if (!year || !term)
       return res.status(400).json({ error: "Year & Term is required" });
 
-    // Fetch all kids
-    const kidsResult = await pool.query("SELECT id, name, photo FROM kids");
+    // Fetch all kids for the current user
+    const kidsResult = await pool.query(
+      "SELECT id, name, photo FROM kids WHERE user_id = $1",
+      [req.userId],
+    );
     const kids = kidsResult.rows;
 
     // Generate attendance records
@@ -276,14 +284,15 @@ router.post("/term", async (req, res) => {
           kid.photo,
           term,
           year,
+          req.userId,
         ]);
       }
     }
 
     // Insert into attendance tables
     const insertQuery = `
-      INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year, user_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `;
 
     for (const record of records) {
@@ -309,8 +318,8 @@ router.delete("/year/:year", async (req, res) => {
   try {
     const { year } = req.params;
     const result = await pool.query(
-      "DELETE FROM attendance WHERE year = $1 RETURNING *",
-      [year]
+      "DELETE FROM attendance WHERE year = $1 AND user_id = $2 RETURNING *",
+      [year, req.userId],
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Year not found" });
@@ -338,8 +347,8 @@ router.delete("/term/:year/:term", async (req, res) => {
 
     // Delele all attendance records for the year and term
     const result = await pool.query(
-      "DELETE FROM attendance WHERE year = $1 AND term = $2 RETURNING *",
-      [Number(year), Number(term)]
+      "DELETE FROM attendance WHERE year = $1 AND term = $2 AND user_id = $3 RETURNING *",
+      [Number(year), Number(term), req.userId],
     );
 
     if (result.rowCount === 0) {

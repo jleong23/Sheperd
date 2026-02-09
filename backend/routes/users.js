@@ -4,20 +4,17 @@ const pool = require("../db");
 
 /**
  * @route GET /users
- * @desc Get all users from the database
- * @access Public
+ * @desc Get the current logged-in user's data
+ * @access Private
  */
 router.get("/", async (req, res) => {
   try {
-    const { status } = req.query;
-
-    let query = "SELECT * FROM users ";
-    const values = [];
-
-    query += " ORDER BY id";
-
-    const result = await pool.query(query, values);
-    res.json(result.rows);
+    // For security, this endpoint should only return the current user's data
+    const result = await pool.query(
+      "SELECT id, email FROM users WHERE id = $1",
+      [req.userId],
+    );
+    res.json(result.rows); // Should be an array with one user
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" }); // Handle errors
@@ -26,13 +23,24 @@ router.get("/", async (req, res) => {
 
 /**
  * @route GET /users/:id
- * @desc Get a single user by their ID
- * @access Public
+ * @desc Get a single user by their ID, but only if it's the current user
+ * @access Private
  */
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params; // Get ID from URL parameters
-    const result = await pool.query("SELECT * FROM users WHERE id = $1", [id]); // Parameterized query
+
+    // Security check: A user can only fetch their own data
+    if (Number(id) !== req.userId) {
+      return res
+        .status(403)
+        .json({ error: "Forbidden: You can only access your own data." });
+    }
+
+    const result = await pool.query(
+      "SELECT id, email FROM users WHERE id = $1",
+      [id],
+    ); // Parameterized query
 
     if (result.rows.length === 0) {
       // If no users is found

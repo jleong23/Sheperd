@@ -13,15 +13,15 @@ require("dotenv").config();
 const kids = JSON.parse(
   fs.readFileSync(
     path.join(__dirname, "../frontend/src/data/kids.json"),
-    "utf8"
-  )
+    "utf8",
+  ),
 );
 
 const attendanceData = JSON.parse(
   fs.readFileSync(
     path.join(__dirname, "../frontend/src/data/attendance.json"),
-    "utf8"
-  )
+    "utf8",
+  ),
 );
 
 const API_URL = process.env.API_URL || "http://localhost:4000";
@@ -68,7 +68,7 @@ async function seedAttendance() {
             const kid = kids.find((k) => k.id === record.kidId);
             if (!kid) {
               console.warn(
-                `Kid with ID ${record.kidId} not found, skipping record`
+                `Kid with ID ${record.kidId} not found, skipping record`,
               );
               continue;
             }
@@ -85,7 +85,7 @@ async function seedAttendance() {
 
             count++;
             console.log(
-              `Inserted attendance for ${kid.name} for week ${week}, term ${term}`
+              `Inserted attendance for ${kid.name} for week ${week}, term ${term}`,
             );
           }
         }
@@ -103,6 +103,24 @@ async function seedAttendance() {
 
 async function seedAll() {
   try {
+    // 1. Authenticate (Login or Register) to get a token
+    console.log("Authenticating seed user...");
+    const seedUser = { email: "seed@example.com", password: "seedpassword123" };
+    let token;
+
+    try {
+      const loginRes = await axios.post(`${API_URL}/auth/login`, seedUser);
+      token = loginRes.data.token;
+    } catch (err) {
+      console.log("Login failed, attempting to register...");
+      const regRes = await axios.post(`${API_URL}/auth/register`, seedUser);
+      token = regRes.data.token;
+    }
+
+    // 2. Set the token for all subsequent requests
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    console.log("Authenticated successfully. Starting seed...");
+
     await seedKids();
     await seedAttendance();
   } catch (err) {

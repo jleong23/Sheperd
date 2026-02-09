@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import AttendanceList from "../../components/attendance/AttendanceList.jsx";
 import AttendanceSort from "../../components/attendance/AttendanceSort.jsx";
+import AddYearTerm from "../../components/attendance/AddYearTerm.jsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.jsx";
 
 export default function Attendance() {
@@ -25,7 +26,7 @@ export default function Attendance() {
       setAllAttendance((prev) => {
         const merged = [...prev, ...normalizedNewRecords];
         const unique = merged.filter(
-          (v, i, a) => a.findIndex((x) => x.id === v.id) === i
+          (v, i, a) => a.findIndex((x) => x.id === v.id) === i,
         );
         return unique;
       });
@@ -33,7 +34,7 @@ export default function Attendance() {
     }
 
     try {
-      const res = await axios.get("http://localhost:4000/attendance");
+      const res = await axios.get("/attendance");
       const normalized = res.data.map((r) => ({
         ...r,
         kidId: r.kidid ?? r.kidId,
@@ -49,7 +50,7 @@ export default function Attendance() {
       setLoading(true);
       await fetchAllAttendance();
       try {
-        const res = await axios.get("http://localhost:4000/kids");
+        const res = await axios.get("/kids");
         console.log("Fetched kids:", res.data); // DEBUG
         setKids(res.data);
       } catch (err) {
@@ -95,11 +96,11 @@ export default function Attendance() {
     const filtered = allAttendance
       .filter(
         (a) =>
-          a.year === Number(selectedYear) && a.term === Number(selectedTerm)
+          a.year === Number(selectedYear) && a.term === Number(selectedTerm),
       )
       .map((record) => {
         const kid = kids.find(
-          (k) => Number(k.id) === Number(record.kidId ?? record.kidid)
+          (k) => Number(k.id) === Number(record.kidId ?? record.kidid),
         );
         return {
           ...record,
@@ -122,10 +123,9 @@ export default function Attendance() {
     if (!record) return;
 
     try {
-      const updated = await axios.patch(
-        `http://localhost:4000/attendance/${recordId}`,
-        { status: newStatus }
-      );
+      const updated = await axios.patch(`/attendance/${recordId}`, {
+        status: newStatus,
+      });
       updateAttendanceRecord(updated.data);
     } catch (err) {
       console.error("Failed to update attendance:", err);
@@ -137,7 +137,7 @@ export default function Attendance() {
   // -----------------------------
   const handleReasonChange = (recordId, reason) => {
     setCurrentAttendance((prev) =>
-      prev.map((r) => (r.id === recordId ? { ...r, reason } : r))
+      prev.map((r) => (r.id === recordId ? { ...r, reason } : r)),
     );
   };
 
@@ -146,10 +146,9 @@ export default function Attendance() {
     if (!record) return;
 
     try {
-      const updated = await axios.patch(
-        `http://localhost:4000/attendance/${recordId}`,
-        { reason: record.reason }
-      );
+      const updated = await axios.patch(`/attendance/${recordId}`, {
+        reason: record.reason,
+      });
       updateAttendanceRecord(updated.data);
       alert(`Reason for ${record.name} updated!`);
     } catch (err) {
@@ -174,7 +173,7 @@ export default function Attendance() {
 
     const updateState = (setter) =>
       setter((prev) =>
-        prev.map((r) => (r.id === fullRecord.id ? fullRecord : r))
+        prev.map((r) => (r.id === fullRecord.id ? fullRecord : r)),
       );
 
     updateState(setAllAttendance);
@@ -185,7 +184,7 @@ export default function Attendance() {
   // Dropdown Options
   // -----------------------------
   const availableYears = [...new Set(allAttendance.map((a) => a.year))].sort(
-    (a, b) => b - a
+    (a, b) => b - a,
   );
 
   const availableTerms = selectedYear
@@ -193,7 +192,7 @@ export default function Attendance() {
         ...new Set(
           allAttendance
             .filter((a) => a.year === selectedYear)
-            .map((a) => a.term)
+            .map((a) => a.term),
         ),
       ].sort((a, b) => a - b)
     : [];

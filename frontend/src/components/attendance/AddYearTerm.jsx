@@ -1,68 +1,86 @@
 import { useState } from "react";
+import { addYear, addTerm, deleteTerm } from "../../api/attendance";
 
-export default function AddYearTerm({ refreshAttendance }) {
-  const [year, setYear] = useState("");
-  const [term, setTerm] = useState("");
+export default function AddYearTerm({ onUpdate, availableYears = [] }) {
+  const latestYear =
+    availableYears.length > 0
+      ? Math.max(...availableYears)
+      : new Date().getFullYear();
+
+  const [year, setYear] = useState(latestYear);
+  const [newTerm, setNewTerm] = useState("");
   const [weeks, setWeeks] = useState(10);
+  const [loading, setLoading] = useState(false);
 
   const handleAddYear = async () => {
-    if (!year) return alert("Enter a year");
-    const res = await fetch("http://localhost:4000/attendance/year", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ year: Number(year) }),
-    });
-    const data = await res.json();
-    alert(data.message || data.error);
-    if (res.ok) {
-      refreshAttendance(data.createdRecords);
+    const nextYear = latestYear + 1;
+    if (
+      !window.confirm(
+        `Are you sure you want to add year ${nextYear}? This will create default attendance for all current kids.`,
+      )
+    )
+      return;
+
+    setLoading(true);
+    try {
+      const response = await addYear(nextYear);
+      alert(`Year ${nextYear} added successfully!`);
+      onUpdate(response.createdRecords); // Pass new records up for a fast update
+    } catch (err) {
+      console.error("Failed to add year:", err);
+      alert(err.response?.data?.error || "Failed to add year.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAddTerm = async () => {
-    if (!year || !term) return alert("Enter both year and term");
-    const res = await fetch("http://localhost:4000/attendance/term", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        year: Number(year),
-        term: Number(term),
-        weeks: Number(weeks),
-      }),
-    });
-    const data = await res.json();
-    alert(data.message || data.error);
-    if (res.ok) {
-      refreshAttendance();
+    if (!newTerm || isNaN(Number(newTerm)))
+      return alert("Please enter a valid term number.");
+    if (
+      !window.confirm(
+        `Are you sure you want to add term ${newTerm} to year ${year}?`,
+      )
+    )
+      return;
+
+    setLoading(true);
+    try {
+      await addTerm(year, Number(newTerm), Number(weeks));
+      alert(`Term ${newTerm} for year ${year} added successfully!`);
+      onUpdate(); // A full refresh is easier here
+    } catch (err) {
+      console.error("Failed to add term:", err);
+      alert(err.response?.data?.error || "Failed to add term.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteTerm = async () => {
-    if (!year || !term) {
+    if (!year || !newTerm) {
       alert("Please enter both year and term to delete");
       return;
     }
 
     if (
-      !confirm(`Are you sure you want to delete Year ${year} , Term ${term}? `)
+      !window.confirm(
+        `Are you sure you want to delete ALL records for Year ${year}, Term ${newTerm}? This cannot be undone.`,
+      )
     )
       return;
 
-    const res = await fetch(
-      `http://localhost:4000/attendance/term/${year}/${term}`,
-      {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          year: Number(year),
-          term: Number(term),
-        }),
-      }
-    );
-
-    const data = await res.json();
-    alert(data.message || data.error);
-    refreshAttendance();
+    setLoading(true);
+    try {
+      const response = await deleteTerm(year, newTerm);
+      alert(response.message || "Term deleted successfully!");
+      onUpdate();
+    } catch (err) {
+      console.error("Failed to delete term:", err);
+      alert(err.response?.data?.error || "Failed to delete term.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,7 +99,7 @@ export default function AddYearTerm({ refreshAttendance }) {
             <label className="text-sm font-medium text-gray-700">Year</label>
             <input
               type="number"
-              placeholder="e.g. 2026"
+              placeholder="Select or enter year"
               value={year}
               onChange={(e) => setYear(e.target.value)}
               className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -93,9 +111,9 @@ export default function AddYearTerm({ refreshAttendance }) {
             <label className="text-sm font-medium text-gray-700">Term</label>
             <input
               type="number"
-              placeholder="e.g. 4"
-              value={term}
-              onChange={(e) => setTerm(e.target.value)}
+              placeholder="Term to add/delete"
+              value={newTerm}
+              onChange={(e) => setNewTerm(e.target.value)}
               className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </div>
@@ -119,7 +137,8 @@ export default function AddYearTerm({ refreshAttendance }) {
         <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-100">
           <button
             onClick={handleAddYear}
-            className="flex-1 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex justify-center items-center gap-2"
+            className="flex-1 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex justify-center items-center gap-2 disabled:opacity-50"
+            disabled={loading}
           >
             <svg
               className="w-4 h-4"
@@ -134,11 +153,12 @@ export default function AddYearTerm({ refreshAttendance }) {
                 d="M12 6v6m0 0v6m0-6h6m-6 0H6"
               />
             </svg>
-            Add Year
+            Add Year {latestYear + 1}
           </button>
           <button
             onClick={handleAddTerm}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex justify-center items-center gap-2"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex justify-center items-center gap-2 disabled:opacity-50"
+            disabled={loading}
           >
             <svg
               className="w-4 h-4"
@@ -158,7 +178,8 @@ export default function AddYearTerm({ refreshAttendance }) {
 
           <button
             onClick={handleDeleteTerm}
-            className="flex-1 bg-white border border-red-200 text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-lg font-medium transition-colors flex justify-center items-center gap-2"
+            className="flex-1 bg-white border border-red-200 text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-lg font-medium transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
+            disabled={loading}
           >
             <svg
               className="w-4 h-4"

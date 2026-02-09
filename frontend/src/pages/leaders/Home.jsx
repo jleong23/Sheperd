@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import useEvents from "../../hooks/useEvents";
-import useUser from "../../hooks/useUser";
 import { fetchKidStats } from "../../api/kids";
 
 // Component Imports
@@ -9,15 +8,17 @@ import GroupStats from "../../components/home/GroupStats";
 import UpcomingEvents from "../../components/home/UpcomingEvents";
 import Reminders from "../../components/home/Reminders";
 
-export default function Home() {
-  const { events, loading, fetchEvents } = useEvents({
-    sortBy: "eventstartdate",
-    order: "asc",
-    limit: 5,
-  });
+const eventOptions = {
+  sortBy: "eventstartdate",
+  order: "asc",
+  limit: 5,
+};
 
-  // Fetch user profile (ID 1 hardcoded for now)
-  const { yearLevel } = useUser(1);
+export default function Home() {
+  const { events, loading, fetchEvents } = useEvents(eventOptions);
+
+  // Default year level for now (since backend user profile doesn't have it yet)
+  const yearLevel = "11";
 
   const [stats, setStats] = useState({
     total_kids: 0,

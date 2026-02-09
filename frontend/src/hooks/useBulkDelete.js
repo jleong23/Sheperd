@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 
 export function useBulkDelete(kids, refresh) {
   const [selected, setSelected] = useState([]);
@@ -10,7 +11,7 @@ export function useBulkDelete(kids, refresh) {
 
   const toggleSelect = (id) => {
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((kidId) => kidId !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((kidId) => kidId !== id) : [...prev, id],
     );
   };
 
@@ -21,16 +22,12 @@ export function useBulkDelete(kids, refresh) {
     }
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${selected.length} kids?`
+      `Are you sure you want to delete ${selected.length} kids?`,
     );
     if (!confirmed) return;
 
     try {
-      await Promise.all(
-        selected.map((id) =>
-          fetch(`http://localhost:4000/kids/${id}`, { method: "DELETE" })
-        )
-      );
+      await Promise.all(selected.map((id) => axios.delete(`/kids/${id}`)));
 
       alert(`${selected.length} kids deleted successfully`);
       setSelected([]);

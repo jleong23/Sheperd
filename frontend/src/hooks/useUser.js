@@ -1,13 +1,23 @@
 import { useState, useEffect, useMemo } from "react";
 import { getUserProfile } from "../api/users";
+import { useAuth } from "../context/AuthContext";
 
 export default function useUser(userId) {
+  const { user: authUser } = useAuth();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!userId) return;
+
+    // Prevent fetching if we know it will fail (backend only allows fetching own profile)
+    if (authUser && authUser.id !== Number(userId)) {
+      console.warn(`Skipping fetch for user ${userId} (not authorized)`);
+      setError(new Error("Cannot fetch other users"));
+      setIsLoading(false);
+      return;
+    }
 
     setIsLoading(true);
     getUserProfile(userId)

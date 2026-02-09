@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchKids } from "../../api/kids";
+import { fetchKidById } from "../../api/kids";
 import { getCatchups } from "../../api/catchups";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { CatchupModal } from "../catchups/CatchupModal";
@@ -27,23 +27,17 @@ export default function KidProfile() {
       setLoading(true);
 
       // 1. Fetch Kid Details
-      const kidsData = await fetchKids();
-      const foundKid = kidsData.find((k) => k.id === Number(id));
-      setKid(foundKid);
+      const kidData = await fetchKidById(id);
+      setKid(kidData);
 
       // 2. Fetch Catchups and Filter by Kid ID
-      const res = await getCatchups();
-      // Ensure we have an array (handle wrapped response or null)
-      const allCatchups = Array.isArray(res) ? res : res?.data || [];
-      const kidCatchups = allCatchups.filter(
-        (c) => Number(c.kidid) === Number(id)
-      );
+      const catchupsResponse = await getCatchups({ kidid: id });
+      const kidCatchups = catchupsResponse.data || [];
 
       // Sort by date (newest first)
       kidCatchups.sort(
-        (a, b) => new Date(b.catchupdate) - new Date(a.catchupdate)
+        (a, b) => new Date(b.catchupdate) - new Date(a.catchupdate),
       );
-
       setCatchups(kidCatchups);
     } catch (err) {
       console.error("Failed to load profile data", err);

@@ -1,66 +1,37 @@
-const BASE_URL = "http://localhost:4000";
+import axios from "axios";
 
 export async function fetchKids(status = "ALL") {
-  const query = status && status !== "ALL" ? `?status=${status}` : "";
+  const params = status && status !== "ALL" ? { status } : {};
+  const response = await axios.get("/kids", { params });
+  return response.data;
+}
 
-  const res = await fetch(`${BASE_URL}/kids${query}`);
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch kids");
-  }
-
-  return res.json();
+export async function createKid(kidData) {
+  const response = await axios.post("/kids", kidData);
+  return response.data;
 }
 
 export async function updateKid(id, updates) {
-  const res = await fetch(`${BASE_URL}/kids/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updates),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to update kid with id ${id}`);
-  }
-  if (res.status === 204) {
-    return null;
-  }
-  return res.json();
+  const response = await axios.put(`/kids/${id}`, updates);
+  return response.data;
 }
 
 export async function fetchKidById(id) {
-  const res = await fetch(`${BASE_URL}/kids/${id}`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch kid with id ${id}`);
-  }
-  return res.json();
+  const response = await axios.get(`/kids/${id}`);
+  return response.data;
 }
 
 export async function fetchKidStats() {
-  const res = await fetch(`${BASE_URL}/kids/stats`);
-  if (!res.ok) {
-    throw new Error("Failed to fetch kid stats");
-  }
-  return res.json();
+  const response = await axios.get("/kids/stats");
+  return response.data;
 }
 
 export async function fetchNewPeopleKids(status = "NP") {
-  const query = status ? `?status=${status}` : "";
-
-  const res = await fetch(`${BASE_URL}/kids${query}`);
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch new people kids");
-  }
-
-  return res.json();
+  const response = await axios.get("/kids", { params: { status } });
+  return response.data;
 }
 
 export async function deleteKid(id) {
-  const res = await fetch(`${BASE_URL}/kids/${id}`, {
-    method: "DELETE",
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to delete kid with id ${id}`);
-  }
-  return res.json();
+  const response = await axios.delete(`/kids/${id}`);
+  return response.data;
 }

@@ -86,7 +86,10 @@ export default function AttendanceSort({
         }`}
       >
         <div className="bg-gray-50 rounded-2xl p-1 border border-gray-100 shadow-inner">
-          <AddYearTerm refreshAttendance={refreshAttendance} />
+          <AddYearTerm
+            onUpdate={refreshAttendance}
+            availableYears={availableYears}
+          />
         </div>
       </div>
 

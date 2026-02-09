@@ -1,9 +1,6 @@
-const BASE_URL = "http://localhost:4000/users";
+import axios from "axios";
 
 export async function getUserProfile(id) {
-  const res = await fetch(`${BASE_URL}/${id}`);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch user with id ${id}`);
-  }
-  return res.json();
+  const response = await axios.get(`/users/${id}`);
+  return response.data;
 }

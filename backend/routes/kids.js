@@ -11,11 +11,11 @@ router.get("/", async (req, res) => {
   try {
     const { status } = req.query;
 
-    let query = "SELECT * FROM kids ";
-    const values = [];
+    let query = "SELECT * FROM kids WHERE user_id = $1";
+    const values = [req.userId];
 
     if (status && ["CORE", "FRINGE", "NP"].includes(status)) {
-      query += " WHERE status_code = $1";
+      query += ` AND status_code = $${values.length + 1}`;
       values.push(status);
     }
 
@@ -42,9 +42,10 @@ router.get("/stats", async (req, res) => {
         COUNT(*) as total_kids,
         COUNT(*) FILTER (WHERE sunday_regulars = true) as regular_kids,
         COUNT(*) FILTER (WHERE baptised = true) as baptised_kids
-      FROM kids;
+      FROM kids
+      WHERE user_id = $1;
     `;
-    const result = await pool.query(query);
+    const result = await pool.query(query, [req.userId]);
     res.json(result.rows[0]);
   } catch (err) {
     console.error("Error fetching kid stats:", err);
@@ -60,7 +61,10 @@ router.get("/stats", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params; // Get the ID from URL parameters
-    const result = await pool.query("SELECT * FROM kids WHERE id = $1", [id]); // Parameterized query
+    const result = await pool.query(
+      "SELECT * FROM kids WHERE id = $1 AND user_id = $2",
+      [id, req.userId],
+    ); // Parameterized query
 
     if (result.rows.length === 0) {
       // If no kid is found
@@ -106,8 +110,8 @@ router.post("/", async (req, res) => {
     // Insert new kid into the database
     const result = await pool.query(
       `INSERT INTO kids
-   (name, school, phone, parent_phone, birthday, photo, parentname, address, status_code, baptised, sunday_regulars, first_call, second_call, first_call_feedback, second_call_feedback)
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
+   (name, school, phone, parent_phone, birthday, photo, parentname, address, status_code, baptised, sunday_regulars, first_call, second_call, first_call_feedback, second_call_feedback, user_id)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
       [
         name,
         school,
@@ -124,6 +128,7 @@ router.post("/", async (req, res) => {
         second_call || false,
         first_call_feedback || "",
         second_call_feedback || "",
+        req.userId,
       ],
     );
 
@@ -183,7 +188,7 @@ router.put("/:id", async (req, res) => {
            first_call_feedback = $14,
            second_call_feedback = $15,
            updated_at = NOW()
-       WHERE id = $16
+       WHERE id = $16 AND user_id = $17
        RETURNING *`,
       [
         name,
@@ -202,6 +207,7 @@ router.put("/:id", async (req, res) => {
         first_call_feedback || "",
         second_call_feedback || "",
         id,
+        req.userId,
       ],
     );
 
@@ -227,8 +233,8 @@ router.delete("/:id", async (req, res) => {
 
     // Delete the kid and return the deleted record
     const result = await pool.query(
-      "DELETE FROM kids WHERE id = $1 RETURNING *",
-      [id],
+      "DELETE FROM kids WHERE id = $1 AND user_id = $2 RETURNING *",
+      [id, req.userId],
     );
 
     if (result.rows.length === 0) {

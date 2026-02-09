@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import Modal from "../ui/Modals/Modal";
 import FormInput from "./FormInput";
 import FormActions from "./FormActions";
+import { createKid } from "../../api/kids";
 
 const DEFAULT_PHOTO = "https://pngtree.com/so/profile-icon";
 
@@ -66,31 +67,21 @@ export default function AddKids({ onKidAdded }) {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:4000/kids", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          birthday: formData.birthday || null,
-          school: formData.school || "",
-          phone: formData.phone || "",
-          parent_phone: formData.parentPhone || "",
-          photo: formData.photo || DEFAULT_PHOTO,
-        }),
+      await createKid({
+        name: formData.name,
+        birthday: formData.birthday || null,
+        school: formData.school || "",
+        phone: formData.phone || "",
+        parent_phone: formData.parentPhone,
+        photo: formData.photo || DEFAULT_PHOTO,
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        alert(data.error || "Failed to add kid");
-        setLoading(false);
-        return;
-      }
 
       onKidAdded?.();
       resetForm();
       setOpen(false);
-    } catch {
-      alert("Error adding kid");
+    } catch (err) {
+      console.error("Error adding kid:", err);
+      alert(err.response?.data?.error || "Error adding kid");
     } finally {
       setLoading(false);
     }

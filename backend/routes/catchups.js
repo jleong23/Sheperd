@@ -32,8 +32,8 @@ router.get("/", async (req, res) => {
       limit,
     } = req.query;
 
-    const params = [];
-    let baseWhere = "WHERE 1=1";
+    const params = [req.userId];
+    let baseWhere = "WHERE c.user_id = $1";
 
     // --------------------
     // Filtering
@@ -83,7 +83,7 @@ router.get("/", async (req, res) => {
     // --------------------
     const countResult = await pool.query(
       `SELECT COUNT(*) FROM catchups c ${baseWhere}`,
-      params
+      params,
     );
 
     const totalCount = parseInt(countResult.rows[0].count, 10);
@@ -141,8 +141,8 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params;
 
     const result = await pool.query(
-      "SELECT * FROM catchups WHERE catchupid = $1",
-      [id]
+      "SELECT * FROM catchups WHERE catchupid = $1 AND user_id = $2",
+      [id, req.userId],
     );
 
     if (result.rows.length === 0) {
@@ -191,10 +191,21 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Invalid or missing catchupdate" });
     }
 
+    // Security Check: Ensure the kid belongs to the user
+    const kidCheck = await pool.query(
+      "SELECT id FROM kids WHERE id = $1 AND user_id = $2",
+      [kidid, req.userId],
+    );
+    if (kidCheck.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Kid not found or does not belong to this user" });
+    }
+
     const result = await pool.query(
       `INSERT INTO catchups
-       (kidid, catchupdate, catchupstarttime, catchupendtime, catchuppurpose, catchupcomments)
-       VALUES ($1, $2, $3, $4, $5, $6)
+       (kidid, catchupdate, catchupstarttime, catchupendtime, catchuppurpose, catchupcomments, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
       [
         kidid,
@@ -203,7 +214,8 @@ router.post("/", async (req, res) => {
         catchupendtime || null,
         catchuppurpose || null,
         catchupcomments || null,
-      ]
+        req.userId,
+      ],
     );
 
     const r = result.rows[0];
@@ -251,6 +263,19 @@ router.patch("/:id", async (req, res) => {
       });
     }
 
+    // Security Check: If kidid is being changed, ensure the new kid belongs to the user
+    if (kidid !== undefined) {
+      const kidCheck = await pool.query(
+        "SELECT id FROM kids WHERE id = $1 AND user_id = $2",
+        [kidid, req.userId],
+      );
+      if (kidCheck.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Kid not found or does not belong to this user" });
+      }
+    }
+
     const result = await pool.query(
       `UPDATE catchups SET 
       kidid = COALESCE($1, kidid), 
@@ -260,7 +285,7 @@ router.patch("/:id", async (req, res) => {
       catchuppurpose = COALESCE($5, catchuppurpose), 
       catchupcomments = COALESCE($6, catchupcomments),
       updatedat = CURRENT_TIMESTAMP
-      WHERE catchupid = $7
+      WHERE catchupid = $7 AND user_id = $8
       RETURNING *`,
       [
         kidid,
@@ -270,7 +295,8 @@ router.patch("/:id", async (req, res) => {
         catchuppurpose,
         catchupcomments,
         id,
-      ]
+        req.userId,
+      ],
     );
 
     if (result.rows.length === 0) {
@@ -300,8 +326,8 @@ router.patch("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
   const result = await pool.query(
-    "DELETE FROM catchups WHERE catchupid = $1 RETURNING *",
-    [id]
+    "DELETE FROM catchups WHERE catchupid = $1 AND user_id = $2 RETURNING *",
+    [id, req.userId],
   );
   if (result.rows.length === 0)
     return res.status(404).json({ error: "Catchup record not found" });
@@ -323,8 +349,8 @@ router.delete("/", async (req, res) => {
     return res.status(400).json({ error: "No IDs provided" });
 
   const result = await pool.query(
-    "DELETE FROM catchups WHERE catchupid = ANY($1::int[]) RETURNING *",
-    [ids]
+    "DELETE FROM catchups WHERE catchupid = ANY($1::int[]) AND user_id = $2 RETURNING *",
+    [ids, req.userId],
   );
 
   res.json({

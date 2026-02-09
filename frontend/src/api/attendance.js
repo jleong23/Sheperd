@@ -1,10 +1,9 @@
-const BASE_URL = "http://localhost:4000";
+import axios from "axios";
 
 export async function fetchAttendance(year, term) {
   try {
-    const res = await fetch(`${BASE_URL}/attendance?year=${year}&term=${term}`);
-    if (!res.ok) throw new Error("Failed to fetch attendance");
-    return await res.json();
+    const response = await axios.get("/attendance", { params: { year, term } });
+    return response.data;
   } catch (err) {
     console.error(err);
     return [];
@@ -12,14 +11,23 @@ export async function fetchAttendance(year, term) {
 }
 
 export async function updateAttendanceStatus(recordId, status) {
-  try {
-    const res = await fetch(`${BASE_URL}/attendance/${recordId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    return await res.json();
-  } catch (err) {
-    console.error(err);
-  }
+  const response = await axios.patch(`/attendance/${recordId}`, {
+    status,
+  });
+  return response.data;
+}
+
+export async function addYear(year) {
+  const response = await axios.post("/attendance/year", { year });
+  return response.data;
+}
+
+export async function addTerm(year, term, weeks = 10) {
+  const response = await axios.post("/attendance/term", { year, term, weeks });
+  return response.data;
+}
+
+export async function deleteTerm(year, term) {
+  const response = await axios.delete(`/attendance/term/${year}/${term}`);
+  return response.data;
 }

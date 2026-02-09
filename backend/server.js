@@ -16,6 +16,8 @@ const attendanceRoutes = require("./routes/attendance");
 const eventsRouter = require("./routes/events");
 const catchupRouter = require("./routes/catchups");
 const usersRouter = require("./routes/users");
+const authRoutes = require("./routes/auth");
+const requireAuth = require("./auth/requireAuth");
 
 const app = express(); // Creating express app instance
 const PORT = process.env.PORT || 4000; // uses the env variabel Port, else defaults to 4000
@@ -25,16 +27,17 @@ app.use(
   cors({
     origin: "http://localhost:5173", // allow your React app
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  })
+  }),
 );
 app.use(express.json());
 
 // API Routes comes after middleware
-app.use("/kids", kidsRoutes);
-app.use("/attendance", attendanceRoutes);
-app.use("/events", eventsRouter);
-app.use("/catchups", catchupRouter);
-app.use("/users", usersRouter);
+app.use("/auth", authRoutes); // Public auth routes
+app.use("/kids", requireAuth, kidsRoutes); // Protected
+app.use("/attendance", requireAuth, attendanceRoutes); // Protected
+app.use("/events", requireAuth, eventsRouter); // Protected
+app.use("/catchups", requireAuth, catchupRouter); // Protected
+app.use("/users", requireAuth, usersRouter); // Protected
 
 // Root route
 app.get("/", (_, res) => {
