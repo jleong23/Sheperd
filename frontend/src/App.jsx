@@ -7,6 +7,7 @@ import {
 // NavBar
 import NavBar from "./components/ui/NavBar";
 import { Toaster } from "react-hot-toast";
+import LoadingSpinner from "./components/ui/LoadingSpinner";
 
 // Auth
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -27,7 +28,7 @@ import NewPeople from "./components/newPeople/NewPeople";
 const PrivateRoute = ({ children }) => {
   const { token, loading } = useAuth();
 
-  if (loading) return null; // or a spinner
+  if (loading) return <LoadingSpinner fullPage={true} />;
 
   return token ? children : <Navigate to="/login" />;
 };
