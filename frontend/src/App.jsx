@@ -10,7 +10,7 @@ import { Toaster } from "react-hot-toast";
 
 // Auth
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import Login from "./components/auth/LoginPage";
+import Login from "./pages/leaders/Login";
 import Signup from "./pages/leaders/Signup";
 
 // Leader Pages
