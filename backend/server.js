@@ -1,16 +1,18 @@
 /**
- * Main backend server for the Attendance app
- * - Sets up Express app, middleware (CORS, JSON parsing)
- * - Connects /kids and /attendance API routes
- * - Provides a root health check route
- * - Handles 404 and server errors
- * - Starts listening on PORT for incoming requests
+ * Main Backend Server for Attendance App
+ * --------------------------------------
+ * - Sets up Express app and middleware (CORS, JSON parsing)
+ * - Connects API routes for kids, attendance, events, catchups, users, and auth
+ * - Provides a root health check endpoint
+ * - Handles 404 Not Found and 500 Server errors
+ * - Starts listening on configured PORT
  */
+
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
-// Import routes
+// Import API route modules
 const kidsRoutes = require("./routes/kids");
 const attendanceRoutes = require("./routes/attendance");
 const eventsRouter = require("./routes/events");
@@ -22,13 +24,15 @@ const requireAuth = require("./auth/requireAuth");
 const app = express(); // Creating express app instance
 const PORT = process.env.PORT || 4000; // uses the env variabel Port, else defaults to 4000
 
-// MIddleware should come BEFORE routes
+// Middleware should come BEFORE routes
+// enable CORS for front end
 app.use(
   cors({
     origin: "http://localhost:5173", // allow your React app
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   }),
 );
+
 app.use(express.json());
 
 // API Routes comes after middleware

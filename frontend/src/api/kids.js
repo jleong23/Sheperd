@@ -1,37 +1,68 @@
+// =======================
+// Kids API
+// =======================
+
 import axios from "axios";
 
+/**
+ * Fetch list of kids
+ * Optional: filter by status (ALL, NP, etc.)
+ */
 export async function fetchKids(status = "ALL") {
   const params = status && status !== "ALL" ? { status } : {};
   const response = await axios.get("/kids", { params });
   return response.data;
 }
 
+/**
+ * Create a new kid
+ * POST kid data to /kids
+ */
 export async function createKid(kidData) {
   const response = await axios.post("/kids", kidData);
   return response.data;
 }
 
+/**
+ * Update an existing kid
+ * PUT updates to /kids/:id
+ */
 export async function updateKid(id, updates) {
   const response = await axios.put(`/kids/${id}`, updates);
   return response.data;
 }
 
+/**
+ * Fetch a single kid by ID
+ */
 export async function fetchKidById(id) {
   const response = await axios.get(`/kids/${id}`);
   return response.data;
 }
 
+/**
+ * Fetch kids statistics
+ * GET /kids/stats
+ */
 export async function fetchKidStats() {
   const response = await axios.get("/kids/stats");
   return response.data;
 }
 
+/**
+ * Fetch "New People" kids
+ * Default status = NP
+ */
 export async function fetchNewPeopleKids(status = "NP") {
   const response = await axios.get("/kids", { params: { status } });
-  return response.data;
+  return response.data; // returns filtered array of kids
 }
 
+/**
+ * Delete a kid by ID
+ * DELETE /kids/:id
+ */
 export async function deleteKid(id) {
   const response = await axios.delete(`/kids/${id}`);
-  return response.data;
+  return response.data; // returns result confirmation
 }
