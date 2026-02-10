@@ -101,24 +101,15 @@ export default function NavBar() {
 
               {profileOpen && (
                 <div className="absolute right-0 top-14 w-48 rounded-md bg-gray-800 shadow-lg">
-                  <p className="px-4 py-2 text-sm text-gray-400">
-                    {user.email}
-                  </p>
-                  <button
-                    onClick={() => {
-                      setProfileOpen(false);
-                      navigate("/profile");
-                    }}
-                    className="block w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-gray-700"
-                  >
-                    Profile
-                  </button>
                   <button
                     onClick={handleLogout}
                     className="block w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-700"
                   >
                     Log out
                   </button>
+                  <p className="px-4 py-2 text-sm text-gray-400">
+                    {user.email}
+                  </p>
                 </div>
               )}
             </div>

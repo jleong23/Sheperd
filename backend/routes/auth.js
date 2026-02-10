@@ -8,10 +8,12 @@ const requireAuth = require("../auth/requireAuth");
 // Register Route
 router.post("/register", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { userName, email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+    if (!userName || !email || !password) {
+      return res
+        .status(400)
+        .json({ error: "User name, Email and password are required" });
     }
 
     const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
@@ -22,11 +24,11 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Email already in use" });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10); // hashing the password
 
     const result = await pool.query(
-      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id",
-      [email, passwordHash],
+      "INSERT INTO users (user_name, email, password) VALUES ($1, $2, $3) RETURNING id", // inserting user_name, email & password
+      [userName, email, passwordHash],
     );
 
     if (!process.env.JWT_SECRET) {
@@ -51,8 +53,12 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
     const user = await pool.query(
-      "SELECT id, password_hash FROM users WHERE email = $1",
+      "SELECT id, password FROM users WHERE email = $1",
       [email],
     );
 
@@ -60,22 +66,16 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const isValid = await bcrypt.compare(password, user.rows[0].password_hash);
+    const isValid = await bcrypt.compare(password, user.rows[0].password);
 
     if (!isValid) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    if (!process.env.JWT_SECRET) {
-      throw new Error("JWT_SECRET is not defined in .env file");
-    }
-
     const token = jwt.sign(
       { userId: user.rows[0].id },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      },
+      { expiresIn: "7d" },
     );
 
     res.json({ token });
@@ -93,7 +93,7 @@ router.post("/login", async (req, res) => {
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, email, name, group_graduation_year FROM users WHERE id = $1",
+      "SELECT id, email, user_name, group_graduation_year FROM users WHERE id = $1",
       [req.userId],
     );
 

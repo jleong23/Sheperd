@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 
 export default function SignUpPage() {
+  const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,7 +16,7 @@ export default function SignUpPage() {
     setError("");
 
     try {
-      await signup(email, password);
+      await signup(userName, email, password);
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || "Failed to sign up");
@@ -43,6 +44,25 @@ export default function SignUpPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label
+              htmlFor="userName"
+              className="block text-sm font-medium text-gray-900"
+            >
+              User Name
+            </label>
+            <div className="mt-2">
+              <input
+                id="userName"
+                type="userName"
+                required
+                autoComplete="userName"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="block w-full rounded-md bg-white px-3 py-2.5 text-gray-900 outline outline-1 outline-gray-300 focus:outline-2 focus:outline-indigo-600 sm:text-sm"
+              />
+            </div>
+          </div>
           <div>
             <label
               htmlFor="email"
