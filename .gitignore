@@ -20,3 +20,4 @@ yarn-debug.log*
 .env.*.local
 .gitignore
 .env
+.env
