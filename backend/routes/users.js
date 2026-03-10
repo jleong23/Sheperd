@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
       "SELECT id, email FROM users WHERE id = $1",
       [req.userId],
     );
-    res.json(result.rows); // Should be an array with one user
+    res.json(result.rows[0]); // Should be an array with one user
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" }); // Handle errors
