@@ -13,13 +13,18 @@ export default function KidsCard({
 }) {
   const handleDelete = async () => {
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${kid.name}?`
+      `Are you sure you want to delete ${kid.name}?`,
     );
     if (!confirmed) return;
 
     try {
+      const token = localStorage.getItem("token");
+
       const res = await fetch(`http://localhost:4000/kids/${kid.id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!res.ok) {
         const data = await res.json();

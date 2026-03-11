@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const supabase = require("../supabaseClient");
 
 // Helper to format Date objects to YYYY-MM-DD using local time
 // This prevents timezone shifts that occur when using toISOString() on a local Date object
@@ -32,36 +32,34 @@ router.get("/", async (req, res) => {
       limit,
     } = req.query;
 
-    const params = [req.userId];
-    let baseWhere = "WHERE c.user_id = $1";
+    let query = supabase
+      .from("catchups")
+      .select("*, kids(name, status_code, baptised, sunday_regulars)", {
+        count: "exact",
+      })
+      .eq("user_id", req.userId);
 
     // --------------------
     // Filtering
     // --------------------
     if (kidid && !isNaN(Number(kidid))) {
-      params.push(Number(kidid));
-      baseWhere += ` AND c.kidid = $${params.length}`;
+      query = query.eq("kidid", Number(kidid));
     }
 
     if (purpose) {
-      params.push(`%${purpose}%`);
-      baseWhere += ` AND c.catchuppurpose ILIKE $${params.length}`;
+      query = query.ilike("catchuppurpose", `%${purpose}%`);
     }
 
     if (startDate && !isNaN(Date.parse(startDate))) {
-      params.push(startDate);
-      baseWhere += ` AND c.catchupdate >= $${params.length}`;
+      query = query.gte("catchupdate", startDate);
     }
 
     if (endDate && !isNaN(Date.parse(endDate))) {
-      params.push(endDate);
-      baseWhere += ` AND c.catchupdate <= $${params.length}`;
+      query = query.lte("catchupdate", endDate);
     }
 
-    // Fix: Allow filtering by exact catchupdate date
     if (catchupdate && !isNaN(Date.parse(catchupdate))) {
-      params.push(catchupdate);
-      baseWhere += ` AND c.catchupdate = $${params.length}`;
+      query = query.eq("catchupdate", catchupdate);
     }
 
     // --------------------
@@ -69,7 +67,7 @@ router.get("/", async (req, res) => {
     // --------------------
     const allowedSort = ["catchupdate", "kidid", "createdat"];
     const sortColumn = allowedSort.includes(sortBy) ? sortBy : "catchupdate";
-    const sortOrder = order === "asc" ? "ASC" : "DESC";
+    const sortOrder = order === "asc";
 
     // --------------------
     // Pagination
@@ -78,43 +76,34 @@ router.get("/", async (req, res) => {
     const pageNum = parseInt(page) || 1;
     const offset = (pageNum - 1) * limitNum;
 
-    // --------------------
-    // Count query
-    // --------------------
-    const countResult = await pool.query(
-      `SELECT COUNT(*) FROM catchups c ${baseWhere}`,
-      params,
-    );
+    query = query
+      .order(sortColumn, { ascending: sortOrder })
+      .range(offset, offset + limitNum - 1);
 
-    const totalCount = parseInt(countResult.rows[0].count, 10);
+    const { data, error, count } = await query;
+    if (error) throw error;
+
+    const totalCount = count || 0;
     const totalPages = Math.ceil(totalCount / limitNum);
-
-    // --------------------
-    // Data query with JOIN to get kid name
-    // --------------------
-    const dataQuery = `
-      SELECT c.*, k.name AS kidName, k.status_code AS kidStatus, k.baptised AS kidBaptised, k.sunday_regulars AS kidSundayRegulars
-      FROM catchups c
-      JOIN kids k ON c.kidid = k.id
-      ${baseWhere}
-      ORDER BY ${sortColumn} ${sortOrder}
-      LIMIT $${params.length + 1}
-      OFFSET $${params.length + 2}
-    `;
-
-    const result = await pool.query(dataQuery, [...params, limitNum, offset]);
 
     // --------------------
     // Frontend-friendly formatting
     // --------------------
-    const rows = result.rows.map((r) => ({
-      ...r,
-      catchupdate: formatDate(r.catchupdate),
-      catchupstarttime: r.catchupstarttime?.slice(0, 5),
-      catchupendtime: r.catchupendtime?.slice(0, 5),
-      updatedat: r.updatedat?.toISOString(),
-      createdat: r.createdat?.toISOString(),
-    }));
+    const rows = data.map((r) => {
+      const { kids, ...catchupData } = r;
+      return {
+        ...catchupData,
+        kidName: kids?.name,
+        kidStatus: kids?.status_code,
+        kidBaptised: kids?.baptised,
+        kidSundayRegulars: kids?.sunday_regulars,
+        catchupdate: formatDate(r.catchupdate),
+        catchupstarttime: r.catchupstarttime?.slice(0, 5),
+        catchupendtime: r.catchupendtime?.slice(0, 5),
+        updatedat: r.updatedat,
+        createdat: r.createdat,
+      };
+    });
 
     res.json({
       data: rows,
@@ -140,24 +129,24 @@ router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query(
-      "SELECT * FROM catchups WHERE catchupid = $1 AND user_id = $2",
-      [id, req.userId],
-    );
+    const { data, error } = await supabase
+      .from("catchups")
+      .select("*")
+      .eq("catchupid", id)
+      .eq("user_id", req.userId)
+      .single();
 
-    if (result.rows.length === 0) {
+    if (error || !data) {
       return res.status(404).json({ error: "Catchup record not found" });
     }
 
-    const r = result.rows[0];
-
     const row = {
-      ...r,
-      catchupdate: formatDate(r.catchupdate),
-      catchupstarttime: r.catchupstarttime?.slice(0, 5),
-      catchupendtime: r.catchupendtime?.slice(0, 5),
-      updatedat: r.updatedat?.toISOString(),
-      createdat: r.createdat?.toISOString(),
+      ...data,
+      catchupdate: formatDate(data.catchupdate),
+      catchupstarttime: data.catchupstarttime?.slice(0, 5),
+      catchupendtime: data.catchupendtime?.slice(0, 5),
+      updatedat: data.updatedat,
+      createdat: data.createdat,
     };
 
     res.json(row);
@@ -192,39 +181,38 @@ router.post("/", async (req, res) => {
     }
 
     // Security Check: Ensure the kid belongs to the user
-    const kidCheck = await pool.query(
-      "SELECT id FROM kids WHERE id = $1 AND user_id = $2",
-      [kidid, req.userId],
-    );
-    if (kidCheck.rows.length === 0) {
+    const { data: kidCheck, error: kidError } = await supabase
+      .from("kids")
+      .select("id")
+      .eq("id", kidid)
+      .eq("user_id", req.userId)
+      .single();
+    if (kidError || !kidCheck) {
       return res
         .status(404)
         .json({ error: "Kid not found or does not belong to this user" });
     }
 
-    const result = await pool.query(
-      `INSERT INTO catchups
-       (kidid, catchupdate, catchupstarttime, catchupendtime, catchuppurpose, catchupcomments, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
-      [
+    const { data, error } = await supabase
+      .from("catchups")
+      .insert({
         kidid,
         catchupdate,
-        catchupstarttime || null,
-        catchupendtime || null,
-        catchuppurpose || null,
-        catchupcomments || null,
-        req.userId,
-      ],
-    );
-
-    const r = result.rows[0];
+        catchupstarttime: catchupstarttime || null,
+        catchupendtime: catchupendtime || null,
+        catchuppurpose: catchuppurpose || null,
+        catchupcomments: catchupcomments || null,
+        user_id: req.userId,
+      })
+      .select()
+      .single();
+    if (error) throw error;
 
     res.status(201).json({
-      ...r,
-      catchupdate: formatDate(r.catchupdate),
-      catchupstarttime: r.catchupstarttime?.slice(0, 5),
-      catchupendtime: r.catchupendtime?.slice(0, 5),
+      ...data,
+      catchupdate: formatDate(data.catchupdate),
+      catchupstarttime: data.catchupstarttime?.slice(0, 5),
+      catchupendtime: data.catchupendtime?.slice(0, 5),
     });
   } catch (err) {
     console.error("Error creating catchup:", err);
@@ -265,52 +253,45 @@ router.patch("/:id", async (req, res) => {
 
     // Security Check: If kidid is being changed, ensure the new kid belongs to the user
     if (kidid !== undefined) {
-      const kidCheck = await pool.query(
-        "SELECT id FROM kids WHERE id = $1 AND user_id = $2",
-        [kidid, req.userId],
-      );
-      if (kidCheck.rows.length === 0) {
+      const { data: kidCheck, error: kidError } = await supabase
+        .from("kids")
+        .select("id")
+        .eq("id", kidid)
+        .eq("user_id", req.userId)
+        .single();
+      if (kidError || !kidCheck) {
         return res
           .status(404)
           .json({ error: "Kid not found or does not belong to this user" });
       }
     }
 
-    const result = await pool.query(
-      `UPDATE catchups SET 
-      kidid = COALESCE($1, kidid), 
-      catchupdate = COALESCE($2, catchupdate), 
-      catchupstarttime = COALESCE($3, catchupstarttime), 
-      catchupendtime = COALESCE($4, catchupendtime), 
-      catchuppurpose = COALESCE($5, catchuppurpose), 
-      catchupcomments = COALESCE($6, catchupcomments),
-      updatedat = CURRENT_TIMESTAMP
-      WHERE catchupid = $7 AND user_id = $8
-      RETURNING *`,
-      [
+    const { data, error } = await supabase
+      .from("catchups")
+      .update({
         kidid,
         catchupdate,
         catchupstarttime,
         catchupendtime,
         catchuppurpose,
         catchupcomments,
-        id,
-        req.userId,
-      ],
-    );
+        updatedat: new Date(),
+      })
+      .eq("catchupid", id)
+      .eq("user_id", req.userId)
+      .select()
+      .single();
 
-    if (result.rows.length === 0) {
+    if (error || !data) {
       return res.status(404).json({ error: "Catchup record not found" });
     }
 
-    const r = result.rows[0];
-
     res.json({
-      ...r,
-      catchupdate: formatDate(r.catchupdate),
-      catchupstarttime: r.catchupstarttime?.slice(0, 5),
-      catchupendtime: r.catchupendtime?.slice(0, 5),
-      updatedat: r.updatedat?.toISOString(),
+      ...data,
+      catchupdate: formatDate(data.catchupdate),
+      catchupstarttime: data.catchupstarttime?.slice(0, 5),
+      catchupendtime: data.catchupendtime?.slice(0, 5),
+      updatedat: data.updatedat,
     });
   } catch (err) {
     console.error("Error updating catchup record:", err);
@@ -325,16 +306,18 @@ router.patch("/:id", async (req, res) => {
  */
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
-  const result = await pool.query(
-    "DELETE FROM catchups WHERE catchupid = $1 AND user_id = $2 RETURNING *",
-    [id, req.userId],
-  );
-  if (result.rows.length === 0)
+  const { data, error } = await supabase
+    .from("catchups")
+    .delete()
+    .eq("catchupid", id)
+    .eq("user_id", req.userId)
+    .select();
+  if (error || data.length === 0)
     return res.status(404).json({ error: "Catchup record not found" });
 
   res.json({
     message: "Catchup deleted successfully",
-    deleted: result.rows[0],
+    deleted: data[0],
   });
 });
 
@@ -348,15 +331,17 @@ router.delete("/", async (req, res) => {
   if (!Array.isArray(ids) || ids.length === 0)
     return res.status(400).json({ error: "No IDs provided" });
 
-  const result = await pool.query(
-    "DELETE FROM catchups WHERE catchupid = ANY($1::int[]) AND user_id = $2 RETURNING *",
-    [ids, req.userId],
-  );
+  const { data, error } = await supabase
+    .from("catchups")
+    .delete()
+    .in("catchupid", ids)
+    .eq("user_id", req.userId)
+    .select();
 
   res.json({
     message: "Catchups deleted successfully",
-    deletedCount: result.rows.length,
-    deleted: result.rows,
+    deletedCount: data ? data.length : 0,
+    deleted: data,
   });
 });
 

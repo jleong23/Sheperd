@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db"); // Import the PostgreSQL connection pool
+const supabase = require("../supabaseClient");
 
 /**
  * @route GET /kids
@@ -11,18 +11,19 @@ router.get("/", async (req, res) => {
   try {
     const { status } = req.query;
 
-    let query = "SELECT * FROM kids WHERE user_id = $1";
-    const values = [req.userId];
+    let query = supabase
+      .from("kids")
+      .select("*")
+      .eq("user_id", req.userId)
+      .order("id");
 
     if (status && ["CORE", "FRINGE", "NP"].includes(status)) {
-      query += ` AND status_code = $${values.length + 1}`;
-      values.push(status);
+      query = query.eq("status_code", status);
     }
 
-    query += " ORDER BY id";
-
-    const result = await pool.query(query, values);
-    res.json(result.rows);
+    const { data, error } = await query;
+    if (error) throw error;
+    res.json(data);
   } catch (err) {
     console.error("Error fetching kids:", err);
     res.status(500).json({ error: "Failed to fetch kids" }); // Handle errors
@@ -36,17 +37,27 @@ router.get("/", async (req, res) => {
  */
 router.get("/stats", async (req, res) => {
   try {
-    // Count total kids, regulars, and baptised using the new columns
-    const query = `
-      SELECT 
-        COUNT(*) as total_kids,
-        COUNT(*) FILTER (WHERE sunday_regulars = true) as regular_kids,
-        COUNT(*) FILTER (WHERE baptised = true) as baptised_kids
-      FROM kids
-      WHERE user_id = $1;
-    `;
-    const result = await pool.query(query, [req.userId]);
-    res.json(result.rows[0]);
+    const { count: total_kids, error: totalError } = await supabase
+      .from("kids")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", req.userId);
+    if (totalError) throw totalError;
+
+    const { count: regular_kids, error: regularError } = await supabase
+      .from("kids")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", req.userId)
+      .eq("sunday_regulars", true);
+    if (regularError) throw regularError;
+
+    const { count: baptised_kids, error: baptisedError } = await supabase
+      .from("kids")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", req.userId)
+      .eq("baptised", true);
+    if (baptisedError) throw baptisedError;
+
+    res.json({ total_kids, regular_kids, baptised_kids });
   } catch (err) {
     console.error("Error fetching kid stats:", err);
     res.status(500).json({ error: "Failed to fetch kid stats" });
@@ -61,17 +72,18 @@ router.get("/stats", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params; // Get the ID from URL parameters
-    const result = await pool.query(
-      "SELECT * FROM kids WHERE id = $1 AND user_id = $2",
-      [id, req.userId],
-    ); // Parameterized query
+    const { data, error } = await supabase
+      .from("kids")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .single();
 
-    if (result.rows.length === 0) {
+    if (error || !data) {
       // If no kid is found
       return res.status(404).json({ error: "Kid not found" });
     }
-
-    res.json(result.rows[0]); // Send the single kid object
+    res.json(data); // Send the single kid object
   } catch (err) {
     console.error("Error fetching kid:", err);
     res.status(500).json({ error: "Failed to fetch kid" });
@@ -108,31 +120,35 @@ router.post("/", async (req, res) => {
     }
 
     // Insert new kid into the database
-    const result = await pool.query(
-      `INSERT INTO kids
-   (name, school, phone, parent_phone, birthday, photo, parentname, address, status_code, baptised, sunday_regulars, first_call, second_call, first_call_feedback, second_call_feedback, user_id)
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
-      [
+    const { data, error } = await supabase
+      .from("kids")
+      .insert({
         name,
-        school,
-        phone,
-        parent_phone,
-        birthday,
-        photo,
-        parentname || null,
-        address || null,
-        status_code || "NP",
-        baptised || false,
-        sunday_regulars || false,
-        first_call || false,
-        second_call || false,
-        first_call_feedback || "",
-        second_call_feedback || "",
-        req.userId,
-      ],
-    );
+        birthday: birthday || null,
+        school: school || null,
+        phone: phone || null,
+        parent_phone: parent_phone || null,
+        photo: photo || null,
+        parentname: parentname || null,
+        address: address || null,
+        status_code: status_code || "NP",
+        baptised: baptised || false,
+        sunday_regulars: sunday_regulars || false,
+        first_call: first_call || false,
+        second_call: second_call || false,
+        first_call_feedback: first_call_feedback || "",
+        second_call_feedback: second_call_feedback || "",
+        user_id: req.userId,
+      })
+      .select()
+      .single();
 
-    res.status(201).json(result.rows[0]); // Return the newly created kid
+    if (error) {
+      console.error("Error creating kid:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.status(201).json(data); // Return the newly created kid
   } catch (err) {
     console.error("Error creating kid:", err);
     res.status(500).json({ error: "Failed to create kid" });
@@ -169,53 +185,40 @@ router.put("/:id", async (req, res) => {
       return res.status(400).json({ error: "Name is required" });
     }
 
-    // Update kid's data in the database
-    const result = await pool.query(
-      `UPDATE kids 
-       SET name = $1, 
-           birthday = $2, 
-           school = $3, 
-           parentname = $4, 
-           phone = $5, 
-           parent_phone = $6, 
-           address = $7, 
-           photo = $8, 
-           status_code = $9,
-           baptised = $10,
-           sunday_regulars = $11,
-           first_call = $12,
-           second_call = $13,
-           first_call_feedback = $14,
-           second_call_feedback = $15,
-           updated_at = NOW()
-       WHERE id = $16 AND user_id = $17
-       RETURNING *`,
-      [
+    const { data, error } = await supabase
+      .from("kids")
+      .update({
         name,
-        birthday || null,
-        school,
-        parentname,
-        phone,
-        parent_phone,
-        address,
-        photo || "",
-        status_code,
-        baptised || false,
-        sunday_regulars || false,
-        first_call || false,
-        second_call || false,
-        first_call_feedback || "",
-        second_call_feedback || "",
-        id,
-        req.userId,
-      ],
-    );
+        birthday: birthday || null,
+        school: school,
+        parentname: parentname,
+        phone: phone,
+        parent_phone: parent_phone,
+        address: address,
+        photo: photo || "",
+        status_code: status_code,
+        baptised: baptised || false,
+        sunday_regulars: sunday_regulars || false,
+        first_call: first_call || false,
+        second_call: second_call || false,
+        first_call_feedback: first_call_feedback || "",
+        second_call_feedback: second_call_feedback || "",
+        updated_at: new Date(),
+      })
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .select()
+      .single();
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Kid not found" }); // Kid does not exist
+    if (error) {
+      console.error("Error updating kid:", error);
+      return res.status(500).json({ error: error.message });
     }
 
-    res.json(result.rows[0]); // Return the updated kid
+    if (!data) {
+      return res.status(404).json({ error: "Kid not found" });
+    }
+    res.json(data); // Return the updated kid
   } catch (err) {
     console.error("Error updating kid:", err);
     res.status(500).json({ error: "Failed to update kid" });
@@ -231,17 +234,27 @@ router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Delete the kid and return the deleted record
-    const result = await pool.query(
-      "DELETE FROM kids WHERE id = $1 AND user_id = $2 RETURNING *",
-      [id, req.userId],
-    );
+    const { data, error } = await supabase
+      .from("kids")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .select();
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Kid not found" });
+    if (error) {
+      console.error("Error deleting kid:", error);
+      return res.status(500).json({ error: error.message });
     }
 
-    res.json({ message: "Kid deleted successfully" }); // Confirm deletion
+    if (!data || data.length === 0) {
+      return res
+        .status(404)
+        .json({
+          error: "Kid not found or you don't have permission to delete it.",
+        });
+    }
+
+    res.json({ message: "Kid deleted successfully", deleted: data[0] }); // Confirm deletion
   } catch (err) {
     console.error("Error deleting kid:", err);
     res.status(500).json({ error: "Failed to delete kid" });

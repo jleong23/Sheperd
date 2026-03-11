@@ -16,7 +16,7 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const pool = require("../db");
+const supabase = require("../supabaseClient");
 const requireAuth = require("../auth/requireAuth");
 
 // Register Route
@@ -30,22 +30,26 @@ router.post("/register", async (req, res) => {
         .json({ error: "User name, Email and password are required" });
     }
 
-    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
-      email,
-    ]);
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", email)
+      .single();
 
-    if (existing.rows.length > 0) {
+    if (existingUser) {
       return res.status(400).json({ error: "Email already in use" });
     }
 
     // Hash password before storing (never store plain text)
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Insert new user and return generated user id
-    const result = await pool.query(
-      "INSERT INTO users (user_name, email, password) VALUES ($1, $2, $3) RETURNING id", // inserting user_name, email & password
-      [userName, email, passwordHash],
-    );
+    const { data: newUser, error: newUserError } = await supabase
+      .from("users")
+      .insert({ user_name: userName, email, password: passwordHash })
+      .select("id")
+      .single();
+
+    if (newUserError) throw newUserError;
 
     // Ensure JWT secret is configured
     if (!process.env.JWT_SECRET) {
@@ -53,11 +57,9 @@ router.post("/register", async (req, res) => {
     }
 
     // Issue JWT for newly registered user
-    const token = jwt.sign(
-      { userId: result.rows[0].id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" },
-    );
+    const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     res.status(201).json({ token });
   } catch (err) {
@@ -75,31 +77,27 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    const user = await pool.query(
-      "SELECT id, password FROM users WHERE email = $1",
-      [email],
-    );
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("id, password")
+      .eq("email", email)
+      .single();
 
-    if (user.rows.length === 0) {
+    if (userError || !user) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // Compare provided password with stored hash
-    const isPasswordMatch = await bcrypt.compare(
-      password,
-      user.rows[0].password,
-    );
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
 
     if (!isPasswordMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     // Issue JWT for authenticated user
-    const token = jwt.sign(
-      { userId: user.rows[0].id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" },
-    );
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
 
     res.json({ token });
   } catch (err) {
@@ -116,16 +114,16 @@ router.post("/login", async (req, res) => {
 router.get("/me", requireAuth, async (req, res) => {
   try {
     // Fetch authenticated user's profile using userId from JWT
-    const result = await pool.query(
-      "SELECT id, email, user_name, group_graduation_year FROM users WHERE id = $1",
-      [req.userId],
-    );
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, email, user_name, group_graduation_year")
+      .eq("id", req.userId)
+      .single();
 
-    if (result.rows.length === 0) {
+    if (error || !data) {
       return res.status(404).json({ error: "User not found" });
     }
-
-    res.json(result.rows[0]);
+    res.json(data);
   } catch (err) {
     console.error("Error fetching user profile:", err);
     res.status(500).json({ error: "Server error" });

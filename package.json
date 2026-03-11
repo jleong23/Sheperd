@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@supabase/supabase-js": "^2.99.0",
     "@tailwindcss/line-clamp": "^0.4.4",
     "bcrypt": "^6.0.0",
     "express-validator": "^7.3.1",

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const supabase = require("../supabaseClient");
 
 /**
  * @route GET /users
@@ -10,11 +10,13 @@ const pool = require("../db");
 router.get("/", async (req, res) => {
   try {
     // For security, this endpoint should only return the current user's data
-    const result = await pool.query(
-      "SELECT id, email FROM users WHERE id = $1",
-      [req.userId],
-    );
-    res.json(result.rows[0]); // Should be an array with one user
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, email")
+      .eq("id", req.userId)
+      .single();
+    if (error) throw error;
+    res.json(data);
   } catch (err) {
     console.error("Error fetching users:", err);
     res.status(500).json({ error: "Failed to fetch users" }); // Handle errors
@@ -37,17 +39,17 @@ router.get("/:id", async (req, res) => {
         .json({ error: "Forbidden: You can only access your own data." });
     }
 
-    const result = await pool.query(
-      "SELECT id, email FROM users WHERE id = $1",
-      [id],
-    ); // Parameterized query
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, email")
+      .eq("id", id)
+      .single();
 
-    if (result.rows.length === 0) {
+    if (error || !data) {
       // If no users is found
       return res.status(404).json({ error: "User not found" });
     }
-
-    res.json(result.rows[0]); // Send the single user object
+    res.json(data); // Send the single user object
   } catch (err) {
     console.error(`Error fetching user: ${err}`);
     res.status(500).json({ error: "Failed to fetch users" });

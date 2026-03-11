@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const supabase = require("../supabaseClient");
 
 /**
  * @route GET /attendance
@@ -11,25 +11,26 @@ router.get("/", async (req, res) => {
   try {
     const { year, term } = req.query;
 
-    let query = "SELECT * FROM attendance WHERE user_id = $1";
-    const params = [req.userId];
+    let query = supabase
+      .from("attendance")
+      .select("*")
+      .eq("user_id", req.userId);
 
     // Filter by year if provided
     if (year) {
-      params.push(Number(year));
-      query += ` AND year = $${params.length}`;
+      query = query.eq("year", Number(year));
     }
 
     // Filter by term if provided
     if (term) {
-      params.push(Number(term));
-      query += ` AND term = $${params.length}`;
+      query = query.eq("term", Number(term));
     }
 
-    query += " ORDER BY week DESC, kidid";
-
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    const { data, error } = await query
+      .order("week", { ascending: false })
+      .order("kidid");
+    if (error) throw error;
+    res.json(data);
   } catch (err) {
     console.error("Error fetching attendance:", err);
     res.status(500).json({ error: "Failed to fetch attendance" });
@@ -44,16 +45,17 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      "SELECT * FROM attendance WHERE id = $1 AND user_id = $2",
-      [id, req.userId],
-    );
+    const { data, error } = await supabase
+      .from("attendance")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .single();
 
-    if (result.rows.length === 0) {
+    if (error || !data) {
       return res.status(404).json({ error: "Attendance record not found" });
     }
-
-    res.json(result.rows[0]);
+    res.json(data);
   } catch (err) {
     console.error("Error fetching attendance record:", err);
     res.status(500).json({ error: "Failed to fetch attendance record" });
@@ -78,36 +80,41 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Invalid attendance status" });
     }
 
-    const kidCheck = await pool.query(
-      "SELECT name, photo FROM kids WHERE id = $1 AND user_id = $2",
-      [kidId, req.userId],
-    );
+    const { data: kidCheck, error: kidError } = await supabase
+      .from("kids")
+      .select("name, photo")
+      .eq("id", kidId)
+      .eq("user_id", req.userId)
+      .single();
 
-    if (kidCheck.rows.length === 0) {
+    if (kidError || !kidCheck) {
       return res
         .status(404)
         .json({ error: "Kid not found or does not belong to this user" });
     }
 
-    const result = await pool.query(
-      `INSERT INTO attendance
-       (kidid, name, week, status, reason, photo, term, year, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, DEFAULT), COALESCE($8, DEFAULT), $9)
-       RETURNING *`,
-      [
-        kidId,
-        name || kidCheck.rows[0].name,
+    const { data, error } = await supabase
+      .from("attendance")
+      .insert({
+        kidid: kidId,
+        name: name || kidCheck.name,
         week,
-        status || null,
-        reason || null,
-        photo || kidCheck.rows[0].photo,
-        term || null,
-        year || null,
-        req.userId || null,
-      ],
-    );
+        status: status || "maybe",
+        reason: reason || null,
+        photo: photo || kidCheck.photo,
+        term: term || null,
+        year: year || null,
+        user_id: req.userId,
+      })
+      .select()
+      .single();
 
-    res.status(201).json(result.rows[0]);
+    if (error) {
+      console.error("Error creating attendance record:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.status(201).json(data);
   } catch (err) {
     console.error("Error creating attendance record:", err);
     res.status(500).json({ error: "Failed to create attendance record" });
@@ -136,21 +143,27 @@ router.patch("/:id", async (req, res) => {
       return res.status(400).json({ error: "Invalid attendance status" });
     }
 
-    const result = await pool.query(
-      `UPDATE attendance SET 
-         status = COALESCE($1, status), 
-         reason = COALESCE($2, reason), 
-         updated_at = NOW() 
-       WHERE id = $3 AND user_id = $4
-       RETURNING *`,
-      [status, reason, id, req.userId],
-    );
+    const updatePayload = { updated_at: new Date() };
+    if (status !== undefined) updatePayload.status = status;
+    if (reason !== undefined) updatePayload.reason = reason;
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Attendance record not found" });
+    const { data, error } = await supabase
+      .from("attendance")
+      .update(updatePayload)
+      .eq("id", id)
+      .eq("user_id", req.userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error updating attendance record:", error);
+      return res.status(500).json({ error: error.message });
     }
 
-    res.json(result.rows[0]);
+    if (!data) {
+      return res.status(404).json({ error: "Attendance record not found" });
+    }
+    res.json(data);
   } catch (err) {
     console.error("Error updating attendance record:", err);
     res.status(500).json({ error: "Failed to update attendance record" });
@@ -165,12 +178,13 @@ router.patch("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      "DELETE FROM attendance WHERE id = $1 AND user_id = $2 RETURNING *",
-      [id, req.userId],
-    );
+    const { error } = await supabase
+      .from("attendance")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", req.userId);
 
-    if (result.rows.length === 0) {
+    if (error) {
       return res.status(404).json({ error: "Attendance record not found" });
     }
 
@@ -194,20 +208,22 @@ router.post("/year", async (req, res) => {
     if (!year) return res.status(400).json({ error: "Year is required" });
 
     // Check if the year already exists
-    const yearCheck = await pool.query(
-      "SELECT 1 FROM attendance WHERE year = $1 AND user_id = $2 LIMIT 1",
-      [year, req.userId],
-    );
-    if (yearCheck.rows.length > 0) {
+    const { count, error: countError } = await supabase
+      .from("attendance")
+      .select("*", { count: "exact", head: true })
+      .eq("year", year)
+      .eq("user_id", req.userId);
+    if (countError) throw countError;
+    if (count > 0) {
       return res.status(400).json({ error: `Year ${year} already exists.` });
     }
 
     // Fetch all kids for the current user
-    const kidsResult = await pool.query(
-      "SELECT id, name, photo FROM kids WHERE user_id = $1",
-      [req.userId],
-    );
-    const kids = kidsResult.rows;
+    const { data: kids, error: kidsError } = await supabase
+      .from("kids")
+      .select("id, name, photo")
+      .eq("user_id", req.userId);
+    if (kidsError) throw kidsError;
 
     // By default, term 1 and 10 weeks
     const term = 1;
@@ -217,30 +233,26 @@ router.post("/year", async (req, res) => {
     const records = [];
     for (const kid of kids) {
       for (let week = 1; week <= weeks; week++) {
-        records.push([
-          kid.id,
-          kid.name,
+        records.push({
+          kidid: kid.id,
+          name: kid.name,
           week,
-          "maybe",
-          "",
-          kid.photo,
+          status: "maybe",
+          reason: "",
+          photo: kid.photo,
           term,
           year,
-          req.userId,
-        ]);
+          user_id: req.userId,
+        });
       }
     }
 
     // Insert into attendance table
-    const insertQuery = `
-    INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year, user_id)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`;
-
-    const createdRecords = [];
-    for (const record of records) {
-      const result = await pool.query(insertQuery, record);
-      createdRecords.push(result.rows[0]);
-    }
+    const { data: createdRecords, error: insertError } = await supabase
+      .from("attendance")
+      .insert(records)
+      .select();
+    if (insertError) throw insertError;
 
     res.json({
       message: `Year ${year} added with default term 1 and 10 weeks`,
@@ -265,42 +277,40 @@ router.post("/term", async (req, res) => {
       return res.status(400).json({ error: "Year & Term is required" });
 
     // Fetch all kids for the current user
-    const kidsResult = await pool.query(
-      "SELECT id, name, photo FROM kids WHERE user_id = $1",
-      [req.userId],
-    );
-    const kids = kidsResult.rows;
+    const { data: kids, error: kidsError } = await supabase
+      .from("kids")
+      .select("id, name, photo")
+      .eq("user_id", req.userId);
+    if (kidsError) throw kidsError;
 
     // Generate attendance records
     const records = [];
     for (const kid of kids) {
       for (let week = 1; week <= weeks; week++) {
-        records.push([
-          kid.id,
-          kid.name,
+        records.push({
+          kidid: kid.id,
+          name: kid.name,
           week,
-          "maybe",
-          "",
-          kid.photo,
+          status: "maybe",
+          reason: "",
+          photo: kid.photo,
           term,
           year,
-          req.userId,
-        ]);
+          user_id: req.userId,
+        });
       }
     }
 
     // Insert into attendance tables
-    const insertQuery = `
-      INSERT INTO attendance (kidId, name, week, status, reason, photo, term, year, user_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    `;
-
-    for (const record of records) {
-      await pool.query(insertQuery, record);
-    }
+    const { data, error: insertError } = await supabase
+      .from("attendance")
+      .insert(records)
+      .select();
+    if (insertError) throw insertError;
 
     res.json({
       message: `Term ${term} added for year ${year} with ${weeks} weeks`,
+      createdRecords: data,
     });
   } catch (err) {
     console.log("Error adding term: ", err);
@@ -317,11 +327,12 @@ router.post("/term", async (req, res) => {
 router.delete("/year/:year", async (req, res) => {
   try {
     const { year } = req.params;
-    const result = await pool.query(
-      "DELETE FROM attendance WHERE year = $1 AND user_id = $2 RETURNING *",
-      [year, req.userId],
-    );
-    if (result.rows.length === 0) {
+    const { error } = await supabase
+      .from("attendance")
+      .delete()
+      .eq("year", year)
+      .eq("user_id", req.userId);
+    if (error) {
       return res.status(404).json({ error: "Year not found" });
     }
 
@@ -346,12 +357,14 @@ router.delete("/term/:year/:term", async (req, res) => {
     }
 
     // Delele all attendance records for the year and term
-    const result = await pool.query(
-      "DELETE FROM attendance WHERE year = $1 AND term = $2 AND user_id = $3 RETURNING *",
-      [Number(year), Number(term), req.userId],
-    );
+    const { count, error } = await supabase
+      .from("attendance")
+      .delete({ count: "exact" })
+      .eq("year", Number(year))
+      .eq("term", Number(term))
+      .eq("user_id", req.userId);
 
-    if (result.rowCount === 0) {
+    if (error || count === 0) {
       return res.status(404).json({
         error: "No records found for that year and term",
       });
@@ -359,7 +372,7 @@ router.delete("/term/:year/:term", async (req, res) => {
 
     res.json({
       message: `Deleted all records for Year ${year} and Term ${term}`,
-      deletedCount: result.rowCount,
+      deletedCount: count,
     });
   } catch (err) {
     console.error(err);

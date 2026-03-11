@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const pool = require("../db");
+const supabase = require("../supabaseClient");
 
 // Helper to format Date objects to YYYY-MM-DD using local time
 // This prevents timezone shifts that occur when using toISOString() on a local Date object
@@ -24,30 +24,30 @@ router.get("/", async (req, res) => {
     const { year, name, startDate, endDate, sortBy, order, page, limit } =
       req.query;
 
-    const params = [req.userId];
-    let baseWhere = "WHERE user_id = $1";
+    let query = supabase
+      .from("events")
+      .select("*", { count: "exact" })
+      .eq("user_id", req.userId);
 
     // --------------------
     // Filtering
     // --------------------
     if (year && !isNaN(Number(year))) {
-      params.push(Number(year));
-      baseWhere += ` AND EXTRACT(YEAR FROM eventstartdate) = $${params.length}`;
+      query = query
+        .gte("eventstartdate", `${year}-01-01`)
+        .lte("eventstartdate", `${year}-12-31`);
     }
 
     if (name) {
-      params.push(`%${name}%`);
-      baseWhere += ` AND eventname ILIKE $${params.length}`;
+      query = query.ilike("eventname", `%${name}%`);
     }
 
     if (startDate && !isNaN(Date.parse(startDate))) {
-      params.push(startDate);
-      baseWhere += ` AND eventstartdate >= $${params.length}`;
+      query = query.gte("eventstartdate", startDate);
     }
 
     if (endDate && !isNaN(Date.parse(endDate))) {
-      params.push(endDate);
-      baseWhere += ` AND eventenddate <= $${params.length}`;
+      query = query.lte("eventenddate", endDate);
     }
 
     // --------------------
@@ -55,7 +55,7 @@ router.get("/", async (req, res) => {
     // --------------------
     const allowedSort = ["eventname", "eventstartdate", "eventenddate"];
     const sortColumn = allowedSort.includes(sortBy) ? sortBy : "eventstartdate";
-    const sortOrder = order === "asc" ? "ASC" : "DESC";
+    const sortOrder = order === "asc";
 
     // --------------------
     // Pagination
@@ -64,40 +64,26 @@ router.get("/", async (req, res) => {
     const pageNum = parseInt(page) || 1;
     const offset = (pageNum - 1) * limitNum;
 
-    // --------------------
-    // Count query (NO limit / offset)
-    // --------------------
-    const countResult = await pool.query(
-      `SELECT COUNT(*) FROM events ${baseWhere}`,
-      params,
-    );
+    query = query
+      .order(sortColumn, { ascending: sortOrder })
+      .range(offset, offset + limitNum - 1);
 
-    const totalCount = parseInt(countResult.rows[0].count, 10);
+    const { data, error, count } = await query;
+    if (error) throw error;
+
+    const totalCount = count || 0;
     const totalPages = Math.ceil(totalCount / limitNum);
-
-    // --------------------
-    // Data query
-    // --------------------
-    const dataQuery = `
-      SELECT * FROM events
-      ${baseWhere}
-      ORDER BY ${sortColumn} ${sortOrder}
-      LIMIT $${params.length + 1}
-      OFFSET $${params.length + 2}
-    `;
-
-    const result = await pool.query(dataQuery, [...params, limitNum, offset]);
 
     // --------------------
     // Frontend-friendly formatting
     // --------------------
-    const rows = result.rows.map((r) => ({
+    const rows = data.map((r) => ({
       ...r,
       eventstartdate: formatDate(r.eventstartdate),
       eventenddate: formatDate(r.eventenddate),
       eventstarttime: r.eventstarttime?.slice(0, 5),
       eventendtime: r.eventendtime?.slice(0, 5),
-      updated_at: r.updated_at?.toISOString(),
+      updated_at: r.updated_at,
       duration:
         r.eventenddate && r.eventstartdate
           ? (new Date(r.eventenddate) - new Date(r.eventstartdate)) /
@@ -129,27 +115,27 @@ router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query(
-      "SELECT * FROM events WHERE eventid = $1 AND user_id = $2",
-      [id, req.userId],
-    );
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("eventid", id)
+      .eq("user_id", req.userId)
+      .single();
 
-    if (result.rows.length === 0) {
+    if (error || !data) {
       return res.status(404).json({ error: "Event record not found" });
     }
 
-    const r = result.rows[0];
-
     const row = {
-      ...r,
-      eventstartdate: formatDate(r.eventstartdate),
-      eventenddate: formatDate(r.eventenddate),
-      eventstarttime: r.eventstarttime?.slice(0, 5),
-      eventendtime: r.eventendtime?.slice(0, 5),
-      updated_at: r.updated_at?.toISOString(),
+      ...data,
+      eventstartdate: formatDate(data.eventstartdate),
+      eventenddate: formatDate(data.eventenddate),
+      eventstarttime: data.eventstarttime?.slice(0, 5),
+      eventendtime: data.eventendtime?.slice(0, 5),
+      updated_at: data.updated_at,
       duration:
-        r.eventenddate && r.eventstartdate
-          ? (new Date(r.eventenddate) - new Date(r.eventstartdate)) /
+        data.eventenddate && data.eventstartdate
+          ? (new Date(data.eventenddate) - new Date(data.eventstartdate)) /
             (1000 * 60 * 60 * 24)
           : null,
     };
@@ -197,33 +183,31 @@ router.post("/", async (req, res) => {
         .json({ error: "eventenddate cannot be before eventstartdate" });
     }
 
-    const result = await pool.query(
-      `INSERT INTO events
-       (eventname, eventstartdate, eventenddate, eventstarttime, eventendtime, eventphoto, eventassignedpeople, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [
+    const { data, error } = await supabase
+      .from("events")
+      .insert({
         eventname,
         eventstartdate,
         eventenddate,
-        eventstarttime || null,
-        eventendtime || null,
-        eventphoto || null,
-        eventassignedpeople || null,
-        req.userId,
-      ],
-    );
+        eventstarttime: eventstarttime || null,
+        eventendtime: eventendtime || null,
+        eventphoto: eventphoto || null,
+        eventassignedpeople: eventassignedpeople || null,
+        user_id: req.userId,
+      })
+      .select()
+      .single();
 
-    const r = result.rows[0];
+    if (error) throw error;
 
     res.status(201).json({
-      ...r,
-      eventstartdate: formatDate(r.eventstartdate),
-      eventenddate: formatDate(r.eventenddate),
-      eventstarttime: r.eventstarttime?.slice(0, 5),
-      eventendtime: r.eventendtime?.slice(0, 5),
+      ...data,
+      eventstartdate: formatDate(data.eventstartdate),
+      eventenddate: formatDate(data.eventenddate),
+      eventstarttime: data.eventstarttime?.slice(0, 5),
+      eventendtime: data.eventendtime?.slice(0, 5),
       duration:
-        (new Date(r.eventenddate) - new Date(r.eventstartdate)) /
+        (new Date(data.eventenddate) - new Date(data.eventstartdate)) /
         (1000 * 60 * 60 * 24),
     });
   } catch (err) {
@@ -277,19 +261,9 @@ router.patch("/:id", async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      `UPDATE events SET 
-      eventname = COALESCE($1, eventname), 
-      eventstartdate = COALESCE($2, eventstartdate), 
-      eventenddate = COALESCE($3, eventenddate), 
-      eventstarttime = COALESCE($4, eventstarttime), 
-      eventendtime = COALESCE($5, eventendtime), 
-      eventphoto = COALESCE($6, eventphoto), 
-      eventassignedpeople = COALESCE($7, eventassignedpeople),
-      updated_at = CURRENT_TIMESTAMP
-      WHERE eventid = $8 AND user_id = $9
-      RETURNING *`,
-      [
+    const { data, error } = await supabase
+      .from("events")
+      .update({
         eventname,
         eventstartdate,
         eventenddate,
@@ -297,26 +271,26 @@ router.patch("/:id", async (req, res) => {
         eventendtime,
         eventphoto,
         eventassignedpeople,
-        id,
-        req.userId,
-      ],
-    );
+        updated_at: new Date(),
+      })
+      .eq("eventid", id)
+      .eq("user_id", req.userId)
+      .select()
+      .single();
 
-    if (result.rows.length === 0) {
+    if (error || !data) {
       return res.status(404).json({ error: "Event record not found" });
     }
 
-    const r = result.rows[0];
-
     res.json({
-      ...r,
-      eventstartdate: formatDate(r.eventstartdate),
-      eventenddate: formatDate(r.eventenddate),
-      eventstarttime: r.eventstarttime?.slice(0, 5),
-      eventendtime: r.eventendtime?.slice(0, 5),
+      ...data,
+      eventstartdate: formatDate(data.eventstartdate),
+      eventenddate: formatDate(data.eventenddate),
+      eventstarttime: data.eventstarttime?.slice(0, 5),
+      eventendtime: data.eventendtime?.slice(0, 5),
       duration:
-        r.eventenddate && r.eventstartdate
-          ? (new Date(r.eventenddate) - new Date(r.eventstartdate)) /
+        data.eventenddate && data.eventstartdate
+          ? (new Date(data.eventenddate) - new Date(data.eventstartdate)) /
             (1000 * 60 * 60 * 24)
           : null,
     });
@@ -333,14 +307,16 @@ router.patch("/:id", async (req, res) => {
  */
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
-  const result = await pool.query(
-    "DELETE FROM events WHERE eventid = $1 AND user_id = $2 RETURNING *",
-    [id, req.userId],
-  );
-  if (result.rows.length === 0)
+  const { data, error } = await supabase
+    .from("events")
+    .delete()
+    .eq("eventid", id)
+    .eq("user_id", req.userId)
+    .select();
+  if (error || data.length === 0)
     return res.status(404).json({ error: "Event record not found" });
 
-  res.json({ message: "Event deleted successfully", deleted: result.rows[0] });
+  res.json({ message: "Event deleted successfully", deleted: data[0] });
 });
 
 /**
@@ -353,15 +329,17 @@ router.delete("/", async (req, res) => {
   if (!Array.isArray(ids) || ids.length === 0)
     return res.status(400).json({ error: "No IDs provided" });
 
-  const result = await pool.query(
-    "DELETE FROM events WHERE eventid = ANY($1::int[]) AND user_id = $2 RETURNING *",
-    [ids, req.userId],
-  );
+  const { data, error } = await supabase
+    .from("events")
+    .delete()
+    .in("eventid", ids)
+    .eq("user_id", req.userId)
+    .select();
 
   res.json({
     message: "Events deleted successfully",
-    deletedCount: result.rows.length,
-    deleted: result.rows,
+    deletedCount: data ? data.length : 0,
+    deleted: data,
   });
 });
 
