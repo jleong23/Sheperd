@@ -16,7 +16,6 @@ export default function AddKids({ onKidAdded }) {
     school: "",
     phone: "",
     parentPhone: "",
-    photo: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -28,7 +27,6 @@ export default function AddKids({ onKidAdded }) {
     { label: "School", name: "school", type: "text" },
     { label: "Phone", name: "phone", type: "text" },
     { label: "Parent Phone", name: "parentPhone", type: "text" },
-    { label: "Photo URL (Optional)", name: "photo", type: "text" },
   ];
 
   const handleChange = (e) => {
@@ -44,7 +42,6 @@ export default function AddKids({ onKidAdded }) {
       school: "",
       phone: "",
       parentPhone: "",
-      photo: "",
     });
     setErrors({});
   };
@@ -56,8 +53,6 @@ export default function AddKids({ onKidAdded }) {
       newErrors.phone = "Invalid phone format.";
     if (formData.parentPhone && !/^\+?[\d\s-]+$/.test(formData.parentPhone))
       newErrors.parentPhone = "Invalid parent phone format.";
-    if (formData.photo && !/^https?:\/\/.+/.test(formData.photo))
-      newErrors.photo = "Photo must be a valid URL.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -73,7 +68,6 @@ export default function AddKids({ onKidAdded }) {
         school: formData.school || "",
         phone: formData.phone || "",
         parent_phone: formData.parentPhone,
-        photo: formData.photo || DEFAULT_PHOTO,
       });
 
       onKidAdded?.();

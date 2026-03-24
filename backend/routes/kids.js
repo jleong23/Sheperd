@@ -103,7 +103,6 @@ router.post("/", async (req, res) => {
       school,
       phone,
       parent_phone,
-      photo,
       parentname,
       address,
       status_code,
@@ -128,7 +127,6 @@ router.post("/", async (req, res) => {
         school: school || null,
         phone: phone || null,
         parent_phone: parent_phone || null,
-        photo: photo || null,
         parentname: parentname || null,
         address: address || null,
         status_code: status_code || "NP",
@@ -171,7 +169,6 @@ router.put("/:id", async (req, res) => {
       phone,
       parent_phone,
       address,
-      photo,
       status_code,
       baptised,
       sunday_regulars,
@@ -195,7 +192,6 @@ router.put("/:id", async (req, res) => {
         phone: phone,
         parent_phone: parent_phone,
         address: address,
-        photo: photo || "",
         status_code: status_code,
         baptised: baptised || false,
         sunday_regulars: sunday_regulars || false,
@@ -247,11 +243,9 @@ router.delete("/:id", async (req, res) => {
     }
 
     if (!data || data.length === 0) {
-      return res
-        .status(404)
-        .json({
-          error: "Kid not found or you don't have permission to delete it.",
-        });
+      return res.status(404).json({
+        error: "Kid not found or you don't have permission to delete it.",
+      });
     }
 
     res.json({ message: "Kid deleted successfully", deleted: data[0] }); // Confirm deletion

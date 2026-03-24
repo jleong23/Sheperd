@@ -69,7 +69,7 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   try {
-    const { kidId, week, status, reason, name, photo, term, year } = req.body;
+    const { kidId, week, status, reason, name, term, year } = req.body;
 
     if (!kidId || !week) {
       return res.status(400).json({ error: "kidId and week are required" });
@@ -82,7 +82,7 @@ router.post("/", async (req, res) => {
 
     const { data: kidCheck, error: kidError } = await supabase
       .from("kids")
-      .select("name, photo")
+      .select("name")
       .eq("id", kidId)
       .eq("user_id", req.userId)
       .single();
@@ -101,7 +101,6 @@ router.post("/", async (req, res) => {
         week,
         status: status || "maybe",
         reason: reason || null,
-        photo: photo || kidCheck.photo,
         term: term || null,
         year: year || null,
         user_id: req.userId,
@@ -221,7 +220,7 @@ router.post("/year", async (req, res) => {
     // Fetch all kids for the current user
     const { data: kids, error: kidsError } = await supabase
       .from("kids")
-      .select("id, name, photo")
+      .select("id, name")
       .eq("user_id", req.userId);
     if (kidsError) throw kidsError;
 
@@ -239,7 +238,6 @@ router.post("/year", async (req, res) => {
           week,
           status: "maybe",
           reason: "",
-          photo: kid.photo,
           term,
           year,
           user_id: req.userId,
@@ -279,7 +277,7 @@ router.post("/term", async (req, res) => {
     // Fetch all kids for the current user
     const { data: kids, error: kidsError } = await supabase
       .from("kids")
-      .select("id, name, photo")
+      .select("id, name")
       .eq("user_id", req.userId);
     if (kidsError) throw kidsError;
 
@@ -293,7 +291,6 @@ router.post("/term", async (req, res) => {
           week,
           status: "maybe",
           reason: "",
-          photo: kid.photo,
           term,
           year,
           user_id: req.userId,
