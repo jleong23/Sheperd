@@ -103,23 +103,12 @@ async function seedAttendance() {
 
 async function seedAll() {
   try {
-    // 1. Authenticate (Login or Register) to get a token
-    console.log("Authenticating seed user...");
-    const seedUser = { email: "seed@example.com", password: "seedpassword123" };
-    let token;
+    // Note: /auth/login routes were removed in favor of client-side Supabase Auth.
+    // To seed protected routes, you must now provide a valid Supabase JWT manually
+    // or configure your backend to bypass auth in development mode.
 
-    try {
-      const loginRes = await axios.post(`${API_URL}/auth/login`, seedUser);
-      token = loginRes.data.token;
-    } catch (err) {
-      console.log("Login failed, attempting to register...");
-      const regRes = await axios.post(`${API_URL}/auth/register`, seedUser);
-      token = regRes.data.token;
-    }
-
-    // 2. Set the token for all subsequent requests
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    console.log("Authenticated successfully. Starting seed...");
+    // axios.defaults.headers.common["Authorization"] = `Bearer <VJ_SUPABASE_TOKEN>`;
+    console.log("Starting seed (Ensuring backend is allowing requests)...");
 
     await seedKids();
     await seedAttendance();

@@ -17,7 +17,7 @@ const requireAuth = (req, res, next) => {
   try {
     // Verify token and decode payload
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId; // Attach userId to request for downstream handlers
+    req.userId = decoded.sub; // Supabase JWTs use 'sub' for the user ID (UUID)
 
     next();
   } catch (error) {

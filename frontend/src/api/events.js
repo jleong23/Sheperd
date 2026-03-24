@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "./index";
 
 /**
  * Fetch all events with optional query parameters
@@ -13,7 +13,7 @@ import axios from "axios";
  * @param {number} params.limit
  */
 export const getEvents = async (params = {}) => {
-  const response = await axios.get("/events", { params });
+  const response = await api.get("/events", { params });
   return response.data;
 };
 
@@ -22,7 +22,7 @@ export const getEvents = async (params = {}) => {
  * @param {number|string} id
  */
 export const getEventById = async (id) => {
-  const response = await axios.get(`/events/${id}`);
+  const response = await api.get(`/events/${id}`);
   return response.data;
 };
 
@@ -31,7 +31,7 @@ export const getEventById = async (id) => {
  * @param {object} event - Event object
  */
 export const addEvent = async (event) => {
-  const response = await axios.post("/events", event);
+  const response = await api.post("/events", event);
   return response.data;
 };
 
@@ -41,7 +41,7 @@ export const addEvent = async (event) => {
  * @param {object} updatedFields - Partial event object
  */
 export const updateEvent = async (id, updatedFields) => {
-  const response = await axios.patch(`/events/${id}`, updatedFields);
+  const response = await api.patch(`/events/${id}`, updatedFields);
   return response.data;
 };
 
@@ -50,7 +50,7 @@ export const updateEvent = async (id, updatedFields) => {
  * @param {number|string} id
  */
 export const deleteEvent = async (id) => {
-  const response = await axios.delete(`/events/${id}`);
+  const response = await api.delete(`/events/${id}`);
   return response.data;
 };
 
@@ -60,6 +60,6 @@ export const deleteEvent = async (id) => {
  */
 export const bulkDeleteEvents = async (ids) => {
   // For DELETE with body, axios uses the `data` property
-  const response = await axios.delete("/events", { data: { ids } });
+  const response = await api.delete("/events", { data: { ids } });
   return response.data;
 };

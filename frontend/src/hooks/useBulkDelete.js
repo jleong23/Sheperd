@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../api";
 
 export function useBulkDelete(kids, refresh) {
   const [selected, setSelected] = useState([]);
@@ -27,7 +27,7 @@ export function useBulkDelete(kids, refresh) {
     if (!confirmed) return;
 
     try {
-      await Promise.all(selected.map((id) => axios.delete(`/kids/${id}`)));
+      await Promise.all(selected.map((id) => api.delete(`/kids/${id}`)));
 
       alert(`${selected.length} kids deleted successfully`);
       setSelected([]);

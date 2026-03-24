@@ -1,8 +1,7 @@
 // =======================
 // Kids API
 // =======================
-
-import axios from "axios";
+import api from "./index";
 
 /**
  * Fetch list of kids
@@ -10,7 +9,7 @@ import axios from "axios";
  */
 export async function fetchKids(status = "ALL") {
   const params = status && status !== "ALL" ? { status } : {};
-  const response = await axios.get("/kids", { params });
+  const response = await api.get("/kids", { params });
   return response.data;
 }
 
@@ -19,7 +18,7 @@ export async function fetchKids(status = "ALL") {
  * POST kid data to /kids
  */
 export async function createKid(kidData) {
-  const response = await axios.post("/kids", kidData);
+  const response = await api.post("/kids", kidData);
   return response.data;
 }
 
@@ -28,7 +27,7 @@ export async function createKid(kidData) {
  * PUT updates to /kids/:id
  */
 export async function updateKid(id, updates) {
-  const response = await axios.put(`/kids/${id}`, updates);
+  const response = await api.put(`/kids/${id}`, updates);
   return response.data;
 }
 
@@ -36,7 +35,7 @@ export async function updateKid(id, updates) {
  * Fetch a single kid by ID
  */
 export async function fetchKidById(id) {
-  const response = await axios.get(`/kids/${id}`);
+  const response = await api.get(`/kids/${id}`);
   return response.data;
 }
 
@@ -45,7 +44,7 @@ export async function fetchKidById(id) {
  * GET /kids/stats
  */
 export async function fetchKidStats() {
-  const response = await axios.get("/kids/stats");
+  const response = await api.get("/kids/stats");
   return response.data;
 }
 
@@ -54,7 +53,7 @@ export async function fetchKidStats() {
  * Default status = NP
  */
 export async function fetchNewPeopleKids(status = "NP") {
-  const response = await axios.get("/kids", { params: { status } });
+  const response = await api.get("/kids", { params: { status } });
   return response.data; // returns filtered array of kids
 }
 
@@ -63,6 +62,6 @@ export async function fetchNewPeopleKids(status = "NP") {
  * DELETE /kids/:id
  */
 export async function deleteKid(id) {
-  const response = await axios.delete(`/kids/${id}`);
+  const response = await api.delete(`/kids/${id}`);
   return response.data; // returns result confirmation
 }

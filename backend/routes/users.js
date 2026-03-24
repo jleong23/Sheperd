@@ -33,7 +33,7 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params; // Get ID from URL parameters
 
     // Security check: A user can only fetch their own data
-    if (Number(id) !== req.userId) {
+    if (id !== req.userId) {
       return res
         .status(403)
         .json({ error: "Forbidden: You can only access your own data." });

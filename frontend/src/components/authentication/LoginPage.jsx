@@ -4,9 +4,11 @@ import { useEffect } from "react";
 import AuthForm from "./AuthForm";
 import { useAuthForm } from "../../hooks/useAuthForm";
 import AuthLayout from "./AuthLayout";
+import { login as supabaseLogin } from "../../api/auth";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
-  const { login, token } = useAuth();
+  const { token } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,9 +17,20 @@ export default function LoginPage() {
     }
   }, [token, navigate]);
 
-  const { values, error, handleChange, handleSubmit } = useAuthForm(
-    ({ email, password }) => login(email, password),
-  );
+  const handleLogin = async ({ email, password }) => {
+    try {
+      const { data } = await supabaseLogin({ email, password });
+      if (data.session) {
+        navigate("/");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Invalid email or password");
+    }
+  };
+
+  const { values, error, handleChange, handleSubmit } =
+    useAuthForm(handleLogin);
 
   return (
     <AuthLayout

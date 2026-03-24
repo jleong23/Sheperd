@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "./index";
 
 /**
  * Get all catchups with optional filtering, sorting, pagination
@@ -22,7 +22,7 @@ export const getCatchups = async (params = {}) => {
   }
 
   const query = new URLSearchParams(cleanParams).toString();
-  const response = await axios.get(`/catchups${query ? `?${query}` : ""}`);
+  const response = await api.get(`/catchups${query ? `?${query}` : ""}`);
   return response.data;
 };
 
@@ -30,7 +30,7 @@ export const getCatchups = async (params = {}) => {
  * Get a single catchup by ID
  */
 export const getCatchupById = async (id) => {
-  const response = await axios.get(`/catchups/${id}`);
+  const response = await api.get(`/catchups/${id}`);
   return response.data;
 };
 
@@ -39,7 +39,7 @@ export const getCatchupById = async (id) => {
  * @param {object} catchup - { kidid, catchupdate, catchupstarttime, catchupendtime, catchuppurpose, catchupcomments }
  */
 export const addCatchup = async (catchup) => {
-  const response = await axios.post("/catchups", catchup);
+  const response = await api.post("/catchups", catchup);
   return response.data;
 };
 
@@ -49,7 +49,7 @@ export const addCatchup = async (catchup) => {
  * @param {object} updatedFields - Partial catchup object
  */
 export const updateCatchup = async (id, updatedFields) => {
-  const response = await axios.patch(`/catchups/${id}`, updatedFields);
+  const response = await api.patch(`/catchups/${id}`, updatedFields);
   return response.data;
 };
 
@@ -57,7 +57,7 @@ export const updateCatchup = async (id, updatedFields) => {
  * Delete a single catchup by ID
  */
 export const deleteCatchup = async (id) => {
-  const response = await axios.delete(`/catchups/${id}`);
+  const response = await api.delete(`/catchups/${id}`);
   return response.data;
 };
 
@@ -65,6 +65,6 @@ export const deleteCatchup = async (id) => {
  * Bulk delete catchups by array of IDs
  */
 export const bulkDeleteCatchups = async (ids) => {
-  const response = await axios.delete("/catchups", { data: { ids } });
+  const response = await api.delete("/catchups", { data: { ids } });
   return response.data;
 };

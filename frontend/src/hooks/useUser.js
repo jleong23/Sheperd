@@ -12,7 +12,8 @@ export default function useUser(userId) {
     if (!userId) return;
 
     // Prevent fetching if we know it will fail (backend only allows fetching own profile)
-    if (authUser && authUser.id !== Number(userId)) {
+    // Supabase IDs are strings (UUIDs), so we do not cast to Number()
+    if (authUser && authUser.id !== userId) {
       console.warn(`Skipping fetch for user ${userId} (not authorized)`);
       setError(new Error("Cannot fetch other users"));
       setIsLoading(false);
