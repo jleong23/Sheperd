@@ -13,8 +13,13 @@ import api from "./index";
  * @param {number} params.limit
  */
 export const getEvents = async (params = {}) => {
-  const response = await api.get("/events", { params });
-  return response.data;
+  try {
+    const response = await api.get("/events", { params });
+    return response.data;
+  } catch (err) {
+    console.error("Failed to fetch events:", err);
+    throw err;
+  }
 };
 
 /**
@@ -22,8 +27,13 @@ export const getEvents = async (params = {}) => {
  * @param {number|string} id
  */
 export const getEventById = async (id) => {
-  const response = await api.get(`/events/${id}`);
-  return response.data;
+  try {
+    const response = await api.get(`/events/${id}`);
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to fetch event ${id}:`, err);
+    throw err;
+  }
 };
 
 /**
@@ -31,8 +41,13 @@ export const getEventById = async (id) => {
  * @param {object} event - Event object
  */
 export const addEvent = async (event) => {
-  const response = await api.post("/events", event);
-  return response.data;
+  try {
+    const response = await api.post("/events", event);
+    return response.data;
+  } catch (err) {
+    console.error("Failed to add event:", err);
+    throw err;
+  }
 };
 
 /**
@@ -41,8 +56,13 @@ export const addEvent = async (event) => {
  * @param {object} updatedFields - Partial event object
  */
 export const updateEvent = async (id, updatedFields) => {
-  const response = await api.patch(`/events/${id}`, updatedFields);
-  return response.data;
+  try {
+    const response = await api.patch(`/events/${id}`, updatedFields);
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to update event ${id}:`, err);
+    throw err;
+  }
 };
 
 /**
@@ -50,8 +70,13 @@ export const updateEvent = async (id, updatedFields) => {
  * @param {number|string} id
  */
 export const deleteEvent = async (id) => {
-  const response = await api.delete(`/events/${id}`);
-  return response.data;
+  try {
+    const response = await api.delete(`/events/${id}`);
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to delete event ${id}:`, err);
+    throw err;
+  }
 };
 
 /**
@@ -59,7 +84,12 @@ export const deleteEvent = async (id) => {
  * @param {Array<number|string>} ids
  */
 export const bulkDeleteEvents = async (ids) => {
-  // For DELETE with body, axios uses the `data` property
-  const response = await api.delete("/events", { data: { ids } });
-  return response.data;
+  try {
+    // For DELETE with body, axios uses the `data` property
+    const response = await api.delete("/events", { data: { ids } });
+    return response.data;
+  } catch (err) {
+    console.error("Failed bulk delete events:", err);
+    throw err;
+  }
 };

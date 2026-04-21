@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const supabase = require("../supabaseClient");
+const createSupabaseClient = require("../supabaseClient");
 
 // Helper to format Date objects to YYYY-MM-DD using local time
 // This prevents timezone shifts that occur when using toISOString() on a local Date object
@@ -20,6 +20,7 @@ const formatDate = (d) => {
  * @access Public
  */
 router.get("/", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { year, name, startDate, endDate, sortBy, order, page, limit } =
       req.query;
@@ -27,7 +28,7 @@ router.get("/", async (req, res) => {
     let query = supabase
       .from("events")
       .select("*", { count: "exact" })
-      .eq("user_id", req.userId);
+      .eq("user_id", req.user.id);
 
     // --------------------
     // Filtering
@@ -112,6 +113,7 @@ router.get("/", async (req, res) => {
  * @access Public
  */
 router.get("/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params;
 
@@ -119,7 +121,7 @@ router.get("/:id", async (req, res) => {
       .from("events")
       .select("*")
       .eq("eventid", id)
-      .eq("user_id", req.userId)
+      .eq("user_id", req.user.id)
       .single();
 
     if (error || !data) {
@@ -154,6 +156,7 @@ router.get("/:id", async (req, res) => {
  * @access Public
  */
 router.post("/", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const {
       eventname,
@@ -193,7 +196,7 @@ router.post("/", async (req, res) => {
         eventendtime: eventendtime || null,
         eventphoto: eventphoto || null,
         eventassignedpeople: eventassignedpeople || null,
-        user_id: req.userId,
+        user_id: req.user.id,
       })
       .select()
       .single();
@@ -223,6 +226,7 @@ router.post("/", async (req, res) => {
  * @access Public
  */
 router.patch("/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params;
     const {
@@ -274,7 +278,7 @@ router.patch("/:id", async (req, res) => {
         updated_at: new Date(),
       })
       .eq("eventid", id)
-      .eq("user_id", req.userId)
+      .eq("user_id", req.user.id)
       .select()
       .single();
 
@@ -306,17 +310,30 @@ router.patch("/:id", async (req, res) => {
  * @access Public
  */
 router.delete("/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   const { id } = req.params;
-  const { data, error } = await supabase
-    .from("events")
-    .delete()
-    .eq("eventid", id)
-    .eq("user_id", req.userId)
-    .select();
-  if (error || data.length === 0)
-    return res.status(404).json({ error: "Event record not found" });
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .delete()
+      .eq("eventid", id)
+      .eq("user_id", req.user.id)
+      .select();
 
-  res.json({ message: "Event deleted successfully", deleted: data[0] });
+    if (error) {
+      console.error("Error deleting event record:", error);
+      return res.status(500).json({ error: "Failed to delete event record" });
+    }
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "Event record not found" });
+    }
+
+    res.json({ message: "Event deleted successfully", deleted: data[0] });
+  } catch (err) {
+    console.error("Error in delete route:", err);
+    res.status(500).json({ error: "Failed to delete event record" });
+  }
 });
 
 /**
@@ -325,22 +342,33 @@ router.delete("/:id", async (req, res) => {
  * @access Public
  */
 router.delete("/", async (req, res) => {
-  const { ids } = req.body;
-  if (!Array.isArray(ids) || ids.length === 0)
-    return res.status(400).json({ error: "No IDs provided" });
+  const supabase = createSupabaseClient(req);
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0)
+      return res.status(400).json({ error: "No IDs provided" });
 
-  const { data, error } = await supabase
-    .from("events")
-    .delete()
-    .in("eventid", ids)
-    .eq("user_id", req.userId)
-    .select();
+    const { data, error } = await supabase
+      .from("events")
+      .delete()
+      .in("eventid", ids)
+      .eq("user_id", req.user.id)
+      .select();
 
-  res.json({
-    message: "Events deleted successfully",
-    deletedCount: data ? data.length : 0,
-    deleted: data,
-  });
+    if (error) {
+      console.error("Error bulk deleting event records:", error);
+      return res.status(500).json({ error: "Failed to bulk delete event records" });
+    }
+
+    res.json({
+      message: "Events deleted successfully",
+      deletedCount: data ? data.length : 0,
+      deleted: data,
+    });
+  } catch (err) {
+    console.error("Error in bulk delete route:", err);
+    res.status(500).json({ error: "Failed to bulk delete event records" });
+  }
 });
 
 module.exports = router;
