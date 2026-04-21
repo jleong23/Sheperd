@@ -11,8 +11,13 @@ supabase.auth.onAuthStateChange((_event, session) => {
   cachedSession = session;
 });
 
-api.interceptors.request.use((config) => {
-  const token = cachedSession?.access_token;
+api.interceptors.request.use(async (config) => {
+  let token = cachedSession?.access_token;
+
+  if (!token) {
+    const { data } = await supabase.auth.getSession();
+    token = data.session?.access_token;
+  }
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
