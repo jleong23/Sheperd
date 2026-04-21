@@ -1,20 +1,21 @@
 const express = require("express");
 const router = express.Router();
-const supabase = require("../supabaseClient");
+const createSupabaseClient = require("../supabaseClient");
 
 /**
  * @route GET /attendance
  * @desc Get attendance records with optional year and term filters
  * @access Public
  */
-router.get("/", async (req, res) => {
+router.get("/",async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { year, term } = req.query;
 
     let query = supabase
-      .from("attendance")
-      .select("*")
-      .eq("user_id", req.userId);
+        .from("attendance")
+        .select("*")
+        .eq("user_id", req.user.id);
 
     // Filter by year if provided
     if (year) {
@@ -43,13 +44,14 @@ router.get("/", async (req, res) => {
  * @access Public
  */
 router.get("/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params;
     const { data, error } = await supabase
       .from("attendance")
       .select("*")
       .eq("id", id)
-      .eq("user_id", req.userId)
+      .eq("user_id", req.user.id)
       .single();
 
     if (error || !data) {
@@ -68,6 +70,7 @@ router.get("/:id", async (req, res) => {
  * @access Public
  */
 router.post("/", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { kidId, week, status, reason, name, term, year } = req.body;
 
@@ -84,7 +87,7 @@ router.post("/", async (req, res) => {
       .from("kids")
       .select("name")
       .eq("id", kidId)
-      .eq("user_id", req.userId)
+      .eq("user_id", req.user.id)
       .single();
 
     if (kidError || !kidCheck) {
@@ -103,7 +106,7 @@ router.post("/", async (req, res) => {
         reason: reason || null,
         term: term || null,
         year: year || null,
-        user_id: req.userId,
+        user_id: req.user.id,
       })
       .select()
       .single();
@@ -126,6 +129,7 @@ router.post("/", async (req, res) => {
  * @access Public
  */
 router.patch("/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params;
     const { status, reason } = req.body;
@@ -150,7 +154,7 @@ router.patch("/:id", async (req, res) => {
       .from("attendance")
       .update(updatePayload)
       .eq("id", id)
-      .eq("user_id", req.userId)
+      .eq("user_id", req.user.id)
       .select()
       .single();
 
@@ -175,13 +179,14 @@ router.patch("/:id", async (req, res) => {
  * @access Public
  */
 router.delete("/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params;
     const { error } = await supabase
       .from("attendance")
       .delete()
       .eq("id", id)
-      .eq("user_id", req.userId);
+      .eq("user_id", req.user.id);
 
     if (error) {
       return res.status(404).json({ error: "Attendance record not found" });
@@ -201,6 +206,7 @@ router.delete("/:id", async (req, res) => {
  * @access Public
  */
 router.post("/year", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { year } = req.body;
 
@@ -211,7 +217,7 @@ router.post("/year", async (req, res) => {
       .from("attendance")
       .select("*", { count: "exact", head: true })
       .eq("year", year)
-      .eq("user_id", req.userId);
+      .eq("user_id", req.user.id);
     if (countError) throw countError;
     if (count > 0) {
       return res.status(400).json({ error: `Year ${year} already exists.` });
@@ -221,7 +227,7 @@ router.post("/year", async (req, res) => {
     const { data: kids, error: kidsError } = await supabase
       .from("kids")
       .select("id, name")
-      .eq("user_id", req.userId);
+      .eq("user_id", req.user.id);
     if (kidsError) throw kidsError;
 
     // By default, term 1 and 10 weeks
@@ -240,7 +246,7 @@ router.post("/year", async (req, res) => {
           reason: "",
           term,
           year,
-          user_id: req.userId,
+          user_id: req.user.id,
         });
       }
     }
@@ -268,6 +274,7 @@ router.post("/year", async (req, res) => {
  * @access Public
  */
 router.post("/term", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { year, term, weeks = 10 } = req.body;
 
@@ -278,7 +285,7 @@ router.post("/term", async (req, res) => {
     const { data: kids, error: kidsError } = await supabase
       .from("kids")
       .select("id, name")
-      .eq("user_id", req.userId);
+      .eq("user_id", req.user.id);
     if (kidsError) throw kidsError;
 
     // Generate attendance records
@@ -293,7 +300,7 @@ router.post("/term", async (req, res) => {
           reason: "",
           term,
           year,
-          user_id: req.userId,
+          user_id: req.user.id,
         });
       }
     }
@@ -322,13 +329,14 @@ router.post("/term", async (req, res) => {
  * @access public
  */
 router.delete("/year/:year", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { year } = req.params;
     const { error } = await supabase
       .from("attendance")
       .delete()
       .eq("year", year)
-      .eq("user_id", req.userId);
+      .eq("user_id", req.user.id);
     if (error) {
       return res.status(404).json({ error: "Year not found" });
     }
@@ -346,6 +354,7 @@ router.delete("/year/:year", async (req, res) => {
  * @access public
  */
 router.delete("/term/:year/:term", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { year, term } = req.params;
 
@@ -359,7 +368,7 @@ router.delete("/term/:year/:term", async (req, res) => {
       .delete({ count: "exact" })
       .eq("year", Number(year))
       .eq("term", Number(term))
-      .eq("user_id", req.userId);
+      .eq("user_id", req.user.id);
 
     if (error || count === 0) {
       return res.status(404).json({

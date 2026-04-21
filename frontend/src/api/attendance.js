@@ -23,9 +23,14 @@ export async function fetchAttendance(year, term) {
  * Update status of a specific attendance record
  * PATCH /attendance/:recordId
  */
-export async function updateAttendanceStatus(recordId, status) {
-  const response = await api.patch(`/attendance/${recordId}`, { status });
-  return response.data; // returns updated attendance record
+export async function updateAttendance(recordId, updates) {
+  try {
+    const response = await api.patch(`/attendance/${recordId}`, updates);
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to update attendance ${recordId}:`, err);
+    throw err;
+  }
 }
 
 /**
@@ -33,8 +38,13 @@ export async function updateAttendanceStatus(recordId, status) {
  * POST /attendance/year
  */
 export async function addYear(year) {
-  const response = await api.post("/attendance/year", { year });
-  return response.data; // returns created year info
+  try {
+    const response = await api.post("/attendance/year", { year });
+    return response.data;
+  } catch (err) {
+    console.error("Failed to add year:", err);
+    throw err;
+  }
 }
 
 /**
@@ -43,8 +53,13 @@ export async function addYear(year) {
  * Default weeks = 10
  */
 export async function addTerm(year, term, weeks = 10) {
-  const response = await api.post("/attendance/term", { year, term, weeks });
-  return response.data; // returns created term info
+  try {
+    const response = await api.post("/attendance/term", { year, term, weeks });
+    return response.data;
+  } catch (err) {
+    console.error("Failed to add term:", err);
+    throw err;
+  }
 }
 
 /**
@@ -52,6 +67,11 @@ export async function addTerm(year, term, weeks = 10) {
  * DELETE /attendance/term/:year/:term
  */
 export async function deleteTerm(year, term) {
-  const response = await api.delete(`/attendance/term/${year}/${term}`);
-  return response.data; // returns result confirmation
+  try {
+    const response = await api.delete(`/attendance/term/${year}/${term}`);
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to delete term ${term} for year ${year}:`, err);
+    throw err;
+  }
 }

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import AttendanceList from "../../components/attendance/AttendanceList.jsx";
 import AttendanceSort from "../../components/attendance/AttendanceSort.jsx";
 import AddYearTerm from "../../components/attendance/AddYearTerm.jsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.jsx";
+import { fetchAttendance, updateAttendance } from "../../api/attendance.js";
+import { fetchKids } from "../../api/kids.js";
 
 export default function Attendance() {
   const [selectedYear, setSelectedYear] = useState(null);
@@ -34,8 +35,13 @@ export default function Attendance() {
     }
 
     try {
-      const res = await axios.get("/attendance");
-      const normalized = res.data.map((r) => ({
+      const data = await fetchAttendance();
+      if (!Array.isArray(data)) {
+        console.error("Attendance is not an array:", data);
+        return;
+      }
+
+      const normalized = data.map((r) => ({
         ...r,
         kidId: r.kidid ?? r.kidId,
       }));
@@ -50,9 +56,8 @@ export default function Attendance() {
       setLoading(true);
       await fetchAllAttendance();
       try {
-        const res = await axios.get("/kids");
-        console.log("Fetched kids:", res.data); // DEBUG
-        setKids(res.data);
+        const data = await fetchKids();
+        setKids(data);
       } catch (err) {
         console.error("Failed to fetch kids:", err);
       } finally {
@@ -123,10 +128,8 @@ export default function Attendance() {
     if (!record) return;
 
     try {
-      const updated = await axios.patch(`/attendance/${recordId}`, {
-        status: newStatus,
-      });
-      updateAttendanceRecord(updated.data);
+      const updated = await updateAttendance(recordId, { status: newStatus });
+      updateAttendanceRecord(updated);
     } catch (err) {
       console.error("Failed to update attendance:", err);
     }
@@ -146,10 +149,10 @@ export default function Attendance() {
     if (!record) return;
 
     try {
-      const updated = await axios.patch(`/attendance/${recordId}`, {
+      const updated = await updateAttendance(recordId, {
         reason: record.reason,
       });
-      updateAttendanceRecord(updated.data);
+      updateAttendanceRecord(updated);
       alert(`Reason for ${record.name} updated!`);
     } catch (err) {
       console.error("Failed to update reason:", err);
