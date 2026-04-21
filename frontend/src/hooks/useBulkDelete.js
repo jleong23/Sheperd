@@ -1,5 +1,5 @@
 import { useState } from "react";
-import api from "../api";
+import { deleteKid } from "../api/kids";
 
 export function useBulkDelete(kids, refresh) {
   const [selected, setSelected] = useState([]);
@@ -27,7 +27,7 @@ export function useBulkDelete(kids, refresh) {
     if (!confirmed) return;
 
     try {
-      await Promise.all(selected.map((id) => api.delete(`/kids/${id}`)));
+      await Promise.all(selected.map((id) => deleteKid(id)));
 
       alert(`${selected.length} kids deleted successfully`);
       setSelected([]);
