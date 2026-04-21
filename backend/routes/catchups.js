@@ -66,7 +66,7 @@ router.get("/", async (req, res) => {
     // --------------------
     // Sorting
     // --------------------
-    const allowedSort = ["catchupdate", "kidid", "createdat"];
+    const allowedSort = ["catchupdate", "kidid", "createdate"];
     const sortColumn = allowedSort.includes(sortBy) ? sortBy : "catchupdate";
     const sortOrder = order === "asc";
 
@@ -101,8 +101,8 @@ router.get("/", async (req, res) => {
         catchupdate: formatDate(r.catchupdate),
         catchupstarttime: r.catchupstarttime?.slice(0, 5),
         catchupendtime: r.catchupendtime?.slice(0, 5),
-        updatedat: r.updatedat,
-        createdat: r.createdat,
+        updatedate: r.updatedate,
+        createdate: r.createdate,
       };
     });
 
@@ -147,8 +147,8 @@ router.get("/:id", async (req, res) => {
       catchupdate: formatDate(data.catchupdate),
       catchupstarttime: data.catchupstarttime?.slice(0, 5),
       catchupendtime: data.catchupendtime?.slice(0, 5),
-      updatedat: data.updatedat,
-      createdat: data.createdat,
+      updatedate: data.updatedate,
+      createdate: data.createdate,
     };
 
     res.json(row);
@@ -279,7 +279,7 @@ router.patch("/:id", async (req, res) => {
         catchupendtime,
         catchuppurpose,
         catchupcomments,
-        updatedat: new Date(),
+        updatedate: new Date(),
       })
       .eq("catchupid", id)
       .eq("user_id", req.user.id)
@@ -295,7 +295,7 @@ router.patch("/:id", async (req, res) => {
       catchupdate: formatDate(data.catchupdate),
       catchupstarttime: data.catchupstarttime?.slice(0, 5),
       catchupendtime: data.catchupendtime?.slice(0, 5),
-      updatedat: data.updatedat,
+      updatedate: data.updatedate,
     });
   } catch (err) {
     console.error("Error updating catchup record:", err);

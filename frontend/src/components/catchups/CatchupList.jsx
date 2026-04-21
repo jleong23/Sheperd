@@ -29,7 +29,7 @@ export default function CatchupList() {
 
   return (
     <div className="p-6">
-      <h1 className="mb-4 text-3xl font-semibold">Catchup History</h1>
+      <h1 className="mb-4 text-3xl font-semibold">Catchup Logs</h1>
 
       <AddCatchup
         onClick={() => {

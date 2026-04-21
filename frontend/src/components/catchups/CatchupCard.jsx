@@ -7,13 +7,12 @@ export function CatchupCard({ catchup, onClick }) {
       onClick={onClick}
       className="cursor-pointer rounded-lg border p-4 shadow-sm transition hover:shadow-md hover:bg-gray-50"
     >
-      <h2 className="font-bold">{catchup.kidname}</h2>
+      <h2 className="font-bold">{catchup.kidName}</h2>
       <div className="flex flex-wrap gap-2 my-1">
-        <KidStatusBadge status={catchup.kidstatus} />
-        {!!catchup.kidbaptised && <KidFlagBadge flag="BAPTISED" />}
-        {!!catchup.kidsundayregulars && <KidFlagBadge flag="SUNDAY_REGULAR" />}
+        <KidStatusBadge status={catchup.kidStatus} />
+        {!!catchup.kidBaptised && <KidFlagBadge flag="BAPTISED" />}
+        {!!catchup.kidSundayRegulars && <KidFlagBadge flag="SUNDAY_REGULAR" />}
       </div>
-      <h5 className="text-sm">Kid ID: {catchup.kidid}</h5>
       <p className="font-medium text-gray-800">
         Purpose: {catchup.catchuppurpose}
       </p>
