@@ -1,27 +1,34 @@
-/**
- * Auth Middleware - Protect private routes
- */
+const { createClient } = require("@supabase/supabase-js");
 
-const jwt = require("jsonwebtoken");
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY, // anon key is fine here
+);
 
-const requireAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization; // Read Authorization header
-
-  // Ensure Bearer token is present
-  if (!authHeader?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  // Extract token from header
-  const token = authHeader.split(" ")[1];
-
+const requireAuth = async (req, res, next) => {
   try {
-    // Verify token and decode payload
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.sub; // Supabase JWTs use 'sub' for the user ID (UUID)
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Missing token" });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data?.user) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    // THIS is your real authenticated user
+    req.user = data.user;
+    req.userId = data.user.id;
 
     next();
-  } catch (error) {
-    res.status(401).json({ error: "Invalid token" });
+  } catch (err) {
+    console.error("Auth middleware error:", err);
+    res.status(401).json({ error: "Unauthorized" });
   }
 };
 

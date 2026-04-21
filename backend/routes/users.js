@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
     const { data, error } = await supabase
       .from("users")
       .select("id, email")
-      .eq("id", req.userId)
+      .eq("id", req.user.id)
       .single();
     if (error) throw error;
     res.json(data);
@@ -33,7 +33,7 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params; // Get ID from URL parameters
 
     // Security check: A user can only fetch their own data
-    if (id !== req.userId) {
+    if (id !== req.user.id) {
       return res
         .status(403)
         .json({ error: "Forbidden: You can only access your own data." });

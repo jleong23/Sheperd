@@ -24,6 +24,9 @@ import KidProfile from "./components/kids/KidProfile";
 import Footer from "./components/ui/Footer";
 import NewPeople from "./components/newPeople/NewPeople";
 
+import { useEffect } from "react";
+import { supabase } from "./supabaseClient";
+
 // Helper component to protect routes
 const PrivateRoute = ({ children }) => {
   const { token, loading } = useAuth();
@@ -70,6 +73,17 @@ function AppRoutes() {
   );
 }
 export default function App() {
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+
+      console.log("SESSION:", data.session);
+      console.log("ACCESS TOKEN:", data.session?.access_token);
+      console.log("ERROR:", error);
+    };
+
+    checkSession();
+  }, []);
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       <AuthProvider>

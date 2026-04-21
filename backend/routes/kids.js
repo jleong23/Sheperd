@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const supabase = require("../supabaseClient");
+const createSupabaseClient = require("../supabaseClient");
 
 /**
  * @route GET /kids
@@ -8,13 +8,13 @@ const supabase = require("../supabaseClient");
  * @access Public
  */
 router.get("/", async (req, res) => {
-  try {
+    const supabase = createSupabaseClient(req);
+    try {
     const { status } = req.query;
 
     let query = supabase
       .from("kids")
       .select("*")
-      .eq("user_id", req.userId)
       .order("id");
 
     if (status && ["CORE", "FRINGE", "NP"].includes(status)) {
@@ -36,24 +36,22 @@ router.get("/", async (req, res) => {
  * @access Public
  */
 router.get("/stats", async (req, res) => {
-  try {
+    const supabase = createSupabaseClient(req);
+    try {
     const { count: total_kids, error: totalError } = await supabase
       .from("kids")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", req.userId);
     if (totalError) throw totalError;
 
     const { count: regular_kids, error: regularError } = await supabase
       .from("kids")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", req.userId)
       .eq("sunday_regulars", true);
     if (regularError) throw regularError;
 
     const { count: baptised_kids, error: baptisedError } = await supabase
       .from("kids")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", req.userId)
       .eq("baptised", true);
     if (baptisedError) throw baptisedError;
 
@@ -70,14 +68,14 @@ router.get("/stats", async (req, res) => {
  * @access Public
  */
 router.get("/:id", async (req, res) => {
-  try {
+    const supabase = createSupabaseClient(req);
+    try {
     const { id } = req.params; // Get the ID from URL parameters
-    const { data, error } = await supabase
-      .from("kids")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", req.userId)
-      .single();
+      const { data, error } = await supabase
+          .from("kids")
+          .select("*")
+          .eq("id", id)
+          .single();
 
     if (error || !data) {
       // If no kid is found
@@ -96,7 +94,8 @@ router.get("/:id", async (req, res) => {
  * @access Public
  */
 router.post("/", async (req, res) => {
-  try {
+    const supabase = createSupabaseClient(req);
+    try {
     const {
       name,
       birthday,
@@ -119,25 +118,24 @@ router.post("/", async (req, res) => {
     }
 
     // Insert new kid into the database
-    const { data, error } = await supabase
-      .from("kids")
-      .insert({
-        name,
-        birthday: birthday || null,
-        school: school || null,
-        phone: phone || null,
-        parent_phone: parent_phone || null,
-        parentname: parentname || null,
-        address: address || null,
-        status_code: status_code || "NP",
-        baptised: baptised || false,
-        sunday_regulars: sunday_regulars || false,
-        first_call: first_call || false,
-        second_call: second_call || false,
-        first_call_feedback: first_call_feedback || "",
-        second_call_feedback: second_call_feedback || "",
-        user_id: req.userId,
-      })
+      const { data, error } = await supabase
+          .from("kids")
+          .insert({
+              name,
+              birthday: birthday || null,
+              school: school !== undefined ? school : null,
+              phone: phone || null,
+              parent_phone: parent_phone || null,
+              parentname: parentname || null,
+              address: address || null,
+              status_code: status_code || "NP",
+              baptised: baptised || false,
+              sunday_regulars: sunday_regulars || false,
+              first_call: first_call || false,
+              second_call: second_call || false,
+              first_call_feedback: first_call_feedback || "",
+              second_call_feedback: second_call_feedback || "",
+          })
       .select()
       .single();
 
@@ -159,7 +157,8 @@ router.post("/", async (req, res) => {
  * @access Public
  */
 router.put("/:id", async (req, res) => {
-  try {
+    const supabase = createSupabaseClient(req);
+    try {
     const { id } = req.params;
     const {
       name,
@@ -187,7 +186,7 @@ router.put("/:id", async (req, res) => {
       .update({
         name,
         birthday: birthday || null,
-        school: school,
+        school: school !== undefined ? school : null,
         parentname: parentname,
         phone: phone,
         parent_phone: parent_phone,
@@ -202,7 +201,6 @@ router.put("/:id", async (req, res) => {
         updated_at: new Date(),
       })
       .eq("id", id)
-      .eq("user_id", req.userId)
       .select()
       .single();
 
@@ -227,14 +225,14 @@ router.put("/:id", async (req, res) => {
  * @access Public
  */
 router.delete("/:id", async (req, res) => {
-  try {
+    const supabase = createSupabaseClient(req);
+    try {
     const { id } = req.params;
 
     const { data, error } = await supabase
       .from("kids")
       .delete()
       .eq("id", id)
-      .eq("user_id", req.userId)
       .select();
 
     if (error) {
