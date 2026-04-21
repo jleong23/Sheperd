@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const supabase = require("../supabaseClient");
+const createSupabaseClient = require("../supabaseClient");
 
 // Helper to format Date objects to YYYY-MM-DD using local time
 // This prevents timezone shifts that occur when using toISOString() on a local Date object
@@ -19,6 +19,7 @@ const formatDate = (d) => {
  * @access Public
  */
 router.get("/", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const {
       kidid,
@@ -37,7 +38,7 @@ router.get("/", async (req, res) => {
       .select("*, kids(name, status_code, baptised, sunday_regulars)", {
         count: "exact",
       })
-      .eq("user_id", req.userId);
+      .eq("user_id", req.user.id);
 
     // --------------------
     // Filtering
@@ -126,6 +127,7 @@ router.get("/", async (req, res) => {
  * @access Public
  */
 router.get("/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params;
 
@@ -133,7 +135,7 @@ router.get("/:id", async (req, res) => {
       .from("catchups")
       .select("*")
       .eq("catchupid", id)
-      .eq("user_id", req.userId)
+      .eq("user_id", req.user.id)
       .single();
 
     if (error || !data) {
@@ -162,6 +164,7 @@ router.get("/:id", async (req, res) => {
  * @access Public
  */
 router.post("/", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const {
       kidid,
@@ -185,7 +188,7 @@ router.post("/", async (req, res) => {
       .from("kids")
       .select("id")
       .eq("id", kidid)
-      .eq("user_id", req.userId)
+      .eq("user_id", req.user.id)
       .single();
     if (kidError || !kidCheck) {
       return res
@@ -202,7 +205,7 @@ router.post("/", async (req, res) => {
         catchupendtime: catchupendtime || null,
         catchuppurpose: catchuppurpose || null,
         catchupcomments: catchupcomments || null,
-        user_id: req.userId,
+        user_id: req.user.id,
       })
       .select()
       .single();
@@ -226,6 +229,7 @@ router.post("/", async (req, res) => {
  * @access Public
  */
 router.patch("/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params;
     const {
@@ -234,7 +238,7 @@ router.patch("/:id", async (req, res) => {
       catchupstarttime,
       catchupendtime,
       catchuppurpose,
-      catchupcomments,
+      catchupcomments
     } = req.body;
 
     // Validate at least one field is provided
@@ -257,7 +261,7 @@ router.patch("/:id", async (req, res) => {
         .from("kids")
         .select("id")
         .eq("id", kidid)
-        .eq("user_id", req.userId)
+        .eq("user_id", req.user.id)
         .single();
       if (kidError || !kidCheck) {
         return res
@@ -278,7 +282,7 @@ router.patch("/:id", async (req, res) => {
         updatedat: new Date(),
       })
       .eq("catchupid", id)
-      .eq("user_id", req.userId)
+      .eq("user_id", req.user.id)
       .select()
       .single();
 
@@ -305,20 +309,33 @@ router.patch("/:id", async (req, res) => {
  * @access Public
  */
 router.delete("/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   const { id } = req.params;
-  const { data, error } = await supabase
-    .from("catchups")
-    .delete()
-    .eq("catchupid", id)
-    .eq("user_id", req.userId)
-    .select();
-  if (error || data.length === 0)
-    return res.status(404).json({ error: "Catchup record not found" });
+  try {
+    const { data, error } = await supabase
+      .from("catchups")
+      .delete()
+      .eq("catchupid", id)
+      .eq("user_id", req.user.id)
+      .select();
 
-  res.json({
-    message: "Catchup deleted successfully",
-    deleted: data[0],
-  });
+    if (error) {
+      console.error("Error deleting catchup record:", error);
+      return res.status(500).json({ error: "Failed to delete catchup record" });
+    }
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: "Catchup record not found" });
+    }
+
+    res.json({
+      message: "Catchup deleted successfully",
+      deleted: data[0],
+    });
+  } catch (err) {
+    console.error("Error in delete route:", err);
+    res.status(500).json({ error: "Failed to delete catchup record" });
+  }
 });
 
 /**
@@ -327,22 +344,33 @@ router.delete("/:id", async (req, res) => {
  * @access Public
  */
 router.delete("/", async (req, res) => {
-  const { ids } = req.body;
-  if (!Array.isArray(ids) || ids.length === 0)
-    return res.status(400).json({ error: "No IDs provided" });
+  const supabase = createSupabaseClient(req);
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0)
+      return res.status(400).json({ error: "No IDs provided" });
 
-  const { data, error } = await supabase
-    .from("catchups")
-    .delete()
-    .in("catchupid", ids)
-    .eq("user_id", req.userId)
-    .select();
+    const { data, error } = await supabase
+      .from("catchups")
+      .delete()
+      .in("catchupid", ids)
+      .eq("user_id", req.user.id)
+      .select();
 
-  res.json({
-    message: "Catchups deleted successfully",
-    deletedCount: data ? data.length : 0,
-    deleted: data,
-  });
+    if (error) {
+      console.error("Error bulk deleting catchup records:", error);
+      return res.status(500).json({ error: "Failed to bulk delete catchup records" });
+    }
+
+    res.json({
+      message: "Catchups deleted successfully",
+      deletedCount: data ? data.length : 0,
+      deleted: data,
+    });
+  } catch (err) {
+    console.error("Error in bulk delete route:", err);
+    res.status(500).json({ error: "Failed to bulk delete catchup records" });
+  }
 });
 
 module.exports = router;
