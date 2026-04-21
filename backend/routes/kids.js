@@ -8,8 +8,8 @@ const createSupabaseClient = require("../supabaseClient");
  * @access Public
  */
 router.get("/", async (req, res) => {
-    const supabase = createSupabaseClient(req);
-    try {
+  const supabase = createSupabaseClient(req);
+  try {
     const { status } = req.query;
 
     let query = supabase
@@ -36,11 +36,11 @@ router.get("/", async (req, res) => {
  * @access Public
  */
 router.get("/stats", async (req, res) => {
-    const supabase = createSupabaseClient(req);
-    try {
+  const supabase = createSupabaseClient(req);
+  try {
     const { count: total_kids, error: totalError } = await supabase
       .from("kids")
-      .select("*", { count: "exact", head: true })
+      .select("*", { count: "exact", head: true });
     if (totalError) throw totalError;
 
     const { count: regular_kids, error: regularError } = await supabase
@@ -68,14 +68,14 @@ router.get("/stats", async (req, res) => {
  * @access Public
  */
 router.get("/:id", async (req, res) => {
-    const supabase = createSupabaseClient(req);
-    try {
+  const supabase = createSupabaseClient(req);
+  try {
     const { id } = req.params; // Get the ID from URL parameters
-      const { data, error } = await supabase
-          .from("kids")
-          .select("*")
-          .eq("id", id)
-          .single();
+    const { data, error } = await supabase
+      .from("kids")
+      .select("*")
+      .eq("id", id)
+      .single();
 
     if (error || !data) {
       // If no kid is found
@@ -94,8 +94,8 @@ router.get("/:id", async (req, res) => {
  * @access Public
  */
 router.post("/", async (req, res) => {
-    const supabase = createSupabaseClient(req);
-    try {
+  const supabase = createSupabaseClient(req);
+  try {
     const {
       name,
       birthday,
@@ -157,8 +157,8 @@ router.post("/", async (req, res) => {
  * @access Public
  */
 router.put("/:id", async (req, res) => {
-    const supabase = createSupabaseClient(req);
-    try {
+  const supabase = createSupabaseClient(req);
+  try {
     const { id } = req.params;
     const {
       name,
@@ -225,31 +225,72 @@ router.put("/:id", async (req, res) => {
  * @access Public
  */
 router.delete("/:id", async (req, res) => {
-    const supabase = createSupabaseClient(req);
     try {
-    const { id } = req.params;
+        const { id } = req.params;
+        console.log("AUTH HEADER:", req.headers.authorization);
+
+        const supabase = createSupabaseClient(req);
+
+        const { data, error } = await supabase
+            .from("kids")
+            .delete()
+            .eq("id", id)
+            .select();
+
+        // 🧪 DEBUG 2: check Supabase response
+        console.log("DELETE RESULT:", { data, error });
+
+        if (error) {
+            console.error("Error deleting kid:", error);
+            return res.status(500).json({ error: error.message });
+        }
+
+        if (!data || data.length === 0) {
+            return res.status(404).json({
+                error: "Kid not found or you don't have permission to delete it.",
+            });
+        }
+
+        res.json({ message: "Kid deleted successfully", deleted: data[0] });
+    } catch (err) {
+        console.error("Error deleting kid:", err);
+        res.status(500).json({ error: "Failed to delete kid" });
+    }
+});
+
+/**
+ * @route DELETE /kids
+ * @desc Bulk delete kids
+ * @access Private
+ */
+router.delete("/", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: "Array of IDs is required" });
+    }
 
     const { data, error } = await supabase
       .from("kids")
       .delete()
-      .eq("id", id)
+      .in("id", ids)
+      .eq("user_id", req.user.id)
       .select();
 
     if (error) {
-      console.error("Error deleting kid:", error);
+      console.error("Error bulk deleting kids:", error);
       return res.status(500).json({ error: error.message });
     }
 
-    if (!data || data.length === 0) {
-      return res.status(404).json({
-        error: "Kid not found or you don't have permission to delete it.",
-      });
-    }
-
-    res.json({ message: "Kid deleted successfully", deleted: data[0] }); // Confirm deletion
+    res.json({
+      message: "Kids deleted successfully",
+      deletedCount: data ? data.length : 0,
+      deleted: data,
+    });
   } catch (err) {
-    console.error("Error deleting kid:", err);
-    res.status(500).json({ error: "Failed to delete kid" });
+    console.error("Error bulk deleting kids:", err);
+    res.status(500).json({ error: "Failed to bulk delete kids" });
   }
 });
 

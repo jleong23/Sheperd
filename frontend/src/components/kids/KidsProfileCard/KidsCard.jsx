@@ -3,6 +3,7 @@ import KidDetails from "./KidDetails";
 import KidPhones from "./KidPhones";
 import { KidProfileImage } from "./KidProfileImage";
 import { Link } from "react-router-dom";
+import api from "../../../api/index.js";
 
 export default function KidsCard({
   kid,
@@ -18,19 +19,7 @@ export default function KidsCard({
     if (!confirmed) return;
 
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`http://localhost:4000/kids/${kid.id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || "Failed to delete kid");
-        return;
-      }
+      await api.delete(`/kids/${kid.id}`); // ✅ unified auth
       onKidDeleted?.();
     } catch (err) {
       console.error(err);

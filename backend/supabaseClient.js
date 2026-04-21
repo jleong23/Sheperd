@@ -5,14 +5,19 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
 const createSupabaseClient = (req) => {
-    const token = req?.headers?.authorization;
-    if (!token) {
-        console.warn("No Authorization header provided.")
-    }
+    const token = req.headers.authorization?.replace("Bearer ", "");
 
-    return createClient(SUPABASE_URL, SUPABASE_KEY, {
-        global: { headers: { Authorization: req.headers.authorization || "" } },
-    });
+    return createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_KEY,
+        {
+            global: {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            },
+        }
+    );
 };
 
 module.exports = createSupabaseClient;
