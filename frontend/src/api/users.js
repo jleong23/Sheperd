@@ -8,6 +8,11 @@ import api from "./index";
  * Sends GET request to /users/:id
  */
 export async function getUserProfile(id) {
-  const response = await api.get(`/users/${id}`);
-  return response.data;
+  try {
+    const response = await api.get(`/users/${id}`);
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to fetch user profile ${id}:`, err);
+    throw err;
+  }
 }

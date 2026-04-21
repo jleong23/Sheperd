@@ -8,9 +8,14 @@ import api from "./index";
  * Optional: filter by status (ALL, NP, etc.)
  */
 export async function fetchKids(status = "ALL") {
-  const params = status && status !== "ALL" ? { status } : {};
-  const response = await api.get("/kids", { params });
-  return response.data;
+  try {
+    const params = status && status !== "ALL" ? { status } : {};
+    const response = await api.get("/kids", { params });
+    return response.data;
+  } catch (err) {
+    console.error("Failed to fetch kids:", err);
+    throw err;
+  }
 }
 
 /**
@@ -18,8 +23,13 @@ export async function fetchKids(status = "ALL") {
  * POST kid data to /kids
  */
 export async function createKid(kidData) {
-  const response = await api.post("/kids", kidData);
-  return response.data;
+  try {
+    const response = await api.post("/kids", kidData);
+    return response.data;
+  } catch (err) {
+    console.error("Failed to create kid:", err);
+    throw err;
+  }
 }
 
 /**
@@ -27,16 +37,26 @@ export async function createKid(kidData) {
  * PUT updates to /kids/:id
  */
 export async function updateKid(id, updates) {
-  const response = await api.put(`/kids/${id}`, updates);
-  return response.data;
+  try {
+    const response = await api.put(`/kids/${id}`, updates);
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to update kid ${id}:`, err);
+    throw err;
+  }
 }
 
 /**
  * Fetch a single kid by ID
  */
 export async function fetchKidById(id) {
-  const response = await api.get(`/kids/${id}`);
-  return response.data;
+  try {
+    const response = await api.get(`/kids/${id}`);
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to fetch kid ${id}:`, err);
+    throw err;
+  }
 }
 
 /**
@@ -44,8 +64,13 @@ export async function fetchKidById(id) {
  * GET /kids/stats
  */
 export async function fetchKidStats() {
-  const response = await api.get("/kids/stats");
-  return response.data;
+  try {
+    const response = await api.get("/kids/stats");
+    return response.data;
+  } catch (err) {
+    console.error("Failed to fetch kid stats:", err);
+    throw err;
+  }
 }
 
 /**
@@ -53,8 +78,13 @@ export async function fetchKidStats() {
  * Default status = NP
  */
 export async function fetchNewPeopleKids(status = "NP") {
-  const response = await api.get("/kids", { params: { status } });
-  return response.data; // returns filtered array of kids
+  try {
+    const response = await api.get("/kids", { params: { status } });
+    return response.data;
+  } catch (err) {
+    console.error("Failed to fetch new people kids:", err);
+    throw err;
+  }
 }
 
 /**
@@ -62,6 +92,11 @@ export async function fetchNewPeopleKids(status = "NP") {
  * DELETE /kids/:id
  */
 export async function deleteKid(id) {
-  const response = await api.delete(`/kids/${id}`);
-  return response.data; // returns result confirmation
+  try {
+    const response = await api.delete(`/kids/${id}`);
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to delete kid ${id}:`, err);
+    throw err;
+  }
 }
