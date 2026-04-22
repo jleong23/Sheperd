@@ -12,6 +12,11 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://sheperd-ywyz.vercel.app"
+];
+
 // Import API route modules
 const kidsRoutes = require("./routes/kids");
 const attendanceRoutes = require("./routes/attendance");
@@ -26,12 +31,27 @@ const PORT = process.env.PORT || 4000; // uses the env variabel Port, else defau
 
 // Middleware should come BEFORE routes
 // enable CORS for front end
-app.use(
-  cors({
-    origin: "http://localhost:5173", // allow your React app
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  }),
-);
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "https://sheperd-ywyz.vercel.app"
+    ];
+
+    // allow server-to-server or curl requests
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
