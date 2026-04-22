@@ -33,17 +33,13 @@ const PORT = process.env.PORT || 4000; // uses the env variabel Port, else defau
 // enable CORS for front end
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      "http://localhost:5173",
-      "https://sheperd-ywyz.vercel.app"
-    ];
-
-    // allow server-to-server or curl requests
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+    const allowed =
+        origin.endsWith("vercel.app") ||
+        origin.includes("localhost");
+
+    if (allowed) return callback(null, true);
 
     return callback(new Error("Not allowed by CORS"));
   },
