@@ -1,10 +1,10 @@
 export default function CatchupToolbar({
   searchTerm,
   onSearchChange,
-  startDate,
-  endDate,
-  onStartDateChange,
-  onEndDateChange,
+  month,
+  year,
+  onMonthChange,
+  onYearChange,
   onClear,
 }) {
   return (
@@ -17,16 +17,33 @@ export default function CatchupToolbar({
           onChange={(e) => onSearchChange(e.target.value)}
           className="rounded-md border px-3 py-2 text-sm"
         />
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => onStartDateChange(e.target.value)}
+        {/* Month Selector */}
+        <select
+          value={month}
+          onChange={(e) => onMonthChange(e.target.value)}
           className="rounded-md border px-3 py-2 text-sm"
-        />
+        >
+          <option value="">All Months</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+
+        {/* Year Input */}
         <input
-          type="date"
-          value={endDate}
-          onChange={(e) => onEndDateChange(e.target.value)}
+          type="number"
+          placeholder="Year (e.g. 2026)"
+          value={year}
+          onChange={(e) => onYearChange(e.target.value)}
           className="rounded-md border px-3 py-2 text-sm"
         />
       </div>

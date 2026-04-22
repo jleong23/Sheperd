@@ -13,10 +13,10 @@ export default function CatchupList() {
     filteredCatchups,
     searchTerm,
     setSearchTerm,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
+    month,
+    setMonth,
+    year,
+    setYear,
     fetchCatchups,
     removeCatchup,
   } = useCatchups();
@@ -41,14 +41,14 @@ export default function CatchupList() {
       <CatchupToolbar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        startDate={startDate}
-        endDate={endDate}
-        onStartDateChange={setStartDate}
-        onEndDateChange={setEndDate}
+        month={month}
+        year={year}
+        onMonthChange={setMonth}
+        onYearChange={setYear}
         onClear={() => {
           setSearchTerm("");
-          setStartDate("");
-          setEndDate("");
+          setMonth("");
+          setYear("");
         }}
       />
 
