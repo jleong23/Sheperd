@@ -119,7 +119,7 @@ CREATE TABLE public.attendance (
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     birthday date,
-    user_id integer NOT NULL
+    user_id uuid NOT NULL
 );
 
 
@@ -183,7 +183,7 @@ CREATE TABLE public.catchups (
     catchupcomments text,
     createdat timestamp without time zone DEFAULT now(),
     updatedat timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    user_id integer
+    user_id uuid
 );
 
 
@@ -225,7 +225,7 @@ CREATE TABLE public.events (
     eventphoto text,
     eventassignedpeople text,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    user_id integer
+    user_id uuid
 );
 
 
@@ -345,11 +345,10 @@ ALTER SEQUENCE public.notes_id_seq OWNED BY public.notes.id;
 --
 
 CREATE TABLE public.users (
-    id integer NOT NULL,
+    id uuid NOT NULL,
     user_name character varying(100),
     email character varying(100) NOT NULL,
     group_graduation_year integer,
-    password text,
     created_at timestamp without time zone DEFAULT now()
 );
 
@@ -375,7 +374,7 @@ ALTER TABLE public.users_id_seq OWNER TO jleong_23;
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: jleong_23
 --
 
-ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+-- sequence owned by removed as id is now uuid
 
 
 --
@@ -417,7 +416,7 @@ ALTER TABLE ONLY public.notes ALTER COLUMN id SET DEFAULT nextval('public.notes_
 -- Name: users id; Type: DEFAULT; Schema: public; Owner: jleong_23
 --
 
-ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+-- default nextval removed as id is now uuid
 
 
 --

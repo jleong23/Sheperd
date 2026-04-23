@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+import { syncUser } from "../api/users";
 
 const AuthContext = createContext();
 
@@ -15,15 +16,19 @@ export const AuthProvider = ({ children }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session) syncUser().catch(console.error);
       setLoading(false);
     });
 
     // 2. Listen for auth changes (login, logout, etc.)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (event === "SIGNED_IN" && session) {
+        syncUser().catch(console.error);
+      }
       setLoading(false);
     });
 

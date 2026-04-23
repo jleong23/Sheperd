@@ -3,6 +3,16 @@
 // =======================
 import api from "./index";
 
+export async function syncUser() {
+  try {
+    const response = await api.post("/users/sync");
+    return response.data;
+  } catch (err) {
+    console.error("Failed to sync user:", err);
+    throw err;
+  }
+}
+
 /**
  * Get user profile by ID
  * Sends GET request to /users/:id

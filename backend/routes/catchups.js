@@ -37,7 +37,7 @@ router.get("/", async (req, res) => {
         .select("*, kids(name, status_code, baptised, sunday_regulars)", {
           count: "exact",
         })
-        .eq("user_id", req.user.id);
+        .eq("auth_id", req.userId);
 
     // --------------------
     // Filtering
@@ -89,7 +89,7 @@ router.get("/", async (req, res) => {
 
     const { data, error, count } = await query;
 
-    if (error) throw error;
+    if (error) return res.status(400).json({ error: error.message });
 
     const rows = data.map((r) => {
       const { kids, ...rest } = r;
@@ -134,10 +134,11 @@ router.get("/:id", async (req, res) => {
         .from("catchups")
         .select("*")
         .eq("catchupid", id)
-        .eq("user_id", req.user.id)
+        .eq("auth_id", req.userId)
         .single();
 
-    if (error || !data) {
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) {
       return res.status(404).json({ error: "Catchup not found" });
     }
 
@@ -177,7 +178,7 @@ router.post("/", async (req, res) => {
         .from("kids")
         .select("id")
         .eq("id", kidid)
-        .eq("user_id", req.user.id)
+        .eq("auth_id", req.userId)
         .single();
 
     if (!kidCheck) {
@@ -193,12 +194,12 @@ router.post("/", async (req, res) => {
           catchupendtime,
           catchuppurpose,
           catchupcomments,
-          user_id: req.user.id,
+          auth_id: req.userId,
         })
         .select()
         .single();
 
-    if (error) throw error;
+    if (error) return res.status(400).json({ error: error.message });
 
     res.status(201).json(data);
   } catch (err) {
@@ -223,11 +224,12 @@ router.patch("/:id", async (req, res) => {
           updatedate: new Date(),
         })
         .eq("catchupid", id)
-        .eq("user_id", req.user.id)
+        .eq("auth_id", req.userId)
         .select()
         .single();
 
-    if (error || !data) {
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) {
       return res.status(404).json({ error: "Catchup not found" });
     }
 
@@ -251,10 +253,11 @@ router.delete("/:id", async (req, res) => {
         .from("catchups")
         .delete()
         .eq("catchupid", id)
-        .eq("user_id", req.user.id)
+        .eq("auth_id", req.userId)
         .select();
 
-    if (error || !data?.length) {
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data?.length) {
       return res.status(404).json({ error: "Catchup not found" });
     }
 
@@ -282,10 +285,10 @@ router.delete("/", async (req, res) => {
         .from("catchups")
         .delete()
         .in("catchupid", ids)
-        .eq("user_id", req.user.id)
+        .eq("auth_id", req.userId)
         .select();
 
-    if (error) throw error;
+    if (error) return res.status(400).json({ error: error.message });
 
     res.json({
       message: "Bulk delete successful",

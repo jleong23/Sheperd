@@ -15,6 +15,7 @@ router.get("/", async (req, res) => {
     let query = supabase
       .from("kids")
       .select("*")
+      .eq("auth_id", req.userId)
       .order("id");
 
     if (status && ["CORE", "FRINGE", "NP"].includes(status)) {
@@ -22,7 +23,7 @@ router.get("/", async (req, res) => {
     }
 
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) return res.status(400).json({ error: error.message });
     res.json(data);
   } catch (err) {
     console.error("Error fetching kids:", err);
@@ -40,20 +41,23 @@ router.get("/stats", async (req, res) => {
   try {
     const { count: total_kids, error: totalError } = await supabase
       .from("kids")
-      .select("*", { count: "exact", head: true });
-    if (totalError) throw totalError;
+      .select("auth_id", { count: "exact", head: true })
+      .eq("auth_id", req.userId);
+    if (totalError) return res.status(400).json({ error: totalError.message });
 
     const { count: regular_kids, error: regularError } = await supabase
       .from("kids")
-      .select("*", { count: "exact", head: true })
+      .select("auth_id", { count: "exact", head: true })
+      .eq("auth_id", req.userId)
       .eq("sunday_regulars", true);
-    if (regularError) throw regularError;
+    if (regularError) return res.status(400).json({ error: regularError.message });
 
     const { count: baptised_kids, error: baptisedError } = await supabase
       .from("kids")
-      .select("*", { count: "exact", head: true })
+      .select("auth_id", { count: "exact", head: true })
+      .eq("auth_id", req.userId)
       .eq("baptised", true);
-    if (baptisedError) throw baptisedError;
+    if (baptisedError) return res.status(400).json({ error: baptisedError.message });
 
     res.json({ total_kids, regular_kids, baptised_kids });
   } catch (err) {
@@ -74,14 +78,14 @@ router.get("/:id", async (req, res) => {
     const { data, error } = await supabase
       .from("kids")
       .select("*")
+      .eq("auth_id", req.userId)
       .eq("id", id)
       .single();
 
     if (error || !data) {
-      // If no kid is found
       return res.status(404).json({ error: "Kid not found" });
     }
-    res.json(data); // Send the single kid object
+    res.json(data);
   } catch (err) {
     console.error("Error fetching kid:", err);
     res.status(500).json({ error: "Failed to fetch kid" });
@@ -135,16 +139,14 @@ router.post("/", async (req, res) => {
               second_call: second_call || false,
               first_call_feedback: first_call_feedback || "",
               second_call_feedback: second_call_feedback || "",
+              auth_id: req.userId,
           })
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating kid:", error);
-      return res.status(500).json({ error: error.message });
-    }
+    if (error) return res.status(400).json({ error: error.message });
 
-    res.status(201).json(data); // Return the newly created kid
+    res.status(201).json(data);
   } catch (err) {
     console.error("Error creating kid:", err);
     res.status(500).json({ error: "Failed to create kid" });
@@ -201,13 +203,11 @@ router.put("/:id", async (req, res) => {
         updated_at: new Date(),
       })
       .eq("id", id)
+      .eq("auth_id", req.userId)
       .select()
       .single();
 
-    if (error) {
-      console.error("Error updating kid:", error);
-      return res.status(500).json({ error: error.message });
-    }
+    if (error) return res.status(400).json({ error: error.message });
 
     if (!data) {
       return res.status(404).json({ error: "Kid not found" });
@@ -235,15 +235,10 @@ router.delete("/:id", async (req, res) => {
             .from("kids")
             .delete()
             .eq("id", id)
+            .eq("auth_id", req.userId)
             .select();
 
-        // 🧪 DEBUG 2: check Supabase response
-        console.log("DELETE RESULT:", { data, error });
-
-        if (error) {
-            console.error("Error deleting kid:", error);
-            return res.status(500).json({ error: error.message });
-        }
+        if (error) return res.status(400).json({ error: error.message });
 
         if (!data || data.length === 0) {
             return res.status(404).json({
@@ -275,13 +270,10 @@ router.delete("/", async (req, res) => {
       .from("kids")
       .delete()
       .in("id", ids)
-      .eq("user_id", req.user.id)
+      .eq("auth_id", req.userId)
       .select();
 
-    if (error) {
-      console.error("Error bulk deleting kids:", error);
-      return res.status(500).json({ error: error.message });
-    }
+    if (error) return res.status(400).json({ error: error.message });
 
     res.json({
       message: "Kids deleted successfully",
@@ -308,7 +300,7 @@ module.exports = router;
  * Key concepts:
  * - `req.params` → used to get URL parameters like ID
  * - `req.body` → contains data sent by client for POST/PUT
- * - `pool.query(...)` → executes SQL queries safely using parameterized queries
+ * - `supabase.from(...)` → executes database operations via Supabase client
  * - Error handling returns proper HTTP status codes
  *
  * This router is mounted in server.js with:

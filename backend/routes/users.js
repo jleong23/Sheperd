@@ -1,6 +1,35 @@
 const express = require("express");
 const router = express.Router();
-const supabase = require("../supabaseClient");
+const createSupabaseClient = require("../supabaseClient");
+const supabaseAdmin = require("../lib/supabaseClient");
+
+/**
+ * @route POST /users/sync
+ * @desc Sync authenticated Supabase user with local database
+ * @access Private
+ */
+router.post("/sync", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+  try {
+    const { email } = req.user;
+
+    const { data, error } = await supabaseAdmin
+      .from("users")
+      .upsert({ auth_id: req.userId, email, user_name: email })
+      .select()
+      .single();
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    res.status(200).json({
+      message: "User synced successfully",
+      user: data
+    });
+  } catch (err) {
+    console.error("Error syncing user:", err);
+    res.status(500).json({ error: "Failed to sync user" });
+  }
+});
 
 /**
  * @route GET /users
@@ -8,14 +37,16 @@ const supabase = require("../supabaseClient");
  * @access Private
  */
 router.get("/", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     // For security, this endpoint should only return the current user's data
     const { data, error } = await supabase
       .from("users")
-      .select("id, email")
-      .eq("id", req.user.id)
+      .select("auth_id, email")
+      .eq("auth_id", req.userId)
       .single();
-    if (error) throw error;
+
+    if (error) return res.status(400).json({ error: error.message });
     res.json(data);
   } catch (err) {
     console.error("Error fetching users:", err);
@@ -29,11 +60,12 @@ router.get("/", async (req, res) => {
  * @access Private
  */
 router.get("/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params; // Get ID from URL parameters
 
     // Security check: A user can only fetch their own data
-    if (id !== req.user.id) {
+    if (id !== req.userId) {
       return res
         .status(403)
         .json({ error: "Forbidden: You can only access your own data." });
@@ -41,15 +73,16 @@ router.get("/:id", async (req, res) => {
 
     const { data, error } = await supabase
       .from("users")
-      .select("id, email")
-      .eq("id", id)
+      .select("auth_id, email")
+      .eq("auth_id", id)
       .single();
 
-    if (error || !data) {
-      // If no users is found
+    if (error) return res.status(400).json({ error: error.message });
+
+    if (!data) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.json(data); // Send the single user object
+    res.json(data);
   } catch (err) {
     console.error(`Error fetching user: ${err}`);
     res.status(500).json({ error: "Failed to fetch users" });

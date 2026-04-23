@@ -15,7 +15,7 @@ router.get("/",async (req, res) => {
     let query = supabase
         .from("attendance")
         .select("*")
-        .eq("user_id", req.user.id);
+        .eq("auth_id", req.userId);
 
     // Filter by year if provided
     if (year) {
@@ -30,7 +30,7 @@ router.get("/",async (req, res) => {
     const { data, error } = await query
       .order("week", { ascending: false })
       .order("kidid");
-    if (error) throw error;
+    if (error) return res.status(400).json({ error: error.message });
     res.json(data);
   } catch (err) {
     console.error("Error fetching attendance:", err);
@@ -51,7 +51,7 @@ router.get("/:id", async (req, res) => {
       .from("attendance")
       .select("*")
       .eq("id", id)
-      .eq("user_id", req.user.id)
+      .eq("auth_id", req.userId)
       .single();
 
     if (error || !data) {
@@ -87,7 +87,7 @@ router.post("/", async (req, res) => {
       .from("kids")
       .select("name")
       .eq("id", kidId)
-      .eq("user_id", req.user.id)
+      .eq("auth_id", req.userId)
       .single();
 
     if (kidError || !kidCheck) {
@@ -106,15 +106,12 @@ router.post("/", async (req, res) => {
         reason: reason || null,
         term: term || null,
         year: year || null,
-        user_id: req.user.id,
+        auth_id: req.userId,
       })
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating attendance record:", error);
-      return res.status(500).json({ error: error.message });
-    }
+    if (error) return res.status(400).json({ error: error.message });
 
     res.status(201).json(data);
   } catch (err) {
@@ -154,18 +151,12 @@ router.patch("/:id", async (req, res) => {
       .from("attendance")
       .update(updatePayload)
       .eq("id", id)
-      .eq("user_id", req.user.id)
+      .eq("auth_id", req.userId)
       .select()
       .single();
 
-    if (error) {
-      console.error("Error updating attendance record:", error);
-      return res.status(500).json({ error: error.message });
-    }
+    if (error) return res.status(400).json({ error: error.message });
 
-    if (!data) {
-      return res.status(404).json({ error: "Attendance record not found" });
-    }
     res.json(data);
   } catch (err) {
     console.error("Error updating attendance record:", err);
@@ -186,11 +177,9 @@ router.delete("/:id", async (req, res) => {
       .from("attendance")
       .delete()
       .eq("id", id)
-      .eq("user_id", req.user.id);
+      .eq("auth_id", req.userId);
 
-    if (error) {
-      return res.status(404).json({ error: "Attendance record not found" });
-    }
+    if (error) return res.status(400).json({ error: error.message });
 
     res.json({ message: "Attendance record deleted successfully" });
   } catch (err) {
@@ -215,10 +204,10 @@ router.post("/year", async (req, res) => {
     // Check if the year already exists
     const { count, error: countError } = await supabase
       .from("attendance")
-      .select("*", { count: "exact", head: true })
+      .select("auth_id", { count: "exact", head: true })
       .eq("year", year)
-      .eq("user_id", req.user.id);
-    if (countError) throw countError;
+      .eq("auth_id", req.userId);
+    if (countError) return res.status(400).json({ error: countError.message });
     if (count > 0) {
       return res.status(400).json({ error: `Year ${year} already exists.` });
     }
@@ -227,8 +216,8 @@ router.post("/year", async (req, res) => {
     const { data: kids, error: kidsError } = await supabase
       .from("kids")
       .select("id, name")
-      .eq("user_id", req.user.id);
-    if (kidsError) throw kidsError;
+      .eq("auth_id", req.userId);
+    if (kidsError) return res.status(400).json({ error: kidsError.message });
 
     // By default, term 1 and 10 weeks
     const term = 1;
@@ -246,7 +235,7 @@ router.post("/year", async (req, res) => {
           reason: "",
           term,
           year,
-          user_id: req.user.id,
+          auth_id: req.userId,
         });
       }
     }
@@ -256,7 +245,7 @@ router.post("/year", async (req, res) => {
       .from("attendance")
       .insert(records)
       .select();
-    if (insertError) throw insertError;
+    if (insertError) return res.status(400).json({ error: insertError.message });
 
     res.json({
       message: `Year ${year} added with default term 1 and 10 weeks`,
@@ -285,8 +274,8 @@ router.post("/term", async (req, res) => {
     const { data: kids, error: kidsError } = await supabase
       .from("kids")
       .select("id, name")
-      .eq("user_id", req.user.id);
-    if (kidsError) throw kidsError;
+      .eq("auth_id", req.userId);
+    if (kidsError) return res.status(400).json({ error: kidsError.message });
 
     // Generate attendance records
     const records = [];
@@ -300,7 +289,7 @@ router.post("/term", async (req, res) => {
           reason: "",
           term,
           year,
-          user_id: req.user.id,
+          auth_id: req.userId,
         });
       }
     }
@@ -310,7 +299,7 @@ router.post("/term", async (req, res) => {
       .from("attendance")
       .insert(records)
       .select();
-    if (insertError) throw insertError;
+    if (insertError) return res.status(400).json({ error: insertError.message });
 
     res.json({
       message: `Term ${term} added for year ${year} with ${weeks} weeks`,
@@ -336,10 +325,8 @@ router.delete("/year/:year", async (req, res) => {
       .from("attendance")
       .delete()
       .eq("year", year)
-      .eq("user_id", req.user.id);
-    if (error) {
-      return res.status(404).json({ error: "Year not found" });
-    }
+      .eq("auth_id", req.userId);
+    if (error) return res.status(400).json({ error: error.message });
 
     res.json({ message: `Year ${year} deleted succesfully` });
   } catch (err) {
@@ -368,9 +355,11 @@ router.delete("/term/:year/:term", async (req, res) => {
       .delete({ count: "exact" })
       .eq("year", Number(year))
       .eq("term", Number(term))
-      .eq("user_id", req.user.id);
+      .eq("auth_id", req.userId);
 
-    if (error || count === 0) {
+    if (error) return res.status(400).json({ error: error.message });
+
+    if (count === 0) {
       return res.status(404).json({
         error: "No records found for that year and term",
       });

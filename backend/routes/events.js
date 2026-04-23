@@ -27,8 +27,8 @@ router.get("/", async (req, res) => {
 
     let query = supabase
       .from("events")
-      .select("*", { count: "exact" })
-      .eq("user_id", req.user.id);
+      .select("id, eventname, eventstartdate, eventenddate, eventstarttime, eventendtime, updated_at", { count: "exact" })
+      .eq("auth_id", req.userId);
 
     // --------------------
     // Filtering
@@ -70,7 +70,7 @@ router.get("/", async (req, res) => {
       .range(offset, offset + limitNum - 1);
 
     const { data, error, count } = await query;
-    if (error) throw error;
+    if (error) return res.status(400).json({ error: error.message });
 
     const totalCount = count || 0;
     const totalPages = Math.ceil(totalCount / limitNum);
@@ -121,10 +121,11 @@ router.get("/:id", async (req, res) => {
       .from("events")
       .select("*")
       .eq("eventid", id)
-      .eq("user_id", req.user.id)
+      .eq("auth_id", req.userId)
       .single();
 
-    if (error || !data) {
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) {
       return res.status(404).json({ error: "Event record not found" });
     }
 
@@ -196,12 +197,12 @@ router.post("/", async (req, res) => {
         eventendtime: eventendtime || null,
         eventphoto: eventphoto || null,
         eventassignedpeople: eventassignedpeople || null,
-        user_id: req.user.id,
+        auth_id: req.userId,
       })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) return res.status(400).json({ error: error.message });
 
     res.status(201).json({
       ...data,
@@ -278,11 +279,13 @@ router.patch("/:id", async (req, res) => {
         updated_at: new Date(),
       })
       .eq("eventid", id)
-      .eq("user_id", req.user.id)
+      .eq("auth_id", req.userId)
       .select()
       .single();
 
-    if (error || !data) {
+    if (error) return res.status(400).json({ error: error.message });
+
+    if (!data) {
       return res.status(404).json({ error: "Event record not found" });
     }
 
@@ -317,13 +320,10 @@ router.delete("/:id", async (req, res) => {
       .from("events")
       .delete()
       .eq("eventid", id)
-      .eq("user_id", req.user.id)
+      .eq("auth_id", req.userId)
       .select();
 
-    if (error) {
-      console.error("Error deleting event record:", error);
-      return res.status(500).json({ error: "Failed to delete event record" });
-    }
+    if (error) return res.status(400).json({ error: error.message });
 
     if (!data || data.length === 0) {
       return res.status(404).json({ error: "Event record not found" });
@@ -352,13 +352,10 @@ router.delete("/", async (req, res) => {
       .from("events")
       .delete()
       .in("eventid", ids)
-      .eq("user_id", req.user.id)
+      .eq("auth_id", req.userId)
       .select();
 
-    if (error) {
-      console.error("Error bulk deleting event records:", error);
-      return res.status(500).json({ error: "Failed to bulk delete event records" });
-    }
+    if (error) return res.status(400).json({ error: error.message });
 
     res.json({
       message: "Events deleted successfully",
