@@ -9,6 +9,8 @@
  * 4. Proceed to next middleware/route
  *
  * - Uses Supabase Auth instead of custom JWT verification
+ * - Requires SERVICE ROLE key for server-side user lookup
+ * - Returns 401 if token is missing, invalid, or expired
  * - req.user → full Supabase user object
  * - req.userId → convenience shortcut
  */
