@@ -13,6 +13,7 @@ const formatDate = (d) => {
   return `${year}-${month}-${day}`;
 };
 
+
 /**
  * @route GET /events
  * @desc Get all events with optional filtering, sorting, and pagination
@@ -27,8 +28,8 @@ router.get("/", async (req, res) => {
 
     let query = supabase
       .from("events")
-      .select("id, eventname, eventstartdate, eventenddate, eventstarttime, eventendtime, updated_at", { count: "exact" })
-      .eq("auth_id", req.userId);
+      .select("eventid, eventname, eventstartdate, eventenddate, eventstarttime, eventendtime, updated_at", { count: "exact" })
+      .eq("user_id", req.userId);
 
     // --------------------
     // Filtering
@@ -121,7 +122,7 @@ router.get("/:id", async (req, res) => {
       .from("events")
       .select("*")
       .eq("eventid", id)
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .single();
 
     if (error) return res.status(400).json({ error: error.message });
@@ -197,7 +198,7 @@ router.post("/", async (req, res) => {
         eventendtime: eventendtime || null,
         eventphoto: eventphoto || null,
         eventassignedpeople: eventassignedpeople || null,
-        auth_id: req.userId,
+        user_id: req.userId,
       })
       .select()
       .single();
@@ -279,7 +280,7 @@ router.patch("/:id", async (req, res) => {
         updated_at: new Date(),
       })
       .eq("eventid", id)
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .select()
       .single();
 
@@ -320,7 +321,7 @@ router.delete("/:id", async (req, res) => {
       .from("events")
       .delete()
       .eq("eventid", id)
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .select();
 
     if (error) return res.status(400).json({ error: error.message });
@@ -352,7 +353,7 @@ router.delete("/", async (req, res) => {
       .from("events")
       .delete()
       .in("eventid", ids)
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .select();
 
     if (error) return res.status(400).json({ error: error.message });

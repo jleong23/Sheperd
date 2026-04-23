@@ -37,7 +37,7 @@ router.get("/", async (req, res) => {
         .select("*, kids(name, status_code, baptised, sunday_regulars)", {
           count: "exact",
         })
-        .eq("auth_id", req.userId);
+        .eq("user_id", req.userId);
 
     // --------------------
     // Filtering
@@ -134,7 +134,7 @@ router.get("/:id", async (req, res) => {
         .from("catchups")
         .select("*")
         .eq("catchupid", id)
-        .eq("auth_id", req.userId)
+        .eq("user_id", req.userId)
         .single();
 
     if (error) return res.status(400).json({ error: error.message });
@@ -178,7 +178,7 @@ router.post("/", async (req, res) => {
         .from("kids")
         .select("id")
         .eq("id", kidid)
-        .eq("auth_id", req.userId)
+        .eq("user_id", req.userId)
         .single();
 
     if (!kidCheck) {
@@ -194,7 +194,7 @@ router.post("/", async (req, res) => {
           catchupendtime,
           catchuppurpose,
           catchupcomments,
-          auth_id: req.userId,
+          user_id: req.userId,
         })
         .select()
         .single();
@@ -224,7 +224,7 @@ router.patch("/:id", async (req, res) => {
           updatedate: new Date(),
         })
         .eq("catchupid", id)
-        .eq("auth_id", req.userId)
+        .eq("user_id", req.userId)
         .select()
         .single();
 
@@ -253,7 +253,7 @@ router.delete("/:id", async (req, res) => {
         .from("catchups")
         .delete()
         .eq("catchupid", id)
-        .eq("auth_id", req.userId)
+        .eq("user_id", req.userId)
         .select();
 
     if (error) return res.status(400).json({ error: error.message });
@@ -285,7 +285,7 @@ router.delete("/", async (req, res) => {
         .from("catchups")
         .delete()
         .in("catchupid", ids)
-        .eq("auth_id", req.userId)
+        .eq("user_id", req.userId)
         .select();
 
     if (error) return res.status(400).json({ error: error.message });

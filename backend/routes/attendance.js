@@ -15,7 +15,7 @@ router.get("/",async (req, res) => {
     let query = supabase
         .from("attendance")
         .select("*")
-        .eq("auth_id", req.userId);
+        .eq("user_id", req.userId);
 
     // Filter by year if provided
     if (year) {
@@ -51,7 +51,7 @@ router.get("/:id", async (req, res) => {
       .from("attendance")
       .select("*")
       .eq("id", id)
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .single();
 
     if (error || !data) {
@@ -87,7 +87,7 @@ router.post("/", async (req, res) => {
       .from("kids")
       .select("name")
       .eq("id", kidId)
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .single();
 
     if (kidError || !kidCheck) {
@@ -106,7 +106,7 @@ router.post("/", async (req, res) => {
         reason: reason || null,
         term: term || null,
         year: year || null,
-        auth_id: req.userId,
+        user_id: req.userId,
       })
       .select()
       .single();
@@ -151,7 +151,7 @@ router.patch("/:id", async (req, res) => {
       .from("attendance")
       .update(updatePayload)
       .eq("id", id)
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .select()
       .single();
 
@@ -177,7 +177,7 @@ router.delete("/:id", async (req, res) => {
       .from("attendance")
       .delete()
       .eq("id", id)
-      .eq("auth_id", req.userId);
+      .eq("user_id", req.userId);
 
     if (error) return res.status(400).json({ error: error.message });
 
@@ -204,9 +204,9 @@ router.post("/year", async (req, res) => {
     // Check if the year already exists
     const { count, error: countError } = await supabase
       .from("attendance")
-      .select("auth_id", { count: "exact", head: true })
+      .select("user_id", { count: "exact", head: true })
       .eq("year", year)
-      .eq("auth_id", req.userId);
+      .eq("user_id", req.userId);
     if (countError) return res.status(400).json({ error: countError.message });
     if (count > 0) {
       return res.status(400).json({ error: `Year ${year} already exists.` });
@@ -216,7 +216,7 @@ router.post("/year", async (req, res) => {
     const { data: kids, error: kidsError } = await supabase
       .from("kids")
       .select("id, name")
-      .eq("auth_id", req.userId);
+      .eq("user_id", req.userId);
     if (kidsError) return res.status(400).json({ error: kidsError.message });
 
     // By default, term 1 and 10 weeks
@@ -235,7 +235,7 @@ router.post("/year", async (req, res) => {
           reason: "",
           term,
           year,
-          auth_id: req.userId,
+          user_id: req.userId,
         });
       }
     }
@@ -274,7 +274,7 @@ router.post("/term", async (req, res) => {
     const { data: kids, error: kidsError } = await supabase
       .from("kids")
       .select("id, name")
-      .eq("auth_id", req.userId);
+      .eq("user_id", req.userId);
     if (kidsError) return res.status(400).json({ error: kidsError.message });
 
     // Generate attendance records
@@ -289,7 +289,7 @@ router.post("/term", async (req, res) => {
           reason: "",
           term,
           year,
-          auth_id: req.userId,
+          user_id: req.userId,
         });
       }
     }
@@ -325,7 +325,7 @@ router.delete("/year/:year", async (req, res) => {
       .from("attendance")
       .delete()
       .eq("year", year)
-      .eq("auth_id", req.userId);
+      .eq("user_id", req.userId);
     if (error) return res.status(400).json({ error: error.message });
 
     res.json({ message: `Year ${year} deleted succesfully` });
@@ -355,7 +355,7 @@ router.delete("/term/:year/:term", async (req, res) => {
       .delete({ count: "exact" })
       .eq("year", Number(year))
       .eq("term", Number(term))
-      .eq("auth_id", req.userId);
+      .eq("user_id", req.userId);
 
     if (error) return res.status(400).json({ error: error.message });
 

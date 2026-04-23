@@ -15,7 +15,7 @@ router.get("/", async (req, res) => {
     let query = supabase
       .from("kids")
       .select("*")
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .order("id");
 
     if (status && ["CORE", "FRINGE", "NP"].includes(status)) {
@@ -41,21 +41,21 @@ router.get("/stats", async (req, res) => {
   try {
     const { count: total_kids, error: totalError } = await supabase
       .from("kids")
-      .select("auth_id", { count: "exact", head: true })
-      .eq("auth_id", req.userId);
+      .select("user_id", { count: "exact", head: true })
+      .eq("user_id", req.userId);
     if (totalError) return res.status(400).json({ error: totalError.message });
 
     const { count: regular_kids, error: regularError } = await supabase
       .from("kids")
-      .select("auth_id", { count: "exact", head: true })
-      .eq("auth_id", req.userId)
+      .select("user_id", { count: "exact", head: true })
+      .eq("user_id", req.userId)
       .eq("sunday_regulars", true);
     if (regularError) return res.status(400).json({ error: regularError.message });
 
     const { count: baptised_kids, error: baptisedError } = await supabase
       .from("kids")
-      .select("auth_id", { count: "exact", head: true })
-      .eq("auth_id", req.userId)
+      .select("user_id", { count: "exact", head: true })
+      .eq("user_id", req.userId)
       .eq("baptised", true);
     if (baptisedError) return res.status(400).json({ error: baptisedError.message });
 
@@ -78,7 +78,7 @@ router.get("/:id", async (req, res) => {
     const { data, error } = await supabase
       .from("kids")
       .select("*")
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .eq("id", id)
       .single();
 
@@ -139,7 +139,7 @@ router.post("/", async (req, res) => {
               second_call: second_call || false,
               first_call_feedback: first_call_feedback || "",
               second_call_feedback: second_call_feedback || "",
-              auth_id: req.userId,
+              user_id: req.userId,
           })
       .select()
       .single();
@@ -203,7 +203,7 @@ router.put("/:id", async (req, res) => {
         updated_at: new Date(),
       })
       .eq("id", id)
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .select()
       .single();
 
@@ -235,7 +235,7 @@ router.delete("/:id", async (req, res) => {
             .from("kids")
             .delete()
             .eq("id", id)
-            .eq("auth_id", req.userId)
+            .eq("user_id", req.userId)
             .select();
 
         if (error) return res.status(400).json({ error: error.message });
@@ -270,7 +270,7 @@ router.delete("/", async (req, res) => {
       .from("kids")
       .delete()
       .in("id", ids)
-      .eq("auth_id", req.userId)
+      .eq("user_id", req.userId)
       .select();
 
     if (error) return res.status(400).json({ error: error.message });

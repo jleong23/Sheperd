@@ -15,7 +15,7 @@ router.post("/sync", async (req, res) => {
 
     const { data, error } = await supabaseAdmin
       .from("users")
-      .upsert({ auth_id: req.userId, email, user_name: email })
+      .upsert({ user_id: req.userId, email, user_name: email })
       .select()
       .single();
 
@@ -37,13 +37,18 @@ router.post("/sync", async (req, res) => {
  * @access Private
  */
 router.get("/", async (req, res) => {
+  console.log("SUPABASE URL:", process.env.SUPABASE_URL);
+  console.log("SUPABASE KEY EXISTS:", !!process.env.SUPABASE_ANON_KEY);
+  console.log("USER TOKEN:", req.headers.authorization);
+  console.log("USER ID:", req.userId);
+
   const supabase = createSupabaseClient(req);
   try {
     // For security, this endpoint should only return the current user's data
     const { data, error } = await supabase
       .from("users")
-      .select("auth_id, email")
-      .eq("auth_id", req.userId)
+      .select("user_id, email")
+      .eq("user_id", req.userId)
       .single();
 
     if (error) return res.status(400).json({ error: error.message });
@@ -73,8 +78,8 @@ router.get("/:id", async (req, res) => {
 
     const { data, error } = await supabase
       .from("users")
-      .select("auth_id, email")
-      .eq("auth_id", id)
+      .select("user_id, email")
+      .eq("user_id", id)
       .single();
 
     if (error) return res.status(400).json({ error: error.message });
