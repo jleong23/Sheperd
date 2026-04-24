@@ -6,48 +6,35 @@ export function useCatchups() {
   const [catchups, setCatchups] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [month, setMonth] = useState("");
-  const [year, setYear] = useState("");
+  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(currentYear);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchCatchups = useCallback(
-    async (override = {}) => {
-      setLoading(true);
+  const fetchCatchups = useCallback(async () => {
+    setLoading(true);
 
-      try {
-        const params = {
-          month: override.month ?? month ?? undefined,
-          year: override.year ?? year ?? undefined,
-          purpose: searchTerm || undefined,
-        };
+    try {
+      const params = {
+        month: month || undefined,
+        year: year || undefined,
+        purpose: searchTerm || undefined,
+      };
 
-        const res = await getCatchups(params);
-        setCatchups(res?.data || []);
-        setError(null);
-      } catch (err) {
-        setError("Failed to fetch catchups");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [month, year, searchTerm],
-  );
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchCatchups({
-        month,
-        year,
-      });
-    }, 300);
-
-    return () => clearTimeout(timer);
+      const res = await getCatchups(params);
+      setCatchups(res?.data || []);
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch catchups");
+    } finally {
+      setLoading(false);
+    }
   }, [month, year, searchTerm]);
 
-  const filteredCatchups = useMemo(() => {
-    // Backend now handles filtering and sorting, so we just return the data
-    return catchups;
-  }, [catchups]);
+  // Optional: initial load only
+  useEffect(() => {
+    fetchCatchups();
+  }, []);
 
   const removeCatchup = async (id) => {
     try {
@@ -62,7 +49,7 @@ export function useCatchups() {
   return {
     loading,
     error,
-    filteredCatchups,
+    filteredCatchups: catchups,
     searchTerm,
     setSearchTerm,
     month,

@@ -5,55 +5,97 @@ export default function CatchupToolbar({
   year,
   onMonthChange,
   onYearChange,
+  onSearch,
   onClear,
 }) {
-  return (
-    <>
-      <div className="grid gap-4 md:grid-cols-3 mb-2">
-        <input
-          type="text"
-          placeholder="Search by purpose or comments..."
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="rounded-md border px-3 py-2 text-sm"
-        />
-        {/* Month Selector */}
-        <select
-          value={month}
-          onChange={(e) => onMonthChange(e.target.value)}
-          className="rounded-md border px-3 py-2 text-sm"
-        >
-          <option value="">All Months</option>
-          <option value="1">January</option>
-          <option value="2">February</option>
-          <option value="3">March</option>
-          <option value="4">April</option>
-          <option value="5">May</option>
-          <option value="6">June</option>
-          <option value="7">July</option>
-          <option value="8">August</option>
-          <option value="9">September</option>
-          <option value="10">October</option>
-          <option value="11">November</option>
-          <option value="12">December</option>
-        </select>
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      onSearch();
+    }
+  };
 
-        {/* Year Input */}
-        <input
-          type="number"
-          placeholder="Year (e.g. 2026)"
-          value={year}
-          onChange={(e) => onYearChange(e.target.value)}
-          className="rounded-md border px-3 py-2 text-sm"
-        />
-      </div>
+  return (
+    <div className="grid gap-4 md:grid-cols-5 grid-cols-1 items-center mb-2">
+      {/* Search */}
+      <input
+        type="text"
+        placeholder="Search by purpose or comments..."
+        value={searchTerm}
+        onChange={(e) => onSearchChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        className="rounded-md border px-5 py-2 text-sm"
+      />
+
+      {/* Month */}
+      <select
+        value={month}
+        onChange={(e) =>
+          onMonthChange(e.target.value ? Number(e.target.value) : "")
+        }
+        onKeyDown={handleKeyDown}
+        className="rounded-md border px-3 py-2 text-sm"
+      >
+        <option value="">All Months</option>
+        {[...Array(12)].map((_, i) => (
+          <option key={i + 1} value={i + 1}>
+            {new Date(0, i).toLocaleString("default", { month: "long" })}
+          </option>
+        ))}
+      </select>
+
+      {/* Year */}
+      <input
+        type="number"
+        placeholder="Year (e.g. 2026)"
+        value={year}
+        onChange={(e) =>
+          onYearChange(e.target.value ? Number(e.target.value) : "")
+        }
+        onKeyDown={handleKeyDown}
+        className="rounded-md border px-3 py-2 text-sm"
+      />
+
+      {/* Quick filters */}
+      <button
+        onClick={() => {
+          const now = new Date();
+          onMonthChange(now.getMonth() + 1);
+          onYearChange(now.getFullYear());
+          onSearch();
+        }}
+        className="bg-green-700 text-white rounded-md px-4 py-2 shadow hover:bg-green-800 transition"
+      >
+        This Month
+      </button>
 
       <button
-        onClick={onClear}
-        className="bg-blue-500 text-white rounded-md px-4 py-2 mb-4"
+        onClick={() => {
+          const now = new Date();
+          onMonthChange("");
+          onYearChange(now.getFullYear());
+          onSearch();
+        }}
+        className="bg-green-700 text-white rounded-md px-4 py-2 shadow hover:bg-green-800 transition"
       >
-        Clear filters
+        This Year
       </button>
-    </>
+
+      {/* Actions */}
+      <div className="flex gap-2 md:col-span-2">
+        <button
+          onClick={onSearch}
+          className="bg-blue-600 text-white rounded-md px-4 py-2 shadow hover:bg-blue-700 flex-1 transition"
+        >
+          Search
+        </button>
+
+        <button
+          onClick={onClear}
+          className="bg-gray-200 text-gray-700 rounded-md px-4 py-2 shadow hover:bg-gray-300 flex-1 transition"
+        >
+          Clear filters
+        </button>
+      </div>
+    </div>
   );
 }

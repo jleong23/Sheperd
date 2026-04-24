@@ -46,10 +46,13 @@ export default function CatchupList() {
         onMonthChange={setMonth}
         onYearChange={setYear}
         onClear={() => {
+          const currentYear = new Date().getFullYear();
           setSearchTerm("");
           setMonth("");
-          setYear("");
+          setYear(currentYear);
+          fetchCatchups(); // IMPORTANT
         }}
+        onSearch={fetchCatchups}
       />
 
       <CatchupResults
