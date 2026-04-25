@@ -3,8 +3,8 @@ import { supabase } from "../supabaseClient";
 
 const api = axios.create({
   // uncomment below when deploying to production
-  // baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000",
-  baseURL: "http://localhost:4000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000",
+  // baseURL: "http://localhost:4000",
 });
 
 let cachedSession = null;
