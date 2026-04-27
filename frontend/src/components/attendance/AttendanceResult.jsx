@@ -50,6 +50,7 @@ export default function AttendanceResult({
             title={`Week ${week}`}
             count={attendanceByWeek[week].length}
             records={attendanceByWeek[week]}
+            allAttendance={currentAttendance}
             onStatusChange={onStatusChange}
             onReasonChange={onReasonChange}
             onReasonSubmit={onReasonSubmit}
@@ -79,6 +80,7 @@ const Panel = ({
   title,
   count,
   records,
+  allAttendance,
   onStatusChange,
   onReasonChange,
   onReasonSubmit,
@@ -160,6 +162,8 @@ const Panel = ({
                 Not Coming: {summary.notComing}
               </div>
               <ExportAttendance attendance={records} />
+              {/*Export whole term attendance*/}
+              <ExportAttendance attendance={allAttendance} />
             </motion.div>
 
             {/* Scrollable Content Area */}
