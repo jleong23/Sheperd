@@ -11,8 +11,6 @@ export default function ExportAttendance({ attendance }) {
     // 1.Transform data to match
     const exportData = attendance.map((record) => ({
       Name: record.name,
-      Term: record.term,
-      Week: record.week,
       Status: record.status,
       Reason: record.reason || "",
     }));
@@ -32,7 +30,7 @@ export default function ExportAttendance({ attendance }) {
     // 5.Export file
     XLSX.writeFile(
       workbook,
-      `Attendance-Term-${attendance[0]?.term}-Week-${attendance[0]?.week || "data"}.xlsx`,
+      `Attendance-Term-${attendance[0]?.term}-Week-${attendance[0]?.week || "data"}-${attendance[0]?.year}.xlsx`,
     );
   };
 
