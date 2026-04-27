@@ -92,7 +92,7 @@ const Panel = ({
       else if (r.status === "not coming") acc.notComing += 1;
       return acc;
     },
-    { coming: 0, maybe: 0, notComing: 0 }
+    { coming: 0, maybe: 0, notComing: 0 },
   );
 
   return (
@@ -157,6 +157,11 @@ const Panel = ({
               <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-100 text-sm font-medium">
                 <span className="w-2 h-2 rounded-full bg-red-500"></span>
                 Not Coming: {summary.notComing}
+              </div>
+              <div className="ml-auto">
+                <button className="flex px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-200 text-sm font-medium">
+                  Export Attendance
+                </button>
               </div>
             </motion.div>
 
