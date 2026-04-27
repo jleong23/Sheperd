@@ -14,6 +14,8 @@ export default function AttendanceResult({
   onReasonChange,
   onReasonSubmit,
   onImport,
+  selectedTerm,
+  selectedYear,
 }) {
   // Group records by week
   const attendanceByWeek = currentAttendance.reduce((acc, record) => {
@@ -42,6 +44,24 @@ export default function AttendanceResult({
 
   return sortedWeeks.length > 0 ? (
     <section className="xl:pb-6 rounded-2xl shadow-xl overflow-hidden">
+      <div className="flex items-center justify-end p-4 bg-white border-b border-gray-200 gap-3">
+        <span className="text-sm font-medium text-gray-500">Full Term:</span>
+        <ExportAttendance
+          attendance={currentAttendance}
+          label="Export Term Attendance"
+        />
+        <label
+          htmlFor="import-attendance-term"
+          className="flex px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-200 text-sm font-medium cursor-pointer"
+        >
+          Import Term Attendance
+        </label>
+        <ImportAttendance
+          onImport={onImport}
+          term={selectedTerm}
+          year={selectedYear}
+        />
+      </div>
       <div className="flex flex-col w-full max-w-7xl mx-auto overflow-hidden rounded-xl bg-slate-800">
         {sortedWeeks.map((week) => (
           <Panel
@@ -57,6 +77,8 @@ export default function AttendanceResult({
             onImport={onImport}
             onReasonChange={onReasonChange}
             onReasonSubmit={onReasonSubmit}
+            selectedTerm={selectedTerm}
+            selectedYear={selectedYear}
           />
         ))}
       </div>
@@ -88,6 +110,8 @@ const Panel = ({
   onReasonChange,
   onReasonSubmit,
   onImport,
+  selectedTerm,
+  selectedYear,
 }) => {
   const isOpen = open === id;
 
@@ -165,10 +189,22 @@ const Panel = ({
                 <span className="w-2 h-2 rounded-full bg-red-500"></span>
                 Not Coming: {summary.notComing}
               </div>
-              <ExportAttendance attendance={records} />
-              {/*Export whole term attendance*/}
-              <ExportAttendance attendance={allAttendance} />
-              <ImportAttendance onImport={onImport} week={id} />
+              <ExportAttendance
+                attendance={records}
+                label={`Export Week ${id} Attendance`}
+              />
+              <label
+                htmlFor={`import-attendance-${id}`}
+                className="flex px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-200 text-sm font-medium cursor-pointer"
+              >
+                Import Week {id}
+              </label>
+              <ImportAttendance
+                onImport={onImport}
+                week={id}
+                term={selectedTerm}
+                year={selectedYear}
+              />
             </motion.div>
 
             {/* Scrollable Content Area */}

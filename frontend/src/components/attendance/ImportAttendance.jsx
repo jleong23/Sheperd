@@ -8,26 +8,74 @@ export default function ImportAttendance({ onImport, week, term, year }) {
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data);
 
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet);
+    let allRows = [];
 
-    const requiredHeaders = ["Name", "Status", "Reason"];
-    const headers = Object.keys(rows[0] || {});
-    const missing = requiredHeaders.filter((h) => !headers.includes(h));
+    // Iterate through all sheets and find those that contain "week" (e.g. "Week 1", "Week 2")
+    workbook.SheetNames.forEach((sheetName) => {
+      if (sheetName.toLowerCase().includes("week")) {
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet);
+        allRows = [...allRows, ...rows];
+      }
+    });
 
-    if (missing.length) {
-      alert(`Missing columns: ${missing.join(", ")}`);
+    if (allRows.length === 0) {
+      alert("No valid 'Week' sheets found in the file.");
       return;
     }
 
-    onImport(
-      rows.map((r) => ({
-        name: r.Name?.trim(),
-        status: r.Status?.toLowerCase().trim().replace(/\s+/g, " "),
-        reason: r.Reason || "",
-      })),
-    );
+    const requiredHeaders = [
+      "Name",
+      "Status",
+      "Reason",
+      "Week",
+      "Term",
+      "Year",
+    ];
+
+    const headers = Object.keys(allRows[0] || {});
+    const missing = requiredHeaders.filter((h) => !headers.includes(h));
+
+    if (missing.length) {
+      alert(
+        `Invalid file. Missing required columns: ${missing.join(", ")}.\n\nPlease export using the system template.`,
+      );
+      return;
+    }
+
+    try {
+      const cleaned = allRows.map((r, i) => {
+        const rowWeek = Number(r.Week);
+        const rowTerm = Number(r.Term);
+        const rowYear = Number(r.Year);
+
+        if (!rowWeek || !rowTerm || !rowYear) {
+          throw new Error(`Invalid Week/Term/Year at row ${i + 2}`);
+        }
+
+        return {
+          name: r.Name?.trim(),
+          status: r.Status?.toLowerCase().trim().replace(/\s+/g, " "),
+          reason: r.Reason || "",
+          week: rowWeek,
+          term: rowTerm,
+          year: rowYear,
+        };
+      });
+
+      onImport(cleaned);
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
-  return <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} />;
+  return (
+    <input
+      type="file"
+      accept=".xlsx,.xls"
+      onChange={handleFileUpload}
+      className="hidden"
+      id={`import-attendance-${week || "term"}`}
+    />
+  );
 }

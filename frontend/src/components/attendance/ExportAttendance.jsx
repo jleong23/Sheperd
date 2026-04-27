@@ -2,7 +2,7 @@ import React from "react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
-export default function ExportAttendance({ attendance }) {
+export default function ExportAttendance({ attendance, label }) {
   const handleExport = async () => {
     if (!attendance || attendance.length === 0) return;
 
@@ -47,6 +47,8 @@ export default function ExportAttendance({ attendance }) {
     const summarySheet = workbook.addWorksheet("Summary");
 
     summarySheet.columns = [
+      { header: "Term", key: "term", width: 10 },
+      { header: "Year", key: "year", width: 10 },
       { header: "Week", key: "week", width: 10 },
       { header: "Total", key: "total", width: 10 },
       { header: "Coming", key: "coming", width: 12 },
@@ -56,7 +58,13 @@ export default function ExportAttendance({ attendance }) {
 
     summaryData
       .sort((a, b) => a.week - b.week)
-      .forEach((row) => summarySheet.addRow(row));
+      .forEach((row) =>
+        summarySheet.addRow({
+          ...row,
+          term: attendance[0]?.term,
+          year: attendance[0]?.year,
+        }),
+      );
 
     const summaryHeaderRow = summarySheet.getRow(1);
 
@@ -92,6 +100,9 @@ export default function ExportAttendance({ attendance }) {
         { header: "Name", key: "name", width: 25 },
         { header: "Status", key: "status", width: 15 },
         { header: "Reason", key: "reason", width: 30 },
+        { header: "Week", key: "week", width: 10 },
+        { header: "Term", key: "term", width: 10 },
+        { header: "Year", key: "year", width: 12 },
       ];
 
       records.forEach((r) => {
@@ -99,6 +110,9 @@ export default function ExportAttendance({ attendance }) {
           name: r.name,
           status: r.status,
           reason: r.reason || "",
+          week: r.week,
+          term: r.term,
+          year: r.year,
         });
       });
 
@@ -134,7 +148,7 @@ export default function ExportAttendance({ attendance }) {
         onClick={handleExport}
         className="flex px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-200 text-sm font-medium"
       >
-        Export Attendance
+        {label || "Export Attendance"}
       </button>
     </div>
   );

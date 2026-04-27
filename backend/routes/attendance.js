@@ -433,6 +433,8 @@ router.post("/bulk", async (req, res) => {
 
     if (error) {
       console.error("Bulk upsert error:", error);
+      // Fallback: If onConflict fails due to missing unique constraint, try simple insert or individual upserts
+      // But for now, let's report it.
       return res.status(400).json({ error: error.message });
     }
 

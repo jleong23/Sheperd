@@ -16,6 +16,7 @@ export default function AttendanceList() {
   const [currentAttendance, setCurrentAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [kids, setKids] = useState([]);
+  const [selectedWeek, setSelectedWeek] = useState(1);
 
   // -----------------------------
   // Fetch ALL attendance and kids
@@ -186,7 +187,7 @@ export default function AttendanceList() {
     updateState(setCurrentAttendance);
   };
 
-  const transformData = (rows, kids, week, term, year) => {
+  const transformData = (rows, kids) => {
     return rows
       .map((row) => {
         if (!row.name) return null;
@@ -202,9 +203,9 @@ export default function AttendanceList() {
 
         return {
           kidid: kid.id,
-          week: Number(week),
-          term: Number(term),
-          year: Number(year),
+          week: row.week,
+          term: row.term,
+          year: row.year,
           status: row.status?.toLowerCase() || "maybe",
           reason: row.reason || "",
         };
@@ -215,11 +216,7 @@ export default function AttendanceList() {
   // Connect Import Excel
   // -----------------------------
   const handleImport = async (rows) => {
-    const term = selectedTerm;
-    const year = selectedYear;
-    const week = rows[0]?.week || 1;
-
-    const transformed = transformData(rows, kids, week, term, year);
+    const transformed = transformData(rows, kids);
 
     console.log("Transformed:", transformed);
 
@@ -287,6 +284,8 @@ export default function AttendanceList() {
             onReasonChange={handleReasonChange}
             onReasonSubmit={handleReasonSubmit}
             onImport={handleImport}
+            selectedTerm={selectedTerm}
+            selectedYear={selectedYear}
           />
         ) : (
           <p className="text-center mt-8 text-gray-500">
