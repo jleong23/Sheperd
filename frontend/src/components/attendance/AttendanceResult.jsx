@@ -6,12 +6,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Calendar, Users, ChevronDown } from "lucide-react";
 import profileIcon from "../../assets/profileIcon.png";
 import ExportAttendance from "./ExportAttendance.jsx";
+import ImportAttendance from "./ImportAttendance.jsx";
 
 export default function AttendanceResult({
   currentAttendance,
   onStatusChange,
   onReasonChange,
   onReasonSubmit,
+  onImport,
 }) {
   // Group records by week
   const attendanceByWeek = currentAttendance.reduce((acc, record) => {
@@ -52,6 +54,7 @@ export default function AttendanceResult({
             records={attendanceByWeek[week]}
             allAttendance={currentAttendance}
             onStatusChange={onStatusChange}
+            onImport={onImport}
             onReasonChange={onReasonChange}
             onReasonSubmit={onReasonSubmit}
           />
@@ -84,6 +87,7 @@ const Panel = ({
   onStatusChange,
   onReasonChange,
   onReasonSubmit,
+  onImport,
 }) => {
   const isOpen = open === id;
 
@@ -164,6 +168,7 @@ const Panel = ({
               <ExportAttendance attendance={records} />
               {/*Export whole term attendance*/}
               <ExportAttendance attendance={allAttendance} />
+              <ImportAttendance onImport={onImport} week={id} />
             </motion.div>
 
             {/* Scrollable Content Area */}

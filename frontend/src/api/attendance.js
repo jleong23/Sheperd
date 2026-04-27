@@ -9,13 +9,13 @@
  */
 import api from "./index";
 
-export async function fetchAttendance(year, term) {
+export async function getAttendance(year, term) {
   try {
     const response = await api.get("/attendance", { params: { year, term } });
     return response.data; // returns array of attendance records
   } catch (err) {
-    console.error(err);
-    return []; // return empty array if request fails
+    console.error("getAttendance failed:", err);
+    throw err;
   }
 }
 
@@ -58,6 +58,20 @@ export async function addTerm(year, term, weeks = 10) {
     return response.data;
   } catch (err) {
     console.error("Failed to add term:", err);
+    throw err;
+  }
+}
+
+export async function addBulkAttendance(cleanedData) {
+  if (!Array.isArray(cleanedData) || cleanedData.length === 0) {
+    throw new Error("No valid attendance data provided");
+  }
+
+  try {
+    const response = await api.post("/attendance/bulk", cleanedData);
+    return response.data;
+  } catch (err) {
+    console.error("Failed to bulk add attendance:", err);
     throw err;
   }
 }

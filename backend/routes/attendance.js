@@ -375,4 +375,74 @@ router.delete("/term/:year/:term", async (req, res) => {
   }
 });
 
+/**
+ * @route POST /attendance/bulk
+ * @desc Bulk insert or update attendance records
+ * @access Public
+ */
+router.post("/bulk", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+
+  try {
+    const records = req.body;
+
+    if (!Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ error: "Records array is required" });
+    }
+
+    const validStatuses = ["coming", "maybe", "not coming"];
+
+    // -----------------------------
+    // Validate & sanitize records
+    // -----------------------------
+    const cleanedRecords = records.map((r, index) => {
+      if (
+          r.kidid == null ||
+          r.week == null ||
+          r.term == null ||
+          r.year == null
+      ){
+        throw new Error(`Missing required fields at index ${index}`);
+      }
+
+      if (r.status && !validStatuses.includes(r.status)) {
+        throw new Error(`Invalid status at index ${index}: ${r.status}`);
+      }
+
+      return {
+        kidid: r.kidid,
+        week: Number(r.week),
+        term: Number(r.term),
+        year: Number(r.year),
+        status: r.status || "maybe",
+        reason: r.reason || "",
+        user_id: req.userId,
+        updated_at: new Date(),
+      };
+    });
+
+    // -----------------------------
+    // UPSERT (insert or update)
+    // -----------------------------
+    const { data, error } = await supabase
+        .from("attendance")
+        .upsert(cleanedRecords, {
+          onConflict: "kidid,week,term,year,user_id",
+        })
+        .select();
+
+    if (error) {
+      console.error("Bulk upsert error:", error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json({
+      message: `Successfully processed ${data.length} records`,
+      data,
+    });
+  } catch (err) {
+    console.error("Bulk import error:", err);
+    res.status(500).json({ error: err.message || "Bulk import failed" });
+  }
+});
 module.exports = router;

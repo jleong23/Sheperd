@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import AttendanceResult from "../../components/attendance/AttendanceResult.jsx";
 import AttendanceSort from "../../components/attendance/AttendanceSort.jsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.jsx";
-import { fetchAttendance, updateAttendance } from "../../api/attendance.js";
+import {
+  addBulkAttendance,
+  getAttendance,
+  updateAttendance,
+} from "../../api/attendance.js";
 import { fetchKids } from "../../api/kids.js";
 
 export default function AttendanceList() {
@@ -34,7 +38,7 @@ export default function AttendanceList() {
     }
 
     try {
-      const data = await fetchAttendance();
+      const data = await getAttendance(selectedYear, selectedTerm);
       if (!Array.isArray(data)) {
         console.error("Attendance is not an array:", data);
         return;
@@ -182,6 +186,63 @@ export default function AttendanceList() {
     updateState(setCurrentAttendance);
   };
 
+  const transformData = (rows, kids, week, term, year) => {
+    return rows
+      .map((row) => {
+        if (!row.name) return null;
+
+        const kid = kids.find(
+          (k) => k.name?.trim().toLowerCase() === row.name.trim().toLowerCase(),
+        );
+
+        if (!kid) {
+          console.warn("Kid not found:", row.name);
+          return null;
+        }
+
+        return {
+          kidid: kid.id,
+          week: Number(week),
+          term: Number(term),
+          year: Number(year),
+          status: row.status?.toLowerCase() || "maybe",
+          reason: row.reason || "",
+        };
+      })
+      .filter(Boolean);
+  };
+  // -----------------------------
+  // Connect Import Excel
+  // -----------------------------
+  const handleImport = async (rows) => {
+    const term = selectedTerm;
+    const year = selectedYear;
+    const week = rows[0]?.week || 1;
+
+    const transformed = transformData(rows, kids, week, term, year);
+
+    console.log("Transformed:", transformed);
+
+    if (transformed.length === 0) {
+      alert("No valid rows to import");
+      return;
+    }
+
+    try {
+      const result = await addBulkAttendance(transformed);
+      console.log("Imported result: ", result);
+
+      // Update UI
+      await fetchAllAttendance();
+      alert("Attendance imported successfully!");
+    } catch (err) {
+      console.error("Import failed:", err);
+      alert(
+        "Failed to import attendance. Please check the console for details.",
+      );
+    }
+  };
+
   // -----------------------------
   // Dropdown Options
   // -----------------------------
@@ -225,6 +286,7 @@ export default function AttendanceList() {
             onAttendanceUpdate={updateAttendanceRecord}
             onReasonChange={handleReasonChange}
             onReasonSubmit={handleReasonSubmit}
+            onImport={handleImport}
           />
         ) : (
           <p className="text-center mt-8 text-gray-500">
