@@ -143,10 +143,10 @@ export default function ExportAttendance({ attendance, label }) {
   };
 
   return (
-    <div className="ml-auto">
+    <div className="flex-shrink-0">
       <button
         onClick={handleExport}
-        className="flex px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-200 text-sm font-medium"
+        className="flex items-center justify-center px-4 py-2 min-h-[44px] rounded-lg bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 active:bg-blue-200 active:scale-95 text-sm font-bold transition-all shadow-sm"
       >
         {label || "Export Attendance"}
       </button>
