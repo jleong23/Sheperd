@@ -15,7 +15,7 @@
  * This acts as the State manager + business logic layer for the Attendance feature.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import AttendanceResult from "../../components/attendance/AttendanceResult.jsx";
 import AttendanceSort from "../../components/attendance/AttendanceSort.jsx";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.jsx";
@@ -42,46 +42,19 @@ export default function AttendanceList() {
   // -----------------------------
   // Fetch ALL attendance records and kids
   // -----------------------------
-  const fetchAllAttendance = async (newRecords) => {
-    if (newRecords) {
-      /**
-       * Normalise inconsistent naming:
-       * backend = kidid
-       * frontend = kidId
-       */
-      const normalizedNewRecords = newRecords.map((r) => ({
-        ...r,
-        kidId: r.kidid ?? r.kidId,
-      }));
-
-      setAllAttendance((prev) => {
-        // Merge old + new records
-        const merged = [...prev, ...normalizedNewRecords];
-        // Remove duplicates based on ID
-        const unique = merged.filter(
-          (v, i, a) => a.findIndex((x) => x.id === v.id) === i,
-        );
-        return unique;
-      });
-      return;
-    }
-
-    // API Request: GET /attendance?year=...&term...
+  const fetchAllAttendance = async () => {
     try {
       const data = await getAttendance();
-      if (!data) return;
-      if (!Array.isArray(data)) {
-        console.error("Attendance is not an array:", data);
-        return;
-      }
-      // Normalise naming consistency
+      if (!Array.isArray(data)) return;
+
       const normalized = data.map((r) => ({
         ...r,
         kidId: r.kidid ?? r.kidId,
       }));
+
       setAllAttendance(normalized);
     } catch (err) {
-      console.error("Failed to fetch attendance:", err);
+      console.error(err);
     }
   };
 
@@ -285,29 +258,17 @@ export default function AttendanceList() {
   // Handle Import Excel
   // -----------------------------
   const handleImport = async (rows) => {
-    // Convert Excel rows -> attendance records
     setImporting(true);
 
     const transformed = transformData(rows, kids);
 
-    console.log("Transformed:", transformed); // For debugging purposes
-
-    if (transformed.length === 0) {
-      toast.error("No valid rows to import");
-      setImporting(false);
-      return;
-    }
-
     try {
-      // POST /attendance/bulk
-      const result = await addBulkAttendance(transformed);
-      console.log("Imported result: ", result);
+      await addBulkAttendance(transformed);
 
-      await fetchAllAttendance(); // Refresh attendance after import
+      // ALWAYS refetch clean state
+      await fetchAllAttendance();
+
       toast.success("Attendance imported successfully!");
-    } catch (err) {
-      console.error("Import failed:", err);
-      toast.error("No valid rows to import");
     } finally {
       setImporting(false);
     }
@@ -316,19 +277,31 @@ export default function AttendanceList() {
   // ---------------------------------------------------
   // Dropdown options
   // ---------------------------------------------------
-  const availableYears = [...new Set(allAttendance.map((a) => a.year))].sort(
-    (a, b) => b - a, // Sort newest years first
-  );
+  const availableYears = useMemo(() => {
+    return [...new Set(allAttendance.map((a) => a.year))].sort((a, b) => b - a);
+  }, [allAttendance]);
 
-  const availableTerms = selectedYear
-    ? [
-        ...new Set(
-          allAttendance
-            .filter((a) => a.year === selectedYear)
-            .map((a) => a.term),
-        ),
-      ].sort((a, b) => a - b)
-    : [];
+  const availableTerms = useMemo(() => {
+    if (!selectedYear) return [];
+
+    return [
+      ...new Set(
+        allAttendance.filter((a) => a.year === selectedYear).map((a) => a.term),
+      ),
+    ].sort((a, b) => a - b);
+  }, [allAttendance, selectedYear]);
+
+  // ---------------------------------------------------
+  // Selection Safety Guard
+  // ---------------------------------------------------
+  useEffect(() => {
+    if (availableYears.length === 0) return;
+
+    if (!availableYears.includes(selectedYear)) {
+      setSelectedYear(availableYears[0] ?? null);
+      setSelectedTerm(null);
+    }
+  }, [availableYears]);
 
   // -----------------------------
   // Render ( loading screen )
