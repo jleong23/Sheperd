@@ -72,7 +72,7 @@ export default function AttendanceResult({
   }, [sortedWeeks, open]);
 
   return sortedWeeks.length > 0 ? (
-    <section className="xl:pb-6 rounded-2xl shadow-xl overflow-hidden">
+    <section className="xl:pb-6 rounded-2xl shadow-xl overflow-visible">
       {/* ---------------------------------------------------
           Top Toolbar
       --------------------------------------------------- */}
@@ -121,7 +121,7 @@ export default function AttendanceResult({
       {/* ---------------------------------------------------
           Weekly Attendance Panels
       --------------------------------------------------- */}
-      <div className="flex flex-col w-full max-w-7xl mx-auto overflow-hidden rounded-xl bg-slate-800">
+      <div className="flex flex-col w-full max-w-7xl mx-auto overflow-visible rounded-xl bg-slate-800">
         {sortedWeeks.map((week) => (
           <Panel
             key={week}
@@ -252,7 +252,9 @@ const Panel = ({
             initial="closed"
             animate="open"
             exit="closed"
-            className="w-full h-full overflow-hidden relative bg-slate-50 flex flex-col"
+            className={`w-full h-full overflow-visible relative bg-slate-50 flex flex-col ${
+              isOpen ? "z-50" : "z-0"
+            }`}
           >
             {/* Panel Header / Summary */}
             <motion.div
@@ -318,7 +320,7 @@ const Panel = ({
               initial="closed"
               animate="open"
               exit="closed"
-              className="flex-1 overflow-y-auto p-4 lg:p-6"
+              className="flex-1 overflow-visible p-4 lg:p-6"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {records.map((record) => (
@@ -391,7 +393,7 @@ const StudentCard = ({
 
   return (
     <div
-      className={`border shadow-sm rounded-xl p-4 flex flex-col gap-4 transition-all hover:shadow-md ${styles.container}`}
+      className={`relative border shadow-sm rounded-xl p-4 flex flex-col gap-4 transition-all hover:shadow-md ${styles.container}`}
     >
       {/* Student Header */}
       <div className="flex items-center justify-between gap-2">
@@ -435,7 +437,7 @@ const StudentCard = ({
                 onClick={() => setIsOpen(false)}
               />
               {/* Dropdown options */}
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-40 overflow-hidden py-1">
+              <div className="absolute right-0 top-12 w-40 bg-white border border-gray-100 rounded-xl shadow-2xl z-[9999] overflow-hidden py-1">
                 {["maybe", "coming", "not coming"].map((option) => (
                   <button
                     key={option}
