@@ -68,7 +68,8 @@ export default function AttendanceList() {
 
     // API Request: GET /attendance?year=...&term...
     try {
-      const data = await getAttendance(selectedYear, selectedTerm);
+      const data = await getAttendance();
+      if (!data) return;
       if (!Array.isArray(data)) {
         console.error("Attendance is not an array:", data);
         return;
@@ -118,7 +119,6 @@ export default function AttendanceList() {
       setSelectedYear(latestYear);
     }
   }, [allAttendance, selectedYear]);
-
   // -----------------------------
   // Auto-select latest term for selected year
   // -----------------------------
