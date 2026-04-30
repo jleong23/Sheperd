@@ -17,14 +17,13 @@ export default function KidsList() {
     enterBulkMode,
   } = useBulkDelete(kids, getKids);
 
-  if (isLoading) return <LoadingSpinner />;
   if (error) return <p className="text-center text-red-500">Error: {error}</p>;
 
   return (
     <div className="p-8">
       <h1 className="mb-4 text-3xl font-semibold">Catchup History</h1>
 
-      <div className="flex gap-4 ">
+      <div className="flex gap-4">
         <AddKids onKidAdded={getKids} />
 
         <DeleteKids
@@ -35,6 +34,7 @@ export default function KidsList() {
           handleDelete={handleDelete}
         />
       </div>
+
       <KidStatusFilter value={status} onChange={setStatus} />
 
       <KidsGrid
@@ -43,6 +43,7 @@ export default function KidsList() {
         toggleSelect={toggleSelect}
         bulkMode={bulkMode}
         refresh={getKids}
+        loading={isLoading}
       />
     </div>
   );
