@@ -25,6 +25,7 @@ import {
   updateAttendance,
 } from "../../api/attendance.js";
 import { fetchKids } from "../../api/kids.js";
+import toast from "react-hot-toast";
 
 export default function AttendanceList() {
   // ---------------------------------------------------
@@ -285,7 +286,7 @@ export default function AttendanceList() {
     console.log("Transformed:", transformed);
 
     if (transformed.length === 0) {
-      alert("No valid rows to import");
+      toast.error("No valid rows to import");
       return;
     }
 
@@ -295,12 +296,10 @@ export default function AttendanceList() {
       console.log("Imported result: ", result);
 
       await fetchAllAttendance(); // Refresh attendance after import
-      alert("Attendance imported successfully!");
+      toast.success("Attendance imported successfully!");
     } catch (err) {
       console.error("Import failed:", err);
-      alert(
-        "Failed to import attendance. Please check the console for details.",
-      );
+      toast.error("No valid rows to import");
     }
   };
 
