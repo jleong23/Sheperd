@@ -1,3 +1,24 @@
+/**
+ * routes/attendance.js - Attendance Management API
+ *
+ * This module handles all attendance-related operations for the application,
+ * including:
+ * - Retrieving attendance records (filtered + paginated)
+ * - Creating and updating attendance entries
+ * - Managing bulk operations (year/term creation, bulk upserts)
+ * - Deleting attendance data by record, year, or term
+ *
+ * Data model is user-scoped via `user_id` to ensure multi-tenancy isolation.
+ * All queries are restricted using `req.userId`.
+ *
+ * Core concept:
+ * Attendance is structured by:
+ * - kidid (student reference)
+ * - week
+ * - term
+ * - year
+ */
+
 const express = require("express");
 const router = express.Router();
 const createSupabaseClient = require("../supabaseClient");
@@ -5,7 +26,11 @@ const createSupabaseClient = require("../supabaseClient");
 /**
  * @route GET /attendance
  * @desc Get attendance records with optional year and term filters
- * @access Public
+ * Flow:
+ * 1. Build base query scoped to authenticated user
+ * 2. Apply optional filters (year, term)
+ * 3. Sort by week (descending) and kidid
+ * 4. Return filtered dataset
  */
 router.get("/",async (req, res) => {
   const supabase = createSupabaseClient(req);
@@ -15,7 +40,7 @@ router.get("/",async (req, res) => {
     let query = supabase
         .from("attendance")
         .select("*")
-        .eq("user_id", req.userId);
+        .eq("user_id", req.userId); // WHERE user_id = req.userID
 
     // Filter by year if provided
     if (year) {
@@ -40,8 +65,7 @@ router.get("/",async (req, res) => {
 
 /**
  * @route GET /attendance/:id
- * @desc Get attendance record by ID
- * @access Public
+ * @desc Retrieve a single attendance record by ID
  */
 router.get("/:id", async (req, res) => {
   const supabase = createSupabaseClient(req);
@@ -50,9 +74,9 @@ router.get("/:id", async (req, res) => {
     const { data, error } = await supabase
       .from("attendance")
       .select("*")
-      .eq("id", id)
-      .eq("user_id", req.userId)
-      .single();
+      .eq("id", id) // WHERE user_id = req.userID
+      .eq("user_id", req.userId) // WHERE user_id = req.userID
+      .single(); // expects EXACTLY one row (throws error if 0 or >1)
 
     if (error || !data) {
       return res.status(404).json({ error: "Attendance record not found" });
@@ -67,7 +91,10 @@ router.get("/:id", async (req, res) => {
 /**
  * @route POST /attendance
  * @desc Create a new attendance record
- * @access Public
+ * Validation:
+ * - kidId and week are required
+ * - status must match allowed enum if provided
+ * - kid must belong to authenticated user
  */
 router.post("/", async (req, res) => {
   const supabase = createSupabaseClient(req);
@@ -86,8 +113,8 @@ router.post("/", async (req, res) => {
     const { data: kidCheck, error: kidError } = await supabase
       .from("kids")
       .select("name")
-      .eq("id", kidId)
-      .eq("user_id", req.userId)
+      .eq("id", kidId) // WHERE id = kidId
+      .eq("user_id", req.userId) // WHERE user_id = req.userID
       .single();
 
     if (kidError || !kidCheck) {
@@ -106,7 +133,7 @@ router.post("/", async (req, res) => {
         reason: reason || null,
         term: term || null,
         year: year || null,
-        user_id: req.userId,
+        user_id: req.userId, // Attaches record to logged-in user
       })
       .select()
       .single();
@@ -122,8 +149,14 @@ router.post("/", async (req, res) => {
 
 /**
  * @route PATCH /attendance/:id
- * @desc Update an attendance record (partial update)
- * @access Public
+ * @desc Partially update an attendance record (status or reason)
+ * @access Protected
+ *
+ * Flow:
+ * 1. Validate at least one field provided
+ * 2. Validate status enum
+ * 3. Build dynamic update payload
+ * 4. Persist changes for user-scoped record
  */
 router.patch("/:id", async (req, res) => {
   const supabase = createSupabaseClient(req);
@@ -149,9 +182,10 @@ router.patch("/:id", async (req, res) => {
 
     const { data, error } = await supabase
       .from("attendance")
+        // Update attendance SET
       .update(updatePayload)
-      .eq("id", id)
-      .eq("user_id", req.userId)
+      .eq("id", id) // WHERE id = record to update
+      .eq("user_id", req.userId) // extra safety: ensures user owns record
       .select()
       .single();
 
@@ -166,8 +200,7 @@ router.patch("/:id", async (req, res) => {
 
 /**
  * @route DELETE /attendance/:id
- * @desc Delete an attendance record
- * @access Public
+ * @desc Delete a single attendance record
  */
 router.delete("/:id", async (req, res) => {
   const supabase = createSupabaseClient(req);
@@ -175,6 +208,7 @@ router.delete("/:id", async (req, res) => {
     const { id } = req.params;
     const { error } = await supabase
       .from("attendance")
+        // Delete from Attendance
       .delete()
       .eq("id", id)
       .eq("user_id", req.userId);
@@ -324,7 +358,7 @@ router.delete("/year/:year", async (req, res) => {
     const { error } = await supabase
       .from("attendance")
       .delete()
-      .eq("year", year)
+      .eq("year", year) // Delete all records where year = X
       .eq("user_id", req.userId);
     if (error) return res.status(400).json({ error: error.message });
 
@@ -352,10 +386,10 @@ router.delete("/term/:year/:term", async (req, res) => {
     // Delele all attendance records for the year and term
     const { count, error } = await supabase
       .from("attendance")
-      .delete({ count: "exact" })
-      .eq("year", Number(year))
-      .eq("term", Number(term))
-      .eq("user_id", req.userId);
+      .delete({ count: "exact" }) // also return how many rows were deleted
+      .eq("year", Number(year)) // filter year
+      .eq("term", Number(term)) // filter term inside the year
+      .eq("user_id", req.userId); // only this user's data
 
     if (error) return res.status(400).json({ error: error.message });
 
@@ -422,12 +456,13 @@ router.post("/bulk", async (req, res) => {
     });
 
     // -----------------------------
-    // UPSERT (insert or update)
+    // BULK UPSERT (insert or update)
     // -----------------------------
     const { data, error } = await supabase
         .from("attendance")
         .upsert(cleanedRecords, {
-          onConflict: "kidid,week,term,year,user_id",
+          onConflict: "kidid,week,term,year,user_id"
+          // if a row already exists the same -> UPDATE instead of insert
         })
         .select();
 
