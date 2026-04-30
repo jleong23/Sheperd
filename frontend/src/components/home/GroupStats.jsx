@@ -1,4 +1,6 @@
-export default function GroupStats({ yearLevel, stats }) {
+import InlineSpinner from "../ui/InlineSpinner.jsx";
+
+export default function GroupStats({ yearLevel, stats, loading }) {
   return (
     <section className="bg-gray-200 p-12 rounded-xl shadow-lg max-w-5xl mx-auto">
       <h2 className="text-5xl font-bold text-center mb-10 text-blue-900">
@@ -13,9 +15,9 @@ export default function GroupStats({ yearLevel, stats }) {
           </div>
           <div>
             <p className="text-gray-500 font-medium text-lg">Year Level</p>
-            <p className="text-3xl font-bold text-[#E07B13]">
-              {yearLevel ?? "Unavailable"}
-            </p>
+            <div className="text-3xl font-bold text-[#E07B13]">
+              {loading ? <InlineSpinner /> : (yearLevel ?? "Unavailable")}
+            </div>
           </div>
         </div>
 
@@ -28,9 +30,13 @@ export default function GroupStats({ yearLevel, stats }) {
             <p className="text-gray-500 font-medium text-lg">
               Number of kids in this group
             </p>
-            <p className="text-3xl font-bold text-[#E07B13]">
-              {stats?.total_kids ?? "Unavailable"}
-            </p>
+            <div className="text-3xl font-bold text-[#E07B13]">
+              {loading ? (
+                <InlineSpinner />
+              ) : (
+                (stats?.total_kids ?? "Unavailable")
+              )}
+            </div>
           </div>
         </div>
 
@@ -41,9 +47,13 @@ export default function GroupStats({ yearLevel, stats }) {
           </div>
           <div>
             <p className="text-gray-500 font-medium text-lg">Kids Baptised</p>
-            <p className="text-3xl font-bold text-[#E07B13]">
-              {stats?.baptised_kids ?? "Unavailable"}
-            </p>
+            <div className="text-3xl font-bold text-[#E07B13]">
+              {loading ? (
+                <InlineSpinner />
+              ) : (
+                (stats?.baptised_kids ?? "Unavailable")
+              )}
+            </div>
           </div>
         </div>
 
@@ -56,9 +66,13 @@ export default function GroupStats({ yearLevel, stats }) {
             <p className="text-gray-500 font-medium text-lg">
               Comes Sunday Service
             </p>
-            <p className="text-3xl font-bold text-[#E07B13]">
-              {stats?.regular_kids ?? "Unavailable"}
-            </p>
+            <div className="text-3xl font-bold text-[#E07B13]">
+              {loading ? (
+                <InlineSpinner />
+              ) : (
+                (stats?.regular_kids ?? "Unavailable")
+              )}
+            </div>
           </div>
         </div>
       </div>

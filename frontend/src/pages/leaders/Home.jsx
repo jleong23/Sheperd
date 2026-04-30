@@ -16,6 +16,7 @@ const eventOptions = {
 
 export default function Home() {
   const { events, loading, fetchEvents } = useEvents(eventOptions);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Default year level for now (since backend user profile doesn't have it yet)
   const yearLevel = "11";
@@ -29,12 +30,16 @@ export default function Home() {
   useEffect(() => {
     fetchEvents();
 
-    // Fetch dynamic stats
+    setStatsLoading(true);
+
     fetchKidStats()
       .then((data) => {
         setStats(data);
       })
-      .catch((err) => console.error("Failed to fetch stats:", err));
+      .catch((err) => console.error("Failed to fetch stats:", err))
+      .finally(() => {
+        setStatsLoading(false);
+      });
   }, [fetchEvents]);
 
   return (
@@ -43,7 +48,11 @@ export default function Home() {
       <Welcome />
 
       {/* Group Stats */}
-      <GroupStats yearLevel={yearLevel || "11"} stats={stats} />
+      <GroupStats
+        yearLevel={yearLevel || "11"}
+        stats={stats}
+        loading={statsLoading}
+      />
 
       {/* Events */}
       <UpcomingEvents events={events} loading={loading} />
