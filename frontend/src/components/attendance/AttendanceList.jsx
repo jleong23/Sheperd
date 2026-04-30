@@ -174,17 +174,21 @@ export default function AttendanceList() {
   // Change Attendance Status
   // -----------------------------
   const handleStatusChange = async (recordId, newStatus) => {
-    // Find record being updated
-    const record = currentAttendance.find((r) => r.id === recordId);
-    if (!record) return;
+    const previous = currentAttendance.find((r) => r.id === recordId);
+
+    // optimistic update
+    updateAttendanceRecord({
+      ...previous,
+      status: newStatus,
+    });
 
     try {
-      // PATCH /attendance/:id
-      const updated = await updateAttendance(recordId, { status: newStatus });
-      // Sync updated record into local state
-      updateAttendanceRecord(updated);
+      await updateAttendance(recordId, { status: newStatus });
     } catch (err) {
-      console.error("Failed to update attendance:", err);
+      console.error(err);
+
+      // rollback if needed
+      updateAttendanceRecord(previous);
     }
   };
 
