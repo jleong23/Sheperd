@@ -22,6 +22,7 @@ import { Calendar, Users, ChevronDown } from "lucide-react";
 import profileIcon from "../../assets/profileIcon.png";
 import ExportAttendance from "./ExportAttendance.jsx";
 import ImportAttendance from "./ImportAttendance.jsx";
+import InlineSpinner from "../ui/InlineSpinner.jsx";
 
 export default function AttendanceResult({
   currentAttendance,
@@ -31,6 +32,7 @@ export default function AttendanceResult({
   onImport,
   selectedTerm,
   selectedYear,
+  importing,
 }) {
   // ---------------------------------------------------
   // Group attendance records by week
@@ -91,9 +93,20 @@ export default function AttendanceResult({
           />
           <label
             htmlFor="import-attendance-term"
-            className="flex items-center justify-center px-4 py-2 min-h-[44px] rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 text-sm font-bold cursor-pointer transition-colors"
+            className={`
+    flex items-center justify-center gap-2
+    px-4 py-2 min-h-[44px]
+    rounded-lg border text-sm font-bold
+    transition-colors
+    ${
+      importing
+        ? "bg-indigo-100 text-indigo-500 border-indigo-200 cursor-wait pointer-events-none"
+        : "bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 cursor-pointer"
+    }
+  `}
           >
-            Import Term
+            {importing && <InlineSpinner />}
+            {importing ? "Importing..." : "Import Term"}
           </label>
         </div>
 
@@ -125,6 +138,7 @@ export default function AttendanceResult({
             onReasonSubmit={onReasonSubmit}
             selectedTerm={selectedTerm}
             selectedYear={selectedYear}
+            importing={importing}
           />
         ))}
       </div>
@@ -171,6 +185,7 @@ const Panel = ({
   onImport,
   selectedTerm,
   selectedYear,
+  importing,
 }) => {
   const isOpen = open === id; // Check if this week is currently open
 
@@ -273,9 +288,20 @@ const Panel = ({
                 />
                 <label
                   htmlFor={`import-attendance-${id}`}
-                  className="flex items-center justify-center px-4 py-2 min-h-[44px] rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 text-sm font-bold cursor-pointer transition-colors"
+                  className={`
+                    flex items-center justify-center gap-2
+                    px-4 py-2 min-h-[44px]
+                    rounded-lg border text-sm font-bold
+                    transition-colors
+                    ${
+                      importing
+                        ? "bg-indigo-100 text-indigo-500 border-indigo-200 cursor-wait pointer-events-none"
+                        : "bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 cursor-pointer"
+                    }
+                  `}
                 >
-                  Import Week {id}
+                  {importing && <InlineSpinner />}
+                  {importing ? "Importing..." : `Import Week ${id}`}
                 </label>
               </div>
               <ImportAttendance

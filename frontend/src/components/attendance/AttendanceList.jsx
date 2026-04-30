@@ -36,6 +36,7 @@ export default function AttendanceList() {
   const [allAttendance, setAllAttendance] = useState([]);
   const [currentAttendance, setCurrentAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [importing, setImporting] = useState(false);
   const [kids, setKids] = useState([]);
 
   // -----------------------------
@@ -281,12 +282,15 @@ export default function AttendanceList() {
   // -----------------------------
   const handleImport = async (rows) => {
     // Convert Excel rows -> attendance records
+    setImporting(true);
+
     const transformed = transformData(rows, kids);
 
-    console.log("Transformed:", transformed);
+    console.log("Transformed:", transformed); // For debugging purposes
 
     if (transformed.length === 0) {
       toast.error("No valid rows to import");
+      setImporting(false);
       return;
     }
 
@@ -300,6 +304,8 @@ export default function AttendanceList() {
     } catch (err) {
       console.error("Import failed:", err);
       toast.error("No valid rows to import");
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -354,6 +360,7 @@ export default function AttendanceList() {
             onImport={handleImport}
             selectedTerm={selectedTerm}
             selectedYear={selectedYear}
+            importing={importing}
           />
         ) : (
           <p className="text-center mt-8 text-gray-500">
