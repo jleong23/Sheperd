@@ -1,5 +1,20 @@
 /**
- * /Users/jleong_23/Documents/Folders/Sheperd/frontend/src/components/attendance/AttendanceResult.jsx
+ * AttendanceResult.jsx
+ * ---------------------------------------------------
+ * Displays attendance records grouped by week.
+ *
+ * Features:
+ * - Groups attendance data into collapsible weekly panels
+ * - Displays attendance summary statistics
+ * - Allows updating attendance status
+ * - Allows adding/editing attendance reasons
+ * - Supports importing and exporting attendance data
+ * - Uses Framer Motion for smooth animations
+ *
+ * Main Components:
+ * - AttendanceResult → Main container
+ * - Panel → Expandable week section
+ * - StudentCard → Individual student attendance card
  */
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -17,21 +32,33 @@ export default function AttendanceResult({
   selectedTerm,
   selectedYear,
 }) {
-  // Group records by week
+  // ---------------------------------------------------
+  // Group attendance records by week
+  // Example:
+  // {
+  //   1: [records...],
+  //   2: [records...]
+  // }
+  // ---------------------------------------------------
   const attendanceByWeek = currentAttendance.reduce((acc, record) => {
     if (!acc[record.week]) acc[record.week] = [];
     acc[record.week].push(record);
     return acc;
   }, {});
 
+  // ---------------------------------------------------
+  // Convert grouped week keys into sorted number array
+  // Example:
+  // ["1","2"] -> [1,2]
+  // ---------------------------------------------------
   const sortedWeeks = Object.keys(attendanceByWeek)
     .map(Number)
     .sort((a, b) => a - b);
 
-  // Default to opening the first available week
+  // Controls which week panel is currently open
   const [open, setOpen] = useState(null);
 
-  // Update open state if weeks change (e.g. filter change)
+  // Ensure an open panel still exists after filters change
   useEffect(() => {
     if (
       open !== null &&
@@ -44,13 +71,19 @@ export default function AttendanceResult({
 
   return sortedWeeks.length > 0 ? (
     <section className="xl:pb-6 rounded-2xl shadow-xl overflow-hidden">
+      {/* ---------------------------------------------------
+          Top Toolbar
+      --------------------------------------------------- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border-b border-gray-200 gap-4">
+        {/* Title */}
         <div className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-gray-400" />
           <span className="text-sm font-semibold text-gray-600 uppercase tracking-wider">
             Full Term
           </span>
         </div>
+
+        {/* Export + Import buttons */}
         <div className="flex flex-wrap items-center gap-3">
           <ExportAttendance
             attendance={currentAttendance}
@@ -63,12 +96,18 @@ export default function AttendanceResult({
             Import Term
           </label>
         </div>
+
+        {/* Hidden import input */}
         <ImportAttendance
           onImport={onImport}
           term={selectedTerm}
           year={selectedYear}
         />
       </div>
+
+      {/* ---------------------------------------------------
+          Weekly Attendance Panels
+      --------------------------------------------------- */}
       <div className="flex flex-col w-full max-w-7xl mx-auto overflow-hidden rounded-xl bg-slate-800">
         {sortedWeeks.map((week) => (
           <Panel
@@ -91,6 +130,9 @@ export default function AttendanceResult({
       </div>
     </section>
   ) : (
+    // ---------------------------------------------------
+    // Empty State
+    // ---------------------------------------------------
     <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
       <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
         <Calendar className="w-8 h-8 text-gray-400" />
@@ -105,6 +147,17 @@ export default function AttendanceResult({
   );
 }
 
+/**
+ * Panel Component
+ * ---------------------------------------------------
+ * Expandable section for a single week.
+ *
+ * Features:
+ * - Expand/collapse animation
+ * - Weekly attendance summary
+ * - Weekly export/import
+ * - Displays student cards
+ */
 const Panel = ({
   open,
   setOpen,
@@ -112,7 +165,6 @@ const Panel = ({
   title,
   count,
   records,
-  allAttendance,
   onStatusChange,
   onReasonChange,
   onReasonSubmit,
@@ -120,7 +172,7 @@ const Panel = ({
   selectedTerm,
   selectedYear,
 }) => {
-  const isOpen = open === id;
+  const isOpen = open === id; // Check if this week is currently open
 
   // Calculate summary stats
   const summary = records.reduce(
@@ -135,6 +187,9 @@ const Panel = ({
 
   return (
     <>
+      {/* ---------------------------------------------------
+          Panel Header Button
+      --------------------------------------------------- */}
       <button
         className={`
           relative group flex items-center justify-between w-full p-4 sm:p-5 transition-all border-b border-slate-700/50 min-h-[72px]
@@ -142,6 +197,7 @@ const Panel = ({
         `}
         onClick={() => setOpen(isOpen ? null : id)}
       >
+        {/* Left Side */}
         <div className="flex items-center gap-3 sm:gap-4">
           <div
             className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-colors shadow-sm ${
@@ -162,6 +218,7 @@ const Panel = ({
           </div>
         </div>
 
+        {/* Expand Icon */}
         <ChevronDown
           className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${
             isOpen ? "rotate-180" : ""
@@ -169,6 +226,9 @@ const Panel = ({
         />
       </button>
 
+      {/* ---------------------------------------------------
+          Animated Expand/Collapse Content
+      --------------------------------------------------- */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -253,14 +313,28 @@ const Panel = ({
   );
 };
 
+/**
+ * StudentCard Component
+ * ---------------------------------------------------
+ * Displays an individual student's attendance record.
+ *
+ * Features:
+ * - Attendance status dropdown
+ * - Attendance reason input
+ * - Dynamic styling based on attendance status
+ */
 const StudentCard = ({
   record,
   onStatusChange,
   onReasonChange,
   onReasonSubmit,
 }) => {
+  // Controls drop down visibility
   const [isOpen, setIsOpen] = useState(false);
 
+  /**
+   * Returns Tailwind styles depending on attendance status
+   */
   const getStatusStyles = (status) => {
     switch (status) {
       case "coming":
@@ -286,13 +360,16 @@ const StudentCard = ({
     }
   };
 
+  // Get matching styles for current status
   const styles = getStatusStyles(record.status);
 
   return (
     <div
       className={`border shadow-sm rounded-xl p-4 flex flex-col gap-4 transition-all hover:shadow-md ${styles.container}`}
     >
+      {/* Student Header */}
       <div className="flex items-center justify-between gap-2">
+        {/* Student Info */}
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="relative flex-shrink-0">
             <img
@@ -306,6 +383,7 @@ const StudentCard = ({
           </span>
         </div>
 
+        {/* Status Dropdown */}
         <div className="relative flex-shrink-0">
           <button
             onClick={(e) => {
@@ -322,12 +400,15 @@ const StudentCard = ({
             />
           </button>
 
+          {/* Dropdown Menu */}
           {isOpen && (
             <>
+              {/* Backdrop */}
               <div
                 className="fixed inset-0 z-30 bg-black/5"
                 onClick={() => setIsOpen(false)}
               />
+              {/* Dropdown options */}
               <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-40 overflow-hidden py-1">
                 {["maybe", "coming", "not coming"].map((option) => (
                   <button
@@ -352,12 +433,17 @@ const StudentCard = ({
         </div>
       </div>
 
+      {/* ---------------------------------------------------
+          Reason Input
+          Only shown for "maybe" or "not coming"
+      --------------------------------------------------- */}
       {(record.status === "not coming" || record.status === "maybe") && (
         <div className="mt-1 pt-4 border-t border-gray-100 flex flex-col gap-2.5">
           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
             Reason for {record.status}
           </label>
           <div className="flex flex-col sm:flex-row gap-2">
+            {/* Controlled input */}
             <input
               type="text"
               placeholder="Add a note..."
@@ -365,6 +451,7 @@ const StudentCard = ({
               onChange={(e) => onReasonChange(record.id, e.target.value)}
               className="flex-1 min-h-[44px] border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 transition-all placeholder:text-gray-400"
             />
+            {/* Save button */}
             <button
               className="bg-slate-900 hover:bg-black active:bg-slate-800 text-white min-h-[44px] sm:px-6 px-4 rounded-lg text-xs font-bold uppercase tracking-wide transition-all shadow-sm active:scale-95"
               onClick={() => onReasonSubmit(record.id)}
@@ -378,6 +465,9 @@ const StudentCard = ({
   );
 };
 
+// ---------------------------------------------------
+// Framer Motion Animation Variants
+// ---------------------------------------------------
 const panelVariants = {
   open: {
     height: "auto",

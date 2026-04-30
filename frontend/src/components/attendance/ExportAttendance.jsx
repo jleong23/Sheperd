@@ -1,19 +1,48 @@
+/**
+ * ExportAttendance.jsx
+ * ---------------------
+ * Excel export component for attendance records.
+ *
+ * Responsibilities:
+ * - Export attendance data into an Excel (.xlsx) file
+ * - Generate a summary sheet with attendance statistics
+ * - Generate individual sheets for each week
+ * - Format Excel sheets with headers, colours, and frozen rows
+ *
+ * Libraries Used:
+ * - ExcelJS → create and style Excel workbooks
+ * - file-saver → trigger browser file download
+ *
+ * Props:
+ * - attendance → array of attendance records
+ * - label → optional custom button label
+ */
+
 import React from "react";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 export default function ExportAttendance({ attendance, label }) {
+  /**
+   * Main export handler
+   * Runs when user clicks Export button
+   */
   const handleExport = async () => {
     if (!attendance || attendance.length === 0) return;
 
+    // Create new Excel workbook
     const workbook = new ExcelJS.Workbook();
+
+    // Metadata shown inside Excel document properties
     workbook.creator = "Sheperd App";
 
     // -----------------------------
     // Group attendance by week
     // -----------------------------
     const groupedByWeek = attendance.reduce((acc, record) => {
+      // If week doesn't exist yet, create empty array
       if (!acc[record.week]) acc[record.week] = [];
+      // Push attendance record into correct week group
       acc[record.week].push(record);
       return acc;
     }, {});
@@ -22,6 +51,7 @@ export default function ExportAttendance({ attendance, label }) {
     // Summary Data
     // -----------------------------
     const summaryData = Object.entries(groupedByWeek).map(([week, records]) => {
+      // Count attendance statuses
       const counts = records.reduce(
         (acc, r) => {
           if (r.status === "coming") acc.coming++;
@@ -29,9 +59,11 @@ export default function ExportAttendance({ attendance, label }) {
           else if (r.status === "not coming") acc.notComing++;
           return acc;
         },
+        // Initial counter values
         { coming: 0, maybe: 0, notComing: 0 },
       );
 
+      // Return formatted summary row
       return {
         week: Number(week),
         total: records.length,

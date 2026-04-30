@@ -1,17 +1,20 @@
 // =======================
 // Attendance API
+// Frontend wrapper around backend /attendance routes
+// Uses axios instance: api (pre-configured baseURL + auth headers)
 // =======================
+
+import api from "./index";
 
 /**
  * Fetch attendance records
- * Optional: filter by year and term
  * GET /attendance?year=YYYY&term=TERM
  */
-import api from "./index";
-
 export async function getAttendance(year, term) {
   try {
-    const response = await api.get("/attendance", { params: { year, term } });
+    const response = await api.get("/attendance", {
+      params: { year, term }, // converst into query string (attendance?year=2026&term=1)
+    });
     return response.data; // returns array of attendance records
   } catch (err) {
     console.error("getAttendance failed:", err);
@@ -20,12 +23,17 @@ export async function getAttendance(year, term) {
 }
 
 /**
- * Update status of a specific attendance record
+ * Update attendance record
  * PATCH /attendance/:recordId
+ * Body = partial update fields (status, reason)
  */
 export async function updateAttendance(recordId, updates) {
   try {
-    const response = await api.patch(`/attendance/${recordId}`, updates);
+    const response = await api.patch(
+      `/attendance/${recordId}`,
+      updates, // request body example: { status: "coming", reason: "sick" }
+    );
+
     return response.data;
   } catch (err) {
     console.error(`Failed to update attendance ${recordId}:`, err);
@@ -34,8 +42,9 @@ export async function updateAttendance(recordId, updates) {
 }
 
 /**
- * Add a new year to attendance
+ * Create a new attendance year
  * POST /attendance/year
+ * Body: { year: 2026 }
  */
 export async function addYear(year) {
   try {
@@ -48,13 +57,18 @@ export async function addYear(year) {
 }
 
 /**
- * Add a new term to a year
+ * Create a new term inside a year
  * POST /attendance/term
- * Default weeks = 10
+ * Body: { year, term, weeks }
  */
 export async function addTerm(year, term, weeks = 10) {
   try {
-    const response = await api.post("/attendance/term", { year, term, weeks });
+    const response = await api.post("/attendance/term", {
+      // backend uses below to generate records
+      year,
+      term,
+      weeks, // default to 10 weeks if not provided
+    });
     return response.data;
   } catch (err) {
     console.error("Failed to add term:", err);
@@ -62,6 +76,11 @@ export async function addTerm(year, term, weeks = 10) {
   }
 }
 
+/**
+ * Bulk insert / update attendance records
+ * POST /attendance/bulk
+ * Body: ARRAY of attendance objects
+ */
 export async function addBulkAttendance(cleanedData) {
   if (!Array.isArray(cleanedData) || cleanedData.length === 0) {
     throw new Error("No valid attendance data provided");
@@ -77,7 +96,7 @@ export async function addBulkAttendance(cleanedData) {
 }
 
 /**
- * Delete a term for a specific year
+ * Delete a specific term in a year
  * DELETE /attendance/term/:year/:term
  */
 export async function deleteTerm(year, term) {

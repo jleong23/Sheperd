@@ -1,16 +1,30 @@
+/**
+ * AddYearTerm Component
+ * ---------------------------------------
+ * Admin utility for managing attendance structure:
+ * - Create new academic year
+ * - Create new term under a year
+ * - Delete term (removes all related attendance records)
+ */
+
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { addYear, addTerm, deleteTerm } from "../../api/attendance";
 
 export default function AddYearTerm({ onUpdate, availableYears = [] }) {
   const latestYear =
+    // If backend returns years, use the latest one, else fallback to current system year
     availableYears.length > 0
       ? Math.max(...availableYears)
       : new Date().getFullYear();
 
+  // Selected year for term operations
   const [year, setYear] = useState(latestYear);
+  // Term number input (1,2,3)
   const [newTerm, setNewTerm] = useState("");
+  // Number of weeks in a term (default = 10)
   const [weeks, setWeeks] = useState(10);
+  // Disables buttons while API calls are running
   const [loading, setLoading] = useState(false);
 
   const handleAddYear = async () => {
@@ -47,6 +61,7 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
 
     setLoading(true);
     try {
+      // POST /attendance/term - creates attendance rows for all kids for this term
       await addTerm(year, Number(newTerm), Number(weeks));
       alert(`Term ${newTerm} for year ${year} added successfully!`);
       onUpdate(); // A full refresh is easier here
@@ -74,6 +89,8 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
     setLoading(true);
     try {
       const response = await deleteTerm(year, newTerm);
+      // DELETE /attendance/term/:year/:term
+      // removes ALL attendance rows matching filters
       alert(response.message || "Term deleted successfully!");
       onUpdate();
     } catch (err) {
