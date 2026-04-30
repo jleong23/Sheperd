@@ -7,7 +7,7 @@ import DeleteEvent from "./DeleteEvent";
 import EventFilter from "./EventFilter";
 import EditEventModal from "./EditEventModal";
 
-import LoadingSpinner from "../ui/LoadingSpinner";
+import EventCardSkeleton from "./EventCardSkeleton.jsx";
 import useEvents from "../../hooks/useEvents";
 
 export default function EventList() {
@@ -56,7 +56,6 @@ export default function EventList() {
     }
   };
 
-  if (loading) return <LoadingSpinner fullPage />;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
@@ -84,7 +83,9 @@ export default function EventList() {
 
       {/* Event Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.length === 0 ? (
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => <EventCardSkeleton key={i} />)
+        ) : events.length === 0 ? (
           <div className="col-span-full p-6 text-center text-gray-500 bg-blue-50 rounded-lg shadow-lg">
             No events found
           </div>
@@ -108,17 +109,21 @@ export default function EventList() {
                 <h2 className="text-xl font-bold text-blue-800">
                   {event.eventname}
                 </h2>
+
                 <p className="text-gray-700 text-sm">
                   <span className="font-semibold">Dates:</span>{" "}
                   {new Date(event.eventstartdate).toLocaleDateString(
                     undefined,
-                    { timeZone: "UTC" }
+                    {
+                      timeZone: "UTC",
+                    },
                   )}{" "}
                   -{" "}
                   {new Date(event.eventenddate).toLocaleDateString(undefined, {
                     timeZone: "UTC",
                   })}
                 </p>
+
                 <p className="text-gray-700 text-sm">
                   <span className="font-semibold">Times:</span>{" "}
                   <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
@@ -129,12 +134,14 @@ export default function EventList() {
                     {event.eventendtime || "N/A"}
                   </span>
                 </p>
+
                 <p className="text-gray-700 text-sm">
                   <span className="font-semibold">Assigned:</span>{" "}
                   <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
                     {event.eventassignedpeople || "None"}
                   </span>
                 </p>
+
                 <p className="text-gray-500 text-xs mt-1">
                   Last updated:{" "}
                   {event.updated_at
@@ -154,6 +161,7 @@ export default function EventList() {
                 >
                   Edit
                 </button>
+
                 <DeleteEvent eventId={event.eventid} onDeleted={handleDelete} />
               </div>
             </div>

@@ -1,4 +1,3 @@
-import InlineSpinner from "../ui/InlineSpinner.jsx";
 import StatCardSkeleton from "./StatCardSkeleton.jsx";
 
 export default function GroupStats({ yearLevel, stats, loading }) {
