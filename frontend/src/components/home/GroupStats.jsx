@@ -1,4 +1,5 @@
 import InlineSpinner from "../ui/InlineSpinner.jsx";
+import StatCardSkeleton from "./StatCardSkeleton.jsx";
 
 export default function GroupStats({ yearLevel, stats, loading }) {
   return (
@@ -8,73 +9,74 @@ export default function GroupStats({ yearLevel, stats, loading }) {
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Year Level */}
-        <div className="flex items-center p-6 bg-white rounded-xl shadow hover:shadow-xl transition-shadow">
-          <div className="bg-[#E07B13] text-white w-12 h-12 flex items-center justify-center rounded-full mr-4">
-            🏫
-          </div>
-          <div>
-            <p className="text-gray-500 font-medium text-lg">Year Level</p>
-            <div className="text-3xl font-bold text-[#E07B13]">
-              {loading ? <InlineSpinner /> : (yearLevel ?? "Unavailable")}
+        {loading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            {/* Year Level */}
+            <div className="flex items-center p-6 bg-white rounded-xl shadow hover:shadow-xl transition-shadow">
+              <div className="bg-[#E07B13] text-white w-12 h-12 flex items-center justify-center rounded-full mr-4">
+                🏫
+              </div>
+              <div>
+                <p className="text-gray-500 font-medium text-lg">Year Level</p>
+                <p className="text-3xl font-bold text-[#E07B13]">
+                  {yearLevel ?? "Unavailable"}
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Number of Kids */}
-        <div className="flex items-center p-6 bg-white rounded-xl shadow hover:shadow-xl transition-shadow">
-          <div className="bg-[#E07B13] text-white w-12 h-12 flex items-center justify-center rounded-full mr-4">
-            🤦🏼‍♂️
-          </div>
-          <div>
-            <p className="text-gray-500 font-medium text-lg">
-              Number of kids in this group
-            </p>
-            <div className="text-3xl font-bold text-[#E07B13]">
-              {loading ? (
-                <InlineSpinner />
-              ) : (
-                (stats?.total_kids ?? "Unavailable")
-              )}
+            {/* Number of Kids */}
+            <div className="flex items-center p-6 bg-white rounded-xl shadow hover:shadow-xl transition-shadow">
+              <div className="bg-[#E07B13] text-white w-12 h-12 flex items-center justify-center rounded-full mr-4">
+                🤦🏼‍♂️
+              </div>
+              <div>
+                <p className="text-gray-500 font-medium text-lg">
+                  Number of kids in this group
+                </p>
+                <p className="text-3xl font-bold text-[#E07B13]">
+                  {stats?.total_kids ?? "Unavailable"}
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Kids Baptised */}
-        <div className="flex items-center p-6 bg-white rounded-xl shadow hover:shadow-xl transition-shadow">
-          <div className="bg-[#E07B13] text-white w-12 h-12 flex items-center justify-center rounded-full mr-4">
-            💧
-          </div>
-          <div>
-            <p className="text-gray-500 font-medium text-lg">Kids Baptised</p>
-            <div className="text-3xl font-bold text-[#E07B13]">
-              {loading ? (
-                <InlineSpinner />
-              ) : (
-                (stats?.baptised_kids ?? "Unavailable")
-              )}
+            {/* Kids Baptised */}
+            <div className="flex items-center p-6 bg-white rounded-xl shadow hover:shadow-xl transition-shadow">
+              <div className="bg-[#E07B13] text-white w-12 h-12 flex items-center justify-center rounded-full mr-4">
+                💧
+              </div>
+              <div>
+                <p className="text-gray-500 font-medium text-lg">
+                  Kids Baptised
+                </p>
+                <p className="text-3xl font-bold text-[#E07B13]">
+                  {stats?.baptised_kids ?? "Unavailable"}
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Comes Sunday Service */}
-        <div className="flex items-center p-6 bg-white rounded-xl shadow hover:shadow-xl transition-shadow">
-          <div className="bg-[#E07B13] text-white w-12 h-12 flex items-center justify-center rounded-full mr-4">
-            ⛪️
-          </div>
-          <div>
-            <p className="text-gray-500 font-medium text-lg">
-              Comes Sunday Service
-            </p>
-            <div className="text-3xl font-bold text-[#E07B13]">
-              {loading ? (
-                <InlineSpinner />
-              ) : (
-                (stats?.regular_kids ?? "Unavailable")
-              )}
+            {/* Sunday Service */}
+            <div className="flex items-center p-6 bg-white rounded-xl shadow hover:shadow-xl transition-shadow">
+              <div className="bg-[#E07B13] text-white w-12 h-12 flex items-center justify-center rounded-full mr-4">
+                ⛪️
+              </div>
+              <div>
+                <p className="text-gray-500 font-medium text-lg">
+                  Comes Sunday Service
+                </p>
+                <p className="text-3xl font-bold text-[#E07B13]">
+                  {stats?.regular_kids ?? "Unavailable"}
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </section>
   );
