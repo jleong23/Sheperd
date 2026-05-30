@@ -19,14 +19,14 @@ export default function LoginPage() {
 
   const handleLogin = async ({ email, password }) => {
     try {
-      const { data } = await supabaseLogin({ email, password });
+      const data = await supabaseLogin({ email, password });
 
-      if (data.session) {
+      if (data?.session) {
         navigate("/");
       }
     } catch (err) {
       console.error(err);
-      toast.error("Invalid email or password");
+      toast.error(err.message || "Invalid email or password");
     }
   };
 
