@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+
 export default function AuthForm({
   fields,
   onSubmit,
@@ -8,33 +10,38 @@ export default function AuthForm({
   return (
     <>
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">
+        <div className="mb-5 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           {error}
         </div>
       )}
 
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={onSubmit} className="space-y-5">
         {fields.map(({ label, ...input }) => (
           <div key={input.name}>
-            <label className="block text-sm font-medium text-gray-900">
+            <label className="mb-2 block text-sm font-medium text-slate-300">
               {label}
             </label>
-            <div className="mt-2">
-              <input
-                {...input}
-                value={values[input.name] || ""}
-                className="block w-full rounded-md bg-white px-3 py-2.5 text-gray-900 outline outline-1 outline-gray-300 focus:outline-indigo-600 sm:text-sm"
-              />
-            </div>
+
+            <input
+              {...input}
+              value={values[input.name] || ""}
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+            />
           </div>
         ))}
 
-        <button
+        <motion.button
+          whileHover={{
+            y: -3,
+            scale: 1.02,
+            boxShadow: "0px 0px 30px rgba(99,102,241,0.35)",
+          }}
+          whileTap={{ scale: 0.97 }}
           type="submit"
-          className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-3.5 text-sm font-semibold text-white hover:bg-indigo-500"
+          className="w-full rounded-xl bg-indigo-600 px-5 py-3 font-bold text-white transition hover:bg-indigo-500"
         >
           {buttonText}
-        </button>
+        </motion.button>
       </form>
     </>
   );
