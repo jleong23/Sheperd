@@ -1,25 +1,52 @@
 import { IoCheckboxOutline } from "react-icons/io5";
+import { motion } from "framer-motion";
 
 export default function Reminders() {
   return (
-    <section className="bg-blue-900 text-white px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-9 rounded-xl shadow-md max-w-4xl mx-auto">
-      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-5 md:mb-7">
+    <motion.section
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="
+    rounded-3xl
+    border border-white/10
+    bg-white/5
+    backdrop-blur-md
+    px-5 py-7
+    shadow-xl
+  "
+    >
+      <h2 className="text-center text-3xl font-bold text-white mb-6">
         Reminders
       </h2>
 
       {[
         "Send in attendance by 9pm Friday",
-        "Tell Ryan he's handsome",
+        "Lock In and Hungry",
         "Update Pastoral Care Logs",
-      ].map((title, id) => (
-        <div
-          key={id}
-          className="text-sm sm:text-base md:text-lg flex items-start gap-3 mb-3"
+      ].map((title) => (
+        <motion.div
+          whileHover={{
+            x: 5,
+          }}
+          className="
+        flex items-center
+        gap-3
+        p-3
+        rounded-xl
+        mb-3
+        bg-white/5
+        border border-white/10
+        hover:border-pink-400/50
+        hover:shadow-[0_0_20px_rgba(236,72,153,0.25)]
+        transition
+      "
         >
-          <IoCheckboxOutline className="mt-1 shrink-0" />
-          <span>{title}</span>
-        </div>
+          <span className="text-pink-400">✓</span>
+          <span className="text-slate-200">{title}</span>
+        </motion.div>
       ))}
-    </section>
+    </motion.section>
   );
 }

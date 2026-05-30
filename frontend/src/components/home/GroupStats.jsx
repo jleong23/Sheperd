@@ -1,4 +1,5 @@
 import StatCardSkeleton from "./StatCardSkeleton.jsx";
+import { motion } from "framer-motion";
 
 export default function GroupStats({ yearLevel, stats, loading }) {
   const cards = [
@@ -21,8 +22,14 @@ export default function GroupStats({ yearLevel, stats, loading }) {
   ];
 
   return (
-    <section className="bg-gray-200 px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-9 rounded-xl shadow-md max-w-4xl mx-auto">
-      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-5 md:mb-7 text-blue-900">
+    <motion.section
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="rounded-3xl border border-white/10 bg-white/5 px-5 py-7 sm:px-7 md:px-8 shadow-xl backdrop-blur-md"
+    >
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-5 md:mb-7 text-white">
         Group Stats
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
@@ -31,25 +38,41 @@ export default function GroupStats({ yearLevel, stats, loading }) {
               <StatCardSkeleton key={index} />
             ))
           : cards.map((card) => (
-              <div
+              <motion.div
                 key={card.label}
-                className="flex items-center p-3 md:p-4 bg-white rounded-xl shadow hover:shadow-lg transition-shadow"
+                whileHover={{
+                  scale: 1.03,
+                  y: -4,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 20,
+                }}
+                className="
+          bg-white/5
+          border border-white/10
+          backdrop-blur-md
+          rounded-2xl
+          p-4
+          flex items-center
+          hover:border-blue-400/50
+          hover:shadow-[0_0_25px_rgba(59,130,246,0.25)]
+          transition
+        "
               >
-                <div className="bg-[#E07B13] text-white w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full mr-3 shrink-0">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                   {card.icon}
                 </div>
 
-                <div>
-                  <p className="text-gray-500 font-medium text-sm md:text-base">
-                    {card.label}
-                  </p>
-                  <p className="text-xl md:text-2xl font-bold text-[#E07B13]">
-                    {card.value}
-                  </p>
+                <div className="ml-4">
+                  <p className="text-slate-400">{card.label}</p>
+
+                  <p className="text-white text-xl font-bold">{card.value}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
       </div>
-    </section>
+    </motion.section>
   );
 }

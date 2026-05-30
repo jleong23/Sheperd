@@ -43,19 +43,24 @@ export default function Home() {
   }, [fetchEvents]);
 
   return (
-    <div className="px-4 py-5 sm:px-6 md:px-8 space-y-8 md:space-y-10 max-w-5xl mx-auto">
-      {/* Welcome + Attendance & New People Page Btn */}
-      <Welcome />
-      {/* Group Stats */}
-      <GroupStats
-        yearLevel={yearLevel || "11"}
-        stats={stats}
-        loading={statsLoading}
-      />
-      {/* Events */}
-      <UpcomingEvents events={events} loading={loading} />
-      {/* Reminders */}
-      <Reminders />
+    <div className="min-h-screen bg-[#0f172a] relative overflow-hidden">
+      <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/20 blur-[120px]" />
+      <div className="absolute top-96 right-20 w-72 h-72 bg-purple-500/20 blur-[120px]" />
+
+      <div className="relative max-w-5xl mx-auto px-4 py-8 space-y-8">
+        {/* Welcome + Attendance & New People Page Btn */}
+        <Welcome />
+        {/* Group Stats */}
+        <GroupStats
+          yearLevel={yearLevel || "11"}
+          stats={stats}
+          loading={statsLoading}
+        />
+        {/* Events */}
+        <UpcomingEvents events={events} loading={loading} />
+        {/* Reminders */}
+        <Reminders />
+      </div>
     </div>
   );
 }
