@@ -35,17 +35,17 @@ export default function SplashHero() {
           one simple dashboard built for leaders.
         </p>
 
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+        <div className="mt-10 flex w-full max-w-xs flex-col gap-4 sm:max-w-none sm:flex-row sm:justify-center">
           <Link
             to="/signup"
-            className="rounded-full bg-white px-8 py-4 text-sm font-bold text-slate-900 hover:bg-slate-200"
+            className="block w-full rounded-full bg-white px-8 py-4 text-center text-sm font-bold text-slate-900 hover:bg-slate-200 sm:w-auto"
           >
             Get Started
           </Link>
 
           <Link
             to="/login"
-            className="rounded-full bg-slate-800 px-8 py-4 text-sm font-bold text-white hover:bg-slate-700"
+            className="block w-full rounded-full bg-slate-800 px-8 py-4 text-center text-sm font-bold text-white hover:bg-slate-700 sm:w-auto"
           >
             Login
           </Link>
