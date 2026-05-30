@@ -23,6 +23,7 @@ import { useState } from "react";
 import { Settings, X } from "lucide-react";
 import AddYearTerm from "./AddYearTerm";
 import useUser from "../../hooks/useUser";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AttendanceSort({
   selectedYear,
@@ -41,20 +42,28 @@ export default function AttendanceSort({
   const { yearLevel } = useUser(1);
 
   return (
-    <div className="mb-6 sm:mb-8">
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45 }}
+      className="mb-6 sm:mb-8"
+    >
       {/* ======================================
           Page Header
       ====================================== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             {yearLevel} Attendance
           </h1>
 
-          <p className="text-gray-500 text-xs sm:text-sm mt-1">
-            Manage and view attendance records
+          <p className="text-slate-400 text-xs sm:text-sm mt-1">
+            Manage attendance records and weekly reports
           </p>
-        </div>
+        </motion.div>
 
         {/* ======================================
             Toggle AddYearTerm Manager
@@ -63,10 +72,10 @@ export default function AttendanceSort({
           // prev => !prev toggles boolean state
           // true becomes false, false becomes true
           onClick={() => setShowAddYearTerm((prev) => !prev)}
-          className={`flex items-center justify-center gap-2 px-4 py-2 min-h-[44px] rounded-xl font-bold transition-all duration-200 active:scale-95 ${
+          className={`bg-slate-200/10 flex items-center justify-center gap-2 px-4 py-2 min-h-[44px] rounded-xl font-bold transition-all duration-200 active:scale-95 ${
             showAddYearTerm
-              ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
-              : "bg-slate-900 text-white hover:bg-black shadow-md hover:shadow-lg"
+              ? "bg-white/10 text-slate-200 hover:bg-white/15 border border-white/10"
+              : "text-white shadow-[0_0_20px_rgba(99,102,241,0.35)] hover:shadow-[0_0_28px_rgba(99,102,241,0.55)]"
           }`}
         >
           {/* Conditional rendering based on state */}
@@ -94,7 +103,7 @@ export default function AttendanceSort({
             : "max-h-0 opacity-0"
         }`}
       >
-        <div className="bg-gray-50 rounded-2xl p-1 sm:p-2 border border-gray-100 shadow-inner">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-2 shadow-xl backdrop-blur-md">
           <AddYearTerm
             // Refresh attendance after adding/deleting year or term
             onUpdate={refreshAttendance}
@@ -106,18 +115,18 @@ export default function AttendanceSort({
       {/* ======================================
           Filters Bar
       ====================================== */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 sm:gap-8 items-stretch sm:items-center">
+      <div className="bg-white/5 p-4 sm:p-5 rounded-3xl border border-white/10 shadow-xl backdrop-blur-md flex flex-col sm:flex-row gap-4 sm:gap-8 items-stretch sm:items-center">
         {/* ======================================
             Academic Year Filter
         ====================================== */}
         <div className="flex flex-col gap-2 flex-1">
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
             Academic Year
           </label>
 
           <div className="relative">
             <select
-              className="w-full appearance-none bg-gray-50 border border-gray-300 text-gray-900 text-sm font-medium rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 block min-h-[44px] px-4 pr-10 transition-all cursor-pointer"
+              className="w-full appearance-none bg-white/10 border border-white/10 text-white text-sm font-medium rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 block min-h-[44px] px-4 pr-10 transition-all cursor-pointer"
               // Controlled component value
               value={selectedYear || ""}
               // Convert dropdown string value into Number
@@ -193,7 +202,9 @@ export default function AttendanceSort({
             {/* Custom dropdown icon */}
             <div
               className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 ${
-                !selectedYear ? "text-gray-200" : "text-gray-400"
+                !selectedYear
+                  ? "bg-white/5 border-white/10 text-slate-500 cursor-not-allowed"
+                  : "bg-white/10 border-white/10 text-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 cursor-pointer"
               }`}
             >
               <svg
@@ -213,6 +224,6 @@ export default function AttendanceSort({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

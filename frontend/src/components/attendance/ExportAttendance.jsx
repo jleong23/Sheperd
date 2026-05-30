@@ -178,7 +178,7 @@ export default function ExportAttendance({ attendance, label }) {
     <div className="flex-shrink-0">
       <button
         onClick={handleExport}
-        className="flex items-center justify-center px-4 py-2 min-h-[44px] rounded-lg bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 active:bg-blue-200 active:scale-95 text-sm font-bold transition-all shadow-sm"
+        className="flex items-center justify-center px-4 py-2 min-h-[44px] rounded-xl bg-blue-500/10 text-blue-300 border border-blue-400/30 hover:bg-blue-500/20 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95 text-sm font-bold transition-all shadow-sm"
       >
         {label || "Export Attendance"}
       </button>

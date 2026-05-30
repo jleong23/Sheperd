@@ -312,43 +312,48 @@ export default function AttendanceList() {
   // Main UI
   // ---------------------------------------------------
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-      {/*Filter Controls*/}
-      <AttendanceSort
-        selectedYear={selectedYear}
-        selectedTerm={selectedTerm}
-        availableYears={availableYears}
-        availableTerms={availableTerms}
-        onYearChange={setSelectedYear}
-        onTermChange={setSelectedTerm}
-        hideWeek={true}
-        refreshAttendance={fetchAllAttendance}
-      />
+    <div className="min-h-screen bg-[#0f172a] relative overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
+      <div className="absolute top-20 left-10 w-96 h-96 bg-blue-500/20 blur-[120px]" />
+      <div className="absolute right-10 top-80 w-96 h-96 bg-purple-500/20 blur-[120px]" />
 
-      {/*Only render attendance if year + term selected*/}
-      {selectedYear && selectedTerm ? (
-        currentAttendance.length > 0 ? (
-          <AttendanceResult
-            currentAttendance={currentAttendance}
-            onStatusChange={handleStatusChange}
-            onAttendanceUpdate={updateAttendanceRecord}
-            onReasonChange={handleReasonChange}
-            onReasonSubmit={handleReasonSubmit}
-            onImport={handleImport}
-            selectedTerm={selectedTerm}
-            selectedYear={selectedYear}
-            importing={importing}
-          />
+      <div className="relative max-w-6xl mx-auto">
+        {/*Filter Controls*/}
+        <AttendanceSort
+          selectedYear={selectedYear}
+          selectedTerm={selectedTerm}
+          availableYears={availableYears}
+          availableTerms={availableTerms}
+          onYearChange={setSelectedYear}
+          onTermChange={setSelectedTerm}
+          hideWeek={true}
+          refreshAttendance={fetchAllAttendance}
+        />
+
+        {/*Only render attendance if year + term selected*/}
+        {selectedYear && selectedTerm ? (
+          currentAttendance.length > 0 ? (
+            <AttendanceResult
+              currentAttendance={currentAttendance}
+              onStatusChange={handleStatusChange}
+              onAttendanceUpdate={updateAttendanceRecord}
+              onReasonChange={handleReasonChange}
+              onReasonSubmit={handleReasonSubmit}
+              onImport={handleImport}
+              selectedTerm={selectedTerm}
+              selectedYear={selectedYear}
+              importing={importing}
+            />
+          ) : (
+            <p className="text-center mt-8 text-slate-400">
+              No attendance found for selected Year and Term.
+            </p>
+          )
         ) : (
-          <p className="text-center mt-8 text-gray-500">
-            No attendance found for selected Year and Term.
+          <p className="text-center mt-8 text-slate-400">
+            Please select Year and Term.
           </p>
-        )
-      ) : (
-        <p className="text-center mt-8 text-gray-500">
-          Please select Year and Term.
-        </p>
-      )}
+        )}
+      </div>
     </div>
   );
 }

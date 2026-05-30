@@ -72,15 +72,20 @@ export default function AttendanceResult({
   }, [sortedWeeks, open]);
 
   return sortedWeeks.length > 0 ? (
-    <section className="xl:pb-6 rounded-2xl shadow-xl overflow-visible">
+    <motion.section
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45 }}
+      className="xl:pb-6 rounded-3xl shadow-xl overflow-visible border border-white/10 bg-white/5 backdrop-blur-md"
+    >
       {/* ---------------------------------------------------
           Top Toolbar
       --------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border-b border-gray-200 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white/5 border-b border-white/10 gap-4">
         {/* Title */}
         <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-gray-400" />
-          <span className="text-sm font-semibold text-gray-600 uppercase tracking-wider">
+          <Calendar className="w-5 h-5 text-blue-300" />
+          <span className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
             Full Term
           </span>
         </div>
@@ -94,16 +99,16 @@ export default function AttendanceResult({
           <label
             htmlFor="import-attendance-term"
             className={`
-    flex items-center justify-center gap-2
-    px-4 py-2 min-h-[44px]
-    rounded-lg border text-sm font-bold
-    transition-colors
-    ${
-      importing
-        ? "bg-indigo-100 text-indigo-500 border-indigo-200 cursor-wait pointer-events-none"
-        : "bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 cursor-pointer"
-    }
-  `}
+              flex items-center justify-center gap-2
+              px-4 py-2 min-h-[44px]
+              rounded-xl border text-sm font-bold
+              transition-all
+              ${
+                importing
+                  ? "bg-purple-500/10 text-purple-300 border-purple-400/30 cursor-wait pointer-events-none"
+                  : "bg-purple-500/10 text-purple-300 border-purple-400/30 hover:bg-purple-500/20 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] cursor-pointer active:scale-95"
+              }
+            `}
           >
             {importing && <InlineSpinner />}
             {importing ? "Importing..." : "Import Term"}
@@ -121,7 +126,7 @@ export default function AttendanceResult({
       {/* ---------------------------------------------------
           Weekly Attendance Panels
       --------------------------------------------------- */}
-      <div className="flex flex-col w-full max-w-7xl mx-auto overflow-visible rounded-xl bg-slate-800">
+      <div className="flex flex-col w-full max-w-7xl mx-auto overflow-visible rounded-3xl bg-transparent">
         {sortedWeeks.map((week) => (
           <Panel
             key={week}
@@ -142,7 +147,7 @@ export default function AttendanceResult({
           />
         ))}
       </div>
-    </section>
+    </motion.section>
   ) : (
     // ---------------------------------------------------
     // Empty State
@@ -207,9 +212,9 @@ const Panel = ({
       --------------------------------------------------- */}
       <button
         className={`
-          relative group flex items-center justify-between w-full p-4 sm:p-5 transition-all border-b border-slate-700/50 min-h-[72px]
-          ${isOpen ? "bg-slate-800/50" : "bg-slate-800 hover:bg-slate-700/80 active:bg-slate-700"}
-        `}
+        relative group flex items-center justify-between w-full p-4 sm:p-5 transition-all border-b border-white/10 min-h-[72px]
+        ${isOpen ? "bg-white/10" : "bg-white/5 hover:bg-white/10 active:bg-white/15"}
+      `}
         onClick={() => setOpen(isOpen ? null : id)}
       >
         {/* Left Side */}
@@ -217,8 +222,8 @@ const Panel = ({
           <div
             className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-colors shadow-sm ${
               isOpen
-                ? "bg-indigo-500 text-white shadow-indigo-500/20"
-                : "bg-slate-700 text-slate-400"
+                ? "bg-blue-500/15 text-blue-300 border border-blue-400/30"
+                : "bg-white/10 text-slate-400 border border-white/10"
             }`}
           >
             <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -252,7 +257,7 @@ const Panel = ({
             initial="closed"
             animate="open"
             exit="closed"
-            className={`w-full h-full overflow-visible relative bg-slate-50 flex flex-col ${
+            className={`w-full h-full overflow-visible relative bg-transparent flex flex-col ${
               isOpen ? "z-50" : "z-0"
             }`}
           >
@@ -261,21 +266,21 @@ const Panel = ({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="p-4 bg-white border-b border-gray-200 flex flex-col gap-4 shadow-sm z-10 shrink-0"
+              className="p-4 bg-white/5 border-b border-white/10 flex flex-col gap-4 shadow-sm z-10 shrink-0"
             >
               {/* Stats Grid */}
               <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-                <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 py-2 sm:px-3 sm:py-1 rounded-xl sm:rounded-full bg-green-50 text-green-700 border border-green-100 text-[10px] sm:text-xs font-bold uppercase tracking-tight">
+                <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 py-2 sm:px-3 sm:py-1 rounded-xl sm:rounded-full bg-green-500/15 text-green-300 border border-green-400/30 text-[10px] sm:text-xs font-bold uppercase tracking-tight">
                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
                   <span className="hidden sm:inline">Coming:</span>{" "}
                   {summary.coming}
                 </div>
-                <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 py-2 sm:px-3 sm:py-1 rounded-xl sm:rounded-full bg-yellow-50 text-yellow-700 border border-yellow-100 text-[10px] sm:text-xs font-bold uppercase tracking-tight">
+                <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 py-2 sm:px-3 sm:py-1 rounded-xl sm:rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-400/30 text-[10px] sm:text-xs font-bold uppercase tracking-tight">
                   <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
                   <span className="hidden sm:inline">Maybe:</span>{" "}
                   {summary.maybe}
                 </div>
-                <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 py-2 sm:px-3 sm:py-1 rounded-xl sm:rounded-full bg-red-50 text-red-700 border border-red-100 text-[10px] sm:text-xs font-bold uppercase tracking-tight">
+                <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 py-2 sm:px-3 sm:py-1 rounded-xl sm:rounded-full bg-red-500/15 text-red-300 border border-red-400/30 text-[10px] sm:text-xs font-bold uppercase tracking-tight">
                   <span className="w-2 h-2 rounded-full bg-red-500"></span>
                   <span className="hidden sm:inline">Not Coming:</span>{" "}
                   {summary.notComing}
@@ -291,16 +296,16 @@ const Panel = ({
                 <label
                   htmlFor={`import-attendance-${id}`}
                   className={`
-                    flex items-center justify-center gap-2
-                    px-4 py-2 min-h-[44px]
-                    rounded-lg border text-sm font-bold
-                    transition-colors
-                    ${
-                      importing
-                        ? "bg-indigo-100 text-indigo-500 border-indigo-200 cursor-wait pointer-events-none"
-                        : "bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 cursor-pointer"
-                    }
-                  `}
+                      flex items-center justify-center gap-2
+                      px-4 py-2 min-h-[44px]
+                      rounded-xl border text-sm font-bold
+                      transition-all
+                      ${
+                        importing
+                          ? "bg-purple-500/10 text-purple-300 border-purple-400/30 cursor-wait pointer-events-none"
+                          : "bg-purple-500/10 text-purple-300 border-purple-400/30 hover:bg-purple-500/20 hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] cursor-pointer active:scale-95"
+                      }
+                    `}
                 >
                   {importing && <InlineSpinner />}
                   {importing ? "Importing..." : `Import Week ${id}`}
@@ -357,9 +362,6 @@ const StudentCard = ({
   onReasonChange,
   onReasonSubmit,
 }) => {
-  // Controls drop down visibility
-  const [isOpen, setIsOpen] = useState(false);
-
   /**
    * Returns Tailwind styles depending on attendance status
    */
@@ -367,23 +369,31 @@ const StudentCard = ({
     switch (status) {
       case "coming":
         return {
-          container: "border-l-4 border-l-green-500 bg-white",
-          badge: "bg-green-100 text-green-800",
+          container:
+            "border-green-400/35 bg-white/5 hover:border-green-400/60 hover:shadow-[0_0_18px_rgba(34,197,94,0.18)]",
+          badge:
+            "bg-green-500/10 text-green-300 border border-green-400/30 hover:bg-green-500/15",
         };
       case "not coming":
         return {
-          container: "border-l-4 border-l-red-500 bg-white",
-          badge: "bg-red-100 text-red-800",
+          container:
+            "border-red-400/35 bg-white/5 hover:border-red-400/60 hover:shadow-[0_0_18px_rgba(239,68,68,0.18)]",
+          badge:
+            "bg-red-500/10 text-red-300 border border-red-400/30 hover:bg-red-500/15",
         };
       case "maybe":
         return {
-          container: "border-l-4 border-l-yellow-500 bg-white",
-          badge: "bg-yellow-100 text-yellow-800",
+          container:
+            "border-yellow-400/35 bg-white/5 hover:border-yellow-400/60 hover:shadow-[0_0_18px_rgba(234,179,8,0.18)]",
+          badge:
+            "bg-yellow-500/10 text-yellow-300 border border-yellow-400/30 hover:bg-yellow-500/15",
         };
       default:
         return {
-          container: "border-l-4 border-l-gray-300 bg-white",
-          badge: "bg-gray-100 text-gray-800",
+          container:
+            "border-white/10 bg-white/5 hover:border-blue-400/40 hover:shadow-[0_0_18px_rgba(59,130,246,0.16)]",
+          badge:
+            "bg-white/10 text-slate-300 border border-white/10 hover:bg-white/15",
         };
     }
   };
@@ -391,9 +401,20 @@ const StudentCard = ({
   // Get matching styles for current status
   const styles = getStatusStyles(record.status);
 
+  const statusCycle = ["maybe", "not coming", "coming"];
+
+  const handleStatusTap = () => {
+    const currentIndex = statusCycle.indexOf(record.status);
+    const nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
+
+    onStatusChange(record.id, nextStatus);
+  };
+
   return (
-    <div
-      className={`relative border shadow-sm rounded-xl p-4 flex flex-col gap-4 transition-all hover:shadow-md ${styles.container}`}
+    <motion.div
+      whileHover={{ scale: 1.02, y: -3 }}
+      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      className={`relative border bg-white/5 backdrop-blur-md shadow-sm rounded-2xl p-4 flex flex-col gap-4 transition-all ${styles.container}`}
     >
       {/* Student Header */}
       <div className="flex items-center justify-between gap-2">
@@ -403,62 +424,24 @@ const StudentCard = ({
             <img
               src={profileIcon}
               alt={record.name}
-              className="w-12 h-12 rounded-full object-cover border border-gray-200"
+              className="w-12 h-12 rounded-full object-cover border border-white/10"
             />
           </div>
-          <span className="font-bold text-gray-900 text-sm sm:text-base truncate">
+          <span className="font-bold text-white text-sm sm:text-base truncate">
             {record.name}
           </span>
         </div>
 
         {/* Status Dropdown */}
-        <div className="relative flex-shrink-0">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(!isOpen);
-            }}
-            className={`px-3 py-2 min-h-[44px] rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-wider w-28 sm:w-32 text-left flex justify-between items-center transition-colors shadow-sm active:scale-95 ${styles.badge}`}
-          >
-            <span className="truncate">{record.status}</span>
-            <ChevronDown
-              className={`w-4 h-4 ml-1 flex-shrink-0 transition-transform duration-300 ${
-                isOpen ? "rotate-180" : ""
-              }`}
-            />
-          </button>
+        {/* Tap Status Button */}
+        <button
+          onClick={handleStatusTap}
+          className={`px-3 py-2 min-h-[44px] rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-wider w-28 sm:w-32 text-left flex justify-between items-center transition-all shadow-sm active:scale-95 ${styles.badge}`}
+        >
+          <span className="truncate">{record.status}</span>
 
-          {/* Dropdown Menu */}
-          {isOpen && (
-            <>
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0 z-30 bg-black/5"
-                onClick={() => setIsOpen(false)}
-              />
-              {/* Dropdown options */}
-              <div className="absolute right-0 top-12 w-40 bg-white border border-gray-100 rounded-xl shadow-2xl z-[9999] overflow-hidden py-1">
-                {["maybe", "coming", "not coming"].map((option) => (
-                  <button
-                    key={option}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStatusChange(record.id, option);
-                      setIsOpen(false);
-                    }}
-                    className={`block w-full text-left px-4 py-3 text-xs font-bold uppercase hover:bg-gray-50 active:bg-gray-100 transition-colors ${
-                      record.status === option
-                        ? "text-indigo-600 bg-indigo-50/50"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+          <span className="text-xs opacity-70">Tap</span>
+        </button>
       </div>
 
       {/* ---------------------------------------------------
@@ -466,7 +449,7 @@ const StudentCard = ({
           Only shown for "maybe" or "not coming"
       --------------------------------------------------- */}
       {(record.status === "not coming" || record.status === "maybe") && (
-        <div className="mt-1 pt-4 border-t border-gray-100 flex flex-col gap-2.5">
+        <div className="mt-1 pt-4 border-t border-white/10 flex flex-col gap-2.5">
           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
             Reason for {record.status}
           </label>
@@ -477,11 +460,11 @@ const StudentCard = ({
               placeholder="Add a note..."
               value={record.reason || ""}
               onChange={(e) => onReasonChange(record.id, e.target.value)}
-              className="flex-1 min-h-[44px] border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-700 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 transition-all placeholder:text-gray-400"
+              className="flex-1 min-h-[44px] border border-white/10 bg-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all placeholder:text-slate-500"
             />
             {/* Save button */}
             <button
-              className="bg-slate-900 hover:bg-black active:bg-slate-800 text-white min-h-[44px] sm:px-6 px-4 rounded-lg text-xs font-bold uppercase tracking-wide transition-all shadow-sm active:scale-95"
+              className="bg-green-500/15 border border-green-400/30 text-green-200 hover:bg-green-500/25 min-h-[44px] sm:px-6 px-4 rounded-lg text-xs font-bold uppercase tracking-wide transition-all shadow-sm active:scale-95"
               onClick={() => onReasonSubmit(record.id)}
             >
               Save
@@ -489,7 +472,7 @@ const StudentCard = ({
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

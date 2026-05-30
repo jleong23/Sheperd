@@ -10,6 +10,7 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { addYear, addTerm, deleteTerm } from "../../api/attendance";
+import { motion } from "framer-motion";
 
 export default function AddYearTerm({ onUpdate, availableYears = [] }) {
   const latestYear =
@@ -102,10 +103,15 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 w-full max-w-2xl mx-auto overflow-hidden">
-      <div className="bg-gray-50/50 px-5 py-4 border-b border-gray-100">
-        <h2 className="text-lg font-bold text-gray-900">Configuration</h2>
-        <p className="text-xs text-gray-500 mt-0.5">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="bg-white/5 rounded-3xl shadow-xl border border-white/10 w-full max-w-2xl mx-auto overflow-hidden backdrop-blur-md"
+    >
+      <div className="bg-white/5 px-5 py-4 border-b border-white/10">
+        <h2 className="text-lg font-bold text-white">Configuration</h2>
+        <p className="text-xs text-slate-300 mt-0.5">
           Add new academic years or terms to the system.
         </p>
       </div>
@@ -122,7 +128,7 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
               placeholder="e.g. 2024"
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              className="w-full border border-gray-300 min-h-[44px] px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
+              className="w-full border border-white/10 bg-white/10 text-white min-h-[44px] px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all text-sm font-medium placeholder:text-slate-500"
             />
           </div>
 
@@ -136,7 +142,7 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
               placeholder="e.g. 1"
               value={newTerm}
               onChange={(e) => setNewTerm(e.target.value)}
-              className="w-full border border-gray-300 min-h-[44px] px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
+              className="w-full border border-white/10 bg-white/10 text-white min-h-[44px] px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all text-sm font-medium placeholder:text-slate-500"
             />
           </div>
 
@@ -150,7 +156,7 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
               placeholder="e.g. 10"
               value={weeks}
               onChange={(e) => setWeeks(e.target.value)}
-              className="w-full border border-gray-300 min-h-[44px] px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm font-medium"
+              className="w-full border border-white/10 bg-white/10 text-white min-h-[44px] px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all text-sm font-medium placeholder:text-slate-500"
             />
           </div>
         </div>
@@ -160,7 +166,7 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               onClick={handleAddYear}
-              className="bg-slate-900 hover:bg-black active:bg-slate-800 text-white min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-sm flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+              className="bg-blue-500/10 text-white min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-sm flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50 disabled:active:scale-100 hover:shadow-[0_0_25px_rgba(34,197,94,0.4)]"
               disabled={loading}
             >
               <Plus className="w-4 h-4" />
@@ -168,7 +174,7 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
             </button>
             <button
               onClick={handleAddTerm}
-              className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-sm flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-sm flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50 disabled:active:scale-100 hover:shadow-[0_0_25px_rgba(99,102,241,0.45)]"
               disabled={loading}
             >
               <Plus className="w-4 h-4" />
@@ -178,7 +184,7 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
 
           <button
             onClick={handleDeleteTerm}
-            className="w-full bg-white border border-red-200 text-red-600 hover:bg-red-50 active:bg-red-100 min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+            className="w-full bg-red-500/10 border border-red-400/30 text-red-300 hover:bg-red-500/20 min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50 disabled:active:scale-100 hover:shadow-[0_0_25px_rgba(239,68,68,0.35)]"
             disabled={loading}
           >
             <Trash2 className="w-4 h-4" />
@@ -186,6 +192,6 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
