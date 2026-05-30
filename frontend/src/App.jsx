@@ -23,6 +23,7 @@ import Catchups from "./pages/leaders/Catchups";
 import KidProfile from "./components/kids/KidProfile";
 import Footer from "./components/ui/Footer";
 import NewPeople from "./components/newPeople/NewPeople";
+import Splash from "./pages/leaders/Splash.jsx";
 
 // Helper component to protect routes
 const PrivateRoute = ({ children }) => {
@@ -30,7 +31,7 @@ const PrivateRoute = ({ children }) => {
 
   if (loading) return <LoadingSpinner fullPage={true} />;
 
-  return token ? children : <Navigate to="/login" />;
+  return token ? children : <Navigate to="/welcome" />;
 };
 
 function AppRoutes() {
@@ -38,6 +39,7 @@ function AppRoutes() {
     <>
       <Routes>
         {/* Public Routes */}
+        <Route path="/welcome" element={<Splash />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
