@@ -50,7 +50,7 @@ function AppRoutes() {
             <PrivateRoute>
               <>
                 <NavBar />
-                <main className="pt-24">
+                <main className="pt-20">
                   <Routes>
                     <Route path="/" element={<LeaderHome />} />
                     <Route path="/kid-list" element={<Kids />} />

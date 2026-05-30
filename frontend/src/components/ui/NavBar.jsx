@@ -2,15 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { X, Menu } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 function ProfileAvatar({ email }) {
   const initial = email?.charAt(0).toUpperCase() || "?";
 
   return (
-    <div
-      className="flex items-center justify-center rounded-full bg-indigo-600 text-white font-semibold
-                    w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12"
-    >
+    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-sm font-bold text-white shadow-[0_0_20px_rgba(99,102,241,0.45)]">
       {initial}
     </div>
   );
@@ -50,39 +48,49 @@ export default function NavBar() {
   ];
 
   const linkClass = ({ isActive }) =>
-    `relative inline-block text-white font-semibold text-lg
-     transition-all duration-200 ease-out
-     hover:-translate-y-1 hover:text-blue-400
+    `relative rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300
      ${
        isActive
-         ? "text-blue-500 after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-blue-500"
-         : ""
+         ? "bg-blue-500/15 text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.25)]"
+         : "text-slate-300 hover:bg-white/10 hover:text-white hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]"
      }`;
 
   return (
-    <nav className="bg-black fixed w-full z-50 shadow-md">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between items-center h-24">
+    <motion.nav
+      initial={{ opacity: 0, y: -24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45 }}
+      className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-[#0f172a]/85 shadow-lg backdrop-blur-xl"
+    >
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="flex h-20 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-4">
+          <Link to="/" className="flex items-center gap-3">
             <img
               src="/dreamersLogo.png"
               alt="Dreamers Logo"
-              className="w-14 h-14 rounded-full"
+              className="h-11 w-11 rounded-xl object-cover shadow-[0_0_20px_rgba(59,130,246,0.25)]"
             />
-            <span className="text-3xl font-bold text-white">
-              Dreamers Youth
+            <span className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+              Dreamers{" "}
+              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Youth
+              </span>
             </span>
           </Link>
 
           {/* Desktop Links */}
-          <ul className="hidden lg:flex gap-10">
+          <ul className="hidden lg:flex gap-2 items-center">
             {links.map(({ to, label }) => (
-              <li key={to}>
+              <motion.li
+                key={to}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.96 }}
+              >
                 <NavLink to={to} className={linkClass}>
                   {label}
                 </NavLink>
-              </li>
+              </motion.li>
             ))}
           </ul>
 
@@ -90,75 +98,101 @@ export default function NavBar() {
           {user && (
             <div
               ref={profileRef}
-              className="hidden lg:relative lg:flex items-center gap-3"
+              className="relative hidden lg:flex items-center gap-3"
             >
-              <button
+              <motion.button
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setProfileOpen((p) => !p)}
-                className="flex items-center gap-3 text-white hover:text-blue-400"
               >
                 <ProfileAvatar email={user.email} />
-              </button>
+              </motion.button>
 
-              {profileOpen && (
-                <div className="absolute right-0 top-14 w-48 rounded-md bg-gray-800 shadow-lg">
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-700"
+              <AnimatePresence>
+                {profileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 12, scale: 0.96 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-14 w-56 rounded-2xl border border-white/10 bg-[#111827]/95 p-3 shadow-[0_0_30px_rgba(59,130,246,0.2)] backdrop-blur-xl"
                   >
-                    Log out
-                  </button>
-                  <p className="px-4 py-2 text-sm text-gray-400">
-                    {user.email}
-                  </p>
-                </div>
-              )}
+                    <p className="mb-2 truncate px-3 py-2 text-sm text-slate-400">
+                      {user.email}
+                    </p>
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-400 transition hover:bg-red-500/10 hover:text-red-300"
+                    >
+                      Log out
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
           {/* Mobile Toggle */}
-          <button
-            className="lg:hidden text-white"
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="rounded-xl border border-white/10 bg-white/5 p-2 text-white shadow-md transition hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.25)] lg:hidden"
             onClick={() => setMenuOpen((m) => !m)}
           >
-            {menuOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
+            {menuOpen ? <X size={26} /> : <Menu size={26} />}
+          </motion.button>
         </div>
       </div>
 
       {/* Mobile Menu — ONE ITEM PER ROW */}
-      {menuOpen && (
-        <div className="lg:hidden bg-black px-6 py-6">
-          <ul className="flex flex-col gap-4">
-            {links.map(({ to, label }) => (
-              <li key={to}>
-                <NavLink
-                  to={to}
-                  onClick={() => setMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `block w-full py-2 active:scale-95 ${linkClass({
-                      isActive,
-                    })}`
-                  }
-                >
-                  {label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden border-t border-white/10 bg-[#0f172a]/95 backdrop-blur-xl lg:hidden"
+          >
+            <div className="px-4 py-5">
+              <ul className="flex flex-col gap-2">
+                {links.map(({ to, label }) => (
+                  <li key={to}>
+                    <NavLink
+                      to={to}
+                      onClick={() => setMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `block rounded-xl px-4 py-3 text-base font-semibold transition ${
+                          isActive
+                            ? "bg-blue-500/15 text-blue-300"
+                            : "text-slate-300 hover:bg-white/10 hover:text-white"
+                        }`
+                      }
+                    >
+                      {label}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
 
-          {user && (
-            <div className="mt-6 pt-4 border-t border-gray-700">
-              <div className="text-sm text-gray-400 mb-3">{user.email}</div>
-              <button
-                onClick={handleLogout}
-                className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600"
-              >
-                Log out
-              </button>
+              {user && (
+                <div className="mt-5 border-t border-white/10 pt-4">
+                  <p className="mb-3 truncate text-sm text-slate-400">
+                    {user.email}
+                  </p>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full rounded-xl bg-red-500/10 py-3 font-semibold text-red-300 transition hover:bg-red-500/20"
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
-    </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.nav>
   );
 }
