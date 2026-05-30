@@ -43,20 +43,17 @@ export default function Home() {
   }, [fetchEvents]);
 
   return (
-    <div className="p-8 space-y-16 max-w-7xl mx-auto">
+    <div className="px-4 py-5 sm:px-6 md:px-8 space-y-8 md:space-y-10 max-w-5xl mx-auto">
       {/* Welcome + Attendance & New People Page Btn */}
       <Welcome />
-
       {/* Group Stats */}
       <GroupStats
         yearLevel={yearLevel || "11"}
         stats={stats}
         loading={statsLoading}
       />
-
       {/* Events */}
       <UpcomingEvents events={events} loading={loading} />
-
       {/* Reminders */}
       <Reminders />
     </div>
