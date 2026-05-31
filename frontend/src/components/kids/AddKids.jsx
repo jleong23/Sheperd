@@ -1,10 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import Modal from "../ui/Modals/Modal";
 import FormInput from "./FormInput";
 import FormActions from "./FormActions";
 import { createKid } from "../../api/kids";
-
-const DEFAULT_PHOTO = "https://pngtree.com/so/profile-icon";
 
 export default function AddKids({ onKidAdded }) {
   const [open, setOpen] = useState(false);
@@ -19,7 +18,6 @@ export default function AddKids({ onKidAdded }) {
   });
 
   const [errors, setErrors] = useState({});
-  const modalRef = useRef(null);
 
   const inputFields = [
     { label: "Name", name: "name", type: "text" },
@@ -48,11 +46,19 @@ export default function AddKids({ onKidAdded }) {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Name is required.";
-    if (formData.phone && !/^\+?[\d\s-]+$/.test(formData.phone))
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required.";
+    }
+
+    if (formData.phone && !/^\+?[\d\s-]+$/.test(formData.phone)) {
       newErrors.phone = "Invalid phone format.";
-    if (formData.parentPhone && !/^\+?[\d\s-]+$/.test(formData.parentPhone))
+    }
+
+    if (formData.parentPhone && !/^\+?[\d\s-]+$/.test(formData.parentPhone)) {
       newErrors.parentPhone = "Invalid parent phone format.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -61,6 +67,7 @@ export default function AddKids({ onKidAdded }) {
     if (!validate()) return;
 
     setLoading(true);
+
     try {
       await createKid({
         name: formData.name,
@@ -81,44 +88,50 @@ export default function AddKids({ onKidAdded }) {
     }
   };
 
-  useEffect(() => {
-    const closeIfOutside = (e) => {
-      if (open && modalRef.current && !modalRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", closeIfOutside);
-    return () => document.removeEventListener("mousedown", closeIfOutside);
-  }, [open]);
-
   return (
-    <div className="text-center">
-      <button
+    <>
+      <motion.button
         onClick={() => setOpen(true)}
-        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 py-3 rounded-xl shadow-lg transition duration-200 transform hover:-translate-y-0.5"
+        whileHover={{
+          y: -3,
+          scale: 1.03,
+          boxShadow: "0px 0px 28px rgba(99,102,241,0.35)",
+        }}
+        whileTap={{ scale: 0.97 }}
+        className="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500"
       >
-        Add New User
-      </button>
+        + Add Kid
+      </motion.button>
 
       <Modal open={open} onClose={() => setOpen(false)}>
-        <div
-          ref={modalRef}
-          className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-3xl transform transition-all duration-300 ease-out scale-100 opacity-100"
-        >
-          <h2 className="text-3xl font-bold mb-6 text-center text-gray-800">
-            Add Kid Details
-          </h2>
+        <div className="max-h-[85vh] w-full overflow-y-auto rounded-3xl border border-slate-800 bg-slate-900/95 p-6 text-white shadow-2xl shadow-indigo-500/20 backdrop-blur sm:p-8">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 w-fit rounded-full border border-indigo-500/40 bg-indigo-500/10 px-4 py-2 text-sm text-indigo-300">
+              👥 New Kid Profile
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {inputFields.map((f) => (
+            <h2 className="text-3xl font-extrabold tracking-tight">
+              Add Kid{" "}
+              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Details
+              </span>
+            </h2>
+
+            <p className="mt-3 text-sm text-slate-400">
+              Add basic details so your team can keep track of this person.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {inputFields.map((field) => (
               <FormInput
-                key={f.name}
-                label={f.label}
-                name={f.name}
-                type={f.type}
-                value={formData[f.name]}
+                key={field.name}
+                label={field.label}
+                name={field.name}
+                type={field.type}
+                value={formData[field.name]}
                 onChange={handleChange}
-                error={errors[f.name]}
+                error={errors[field.name]}
               />
             ))}
           </div>
@@ -133,6 +146,6 @@ export default function AddKids({ onKidAdded }) {
           />
         </div>
       </Modal>
-    </div>
+    </>
   );
 }

@@ -1,6 +1,5 @@
 import { CgProfile } from "react-icons/cg";
 import { FaBirthdayCake, FaSchool } from "react-icons/fa";
-import { GrStatusDisabled } from "react-icons/gr";
 import KidStatusBadge from "../../ui/KidStatusBadge";
 import KidFlagBadge from "../../ui/KidFlagBadge";
 
@@ -12,25 +11,36 @@ export default function KidDetails({
   baptised,
   sunday_regulars,
 }) {
+  const formattedBirthday = birthday
+    ? new Date(birthday).toLocaleDateString("en-AU", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "No birthday added";
+
   return (
-    <div className="flex flex-col justify-center gap-1 sm:gap-2 w-full">
-      <div className="flex items-center gap-2 text-lg font-semibold text-gray-800">
-        <CgProfile className="text-blue-600" /> {name}
+    <div className="flex w-full flex-col justify-center gap-3">
+      <div className="flex items-center gap-2 text-xl font-bold text-white">
+        <CgProfile className="text-indigo-400" />
+        <span className="line-clamp-1">{name}</span>
       </div>
-      <div className="flex items-center gap-2 text-gray-700">
-        <FaBirthdayCake className="text-yellow-500" />
-        {new Date(birthday).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
+
+      <div className="flex items-center justify-center gap-2 text-sm text-slate-400 sm:justify-start">
+        <FaBirthdayCake className="shrink-0 text-pink-400" />
+        <span className="line-clamp-1">{formattedBirthday}</span>
       </div>
-      <div className="flex items-center gap-2 text-gray-700">
-        <FaSchool className="text-green-500" /> {school}
+
+      <div className="flex items-center justify-center gap-2 text-sm text-slate-400 sm:justify-start">
+        <FaSchool className="shrink-0 text-emerald-400" />
+        <span className="line-clamp-1">{school || "No school added"}</span>
       </div>
-      <div className="flex items-center gap-2 text-gray-700 flex-wrap">
+
+      <div className="flex flex-wrap items-center justify-center gap-2 pt-1 sm:justify-start">
         <KidStatusBadge status={status_code} />
+
         {sunday_regulars && <KidFlagBadge flag="SUNDAY_REGULAR" />}
+
         {baptised && <KidFlagBadge flag="BAPTISED" />}
       </div>
     </div>

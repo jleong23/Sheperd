@@ -1,23 +1,48 @@
 export default function FormInput({
   label,
   name,
+  type = "text",
   value,
   onChange,
   error,
-  type = "text",
+  placeholder,
 }) {
   return (
-    <div className="flex flex-col">
-      <label className="font-medium text-gray-700 mb-1">{label}</label>
+    <div className="space-y-2">
+      <label
+        htmlFor={name}
+        className="block text-sm font-medium text-slate-300"
+      >
+        {label}
+      </label>
+
       <input
-        type={type}
+        id={name}
         name={name}
-        value={value}
+        type={type}
+        value={value || ""}
         onChange={onChange}
-        className={`border rounded-lg px-3 py-2 focus:ring-2 focus:outline-none text-gray-700
-          ${error ? "border-red-500 focus:ring-red-300" : "focus:ring-blue-400"}`}
+        placeholder={placeholder}
+        className={`
+          w-full rounded-xl border
+          bg-slate-950
+          px-4 py-3
+          text-white
+          placeholder:text-slate-500
+          transition-all duration-200
+          outline-none
+
+          ${
+            error
+              ? "border-red-500 focus:ring-red-500/30"
+              : "border-slate-700 focus:border-indigo-500 focus:ring-indigo-500/30"
+          }
+
+          focus:ring-2
+        `}
       />
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+
+      {error && <p className="text-sm font-medium text-red-400">{error}</p>}
     </div>
   );
 }
