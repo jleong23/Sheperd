@@ -5,6 +5,7 @@ import CatchupToolbar from "./CatchupToolBar";
 import CatchupResults from "./CatchupResults";
 import { CatchupModal } from "./CatchupModal";
 import { useCatchups } from "../../hooks/useCatchups";
+import CatchupPageSkeleton from "./CatchupPageSkeleton.jsx";
 
 export default function CatchupList() {
   const {
@@ -24,7 +25,7 @@ export default function CatchupList() {
   const [selectedCatchup, setSelectedCatchup] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  if (loading) return <LoadingSpinner fullPage />;
+  if (loading) return <CatchupPageSkeleton fullPage />;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
