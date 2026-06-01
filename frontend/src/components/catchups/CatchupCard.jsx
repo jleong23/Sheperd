@@ -64,7 +64,7 @@ export function CatchupCard({ catchup, onClick }) {
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Comments
           </p>
-          <p className="mt-1 line-clamp-3 text-sm leading-6 text-slate-400">
+          <p className="mt-1 line-clamp-3 text-sm leading-6 text-slate-200">
             {catchup.catchupcomments || "No comments added"}
           </p>
         </div>
