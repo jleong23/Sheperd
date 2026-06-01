@@ -59,10 +59,27 @@ export function CatchupModal({
   return (
     <>
       <Modal open={open} onClose={onClose}>
-        <div className="space-y-6">
-          <h2 className="text-2xl font-semibold">
-            {isEdit ? "Edit Catchup" : "Add Catchup"}
-          </h2>
+        <div className="max-h-[85vh] w-full overflow-y-auto rounded-3xl border border-slate-800 bg-slate-900/95 p-6 text-white shadow-2xl shadow-indigo-500/20 backdrop-blur sm:p-8">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 w-fit rounded-full border border-indigo-500/40 bg-indigo-500/10 px-4 py-2 text-sm text-indigo-300">
+              💬 {isEdit ? "Edit Catchup" : "New Catchup"}
+            </div>
+
+            <h2 className="text-3xl font-extrabold tracking-tight">
+              {isEdit ? "Update" : "Add"}{" "}
+              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                Catchup Details
+              </span>
+            </h2>
+
+            <p className="mt-3 text-sm text-slate-400">
+              Record conversations, follow-ups and pastoral care notes.
+            </p>
+
+            <p className="mt-2 text-xs text-slate-500">
+              <span className="text-red-400">*</span> Required fields
+            </p>
+          </div>
 
           <CatchupForm
             kids={kids}
@@ -87,24 +104,33 @@ export function CatchupModal({
         open={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
       >
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold text-gray-800">Confirm Deletion</h3>
-          <p className="text-gray-600">
-            Are you sure you want to delete this catchup? This action cannot be
-            undone.
-          </p>
-          <div className="flex justify-end gap-3 mt-6">
+        <div className="w-full rounded-3xl border border-slate-800 bg-slate-900/95 p-6 text-white shadow-2xl shadow-red-500/20 backdrop-blur sm:p-8">
+          <div className="mb-6 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-red-500/40 bg-red-500/10 text-red-300">
+              ⚠️
+            </div>
+
+            <h3 className="text-2xl font-bold text-white">Delete Catchup?</h3>
+
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              Are you sure you want to delete this catchup? This action cannot
+              be undone.
+            </p>
+          </div>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               onClick={() => setShowDeleteConfirm(false)}
-              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+              className="rounded-xl border border-slate-700 bg-slate-950 px-5 py-3 text-sm font-bold text-slate-300 transition hover:border-slate-500 hover:bg-slate-900 hover:text-white"
             >
               Cancel
             </button>
+
             <button
               onClick={confirmDelete}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-500"
             >
-              Delete
+              Delete Catchup
             </button>
           </div>
         </div>

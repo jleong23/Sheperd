@@ -18,7 +18,7 @@
 import { useState, useEffect, useMemo } from "react";
 import AttendanceResult from "../../components/attendance/AttendanceResult.jsx";
 import AttendanceSort from "../../components/attendance/AttendanceSort.jsx";
-import LoadingSpinner from "../../components/ui/LoadingSpinner.jsx";
+import AttendancePageSkeleton from "./AttendanceSkeleton/AttendancePageSkeleton.jsx";
 import {
   addBulkAttendance,
   getAttendance,
@@ -306,7 +306,9 @@ export default function AttendanceList() {
   // -----------------------------
   // Render ( loading screen )
   // -----------------------------
-  if (loading) return <LoadingSpinner fullPage={true} />;
+  if (loading) {
+    return <AttendancePageSkeleton />;
+  }
 
   // ---------------------------------------------------
   // Main UI

@@ -1,24 +1,39 @@
-export default function FormActions({ onCancel, onSubmit, loading }) {
+import { motion } from "framer-motion";
+
+export default function FormActions({
+  onCancel,
+  onSubmit,
+  loading = false,
+  submitText = "Save",
+  cancelText = "Cancel",
+}) {
   return (
-    <div className="mt-8 flex justify-end gap-4">
-      <button
+    <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <motion.button
+        type="button"
         onClick={onCancel}
         disabled={loading}
-        className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+        whileHover={{ y: -2, scale: 1.02 }}
+        whileTap={{ scale: 0.97 }}
+        className="rounded-xl border border-slate-700 bg-slate-950 px-5 py-3 text-sm font-bold text-slate-300 transition hover:border-slate-500 hover:bg-slate-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Cancel
-      </button>
+        {cancelText}
+      </motion.button>
 
-      <button
+      <motion.button
+        type="button"
         onClick={onSubmit}
         disabled={loading}
-        className="px-6 py-2 rounded-lg bg-green-600 text-white flex items-center gap-2 hover:bg-green-700 transition disabled:opacity-60 relative"
+        whileHover={{
+          y: -2,
+          scale: 1.02,
+          boxShadow: "0px 0px 24px rgba(99,102,241,0.35)",
+        }}
+        whileTap={{ scale: 0.97 }}
+        className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading && (
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin absolute left-3"></div>
-        )}
-        Add Kid
-      </button>
+        {loading ? "Saving..." : submitText}
+      </motion.button>
     </div>
   );
 }

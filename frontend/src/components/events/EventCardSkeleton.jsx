@@ -1,21 +1,42 @@
-// components/events/EventCardSkeleton.jsx
 export default function EventCardSkeleton() {
   return (
-    <div className="bg-white rounded-xl shadow-lg p-5 border border-gray-200 animate-pulse">
-      {/* title */}
-      <div className="h-5 w-2/3 bg-gray-300 rounded mb-3" />
+    <div className="flex h-full animate-pulse flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-indigo-500/5 backdrop-blur">
+      <div className="mb-5 h-44 w-full rounded-2xl bg-slate-800" />
 
-      {/* lines */}
-      <div className="space-y-2">
-        <div className="h-3 w-full bg-gray-300 rounded" />
-        <div className="h-3 w-5/6 bg-gray-300 rounded" />
-        <div className="h-3 w-4/6 bg-gray-300 rounded" />
-      </div>
+      <div className="flex flex-1 flex-col">
+        <div className="mb-5">
+          <div className="mb-3 h-6 w-3/4 rounded-full bg-slate-700" />
+          <div className="h-3 w-1/2 rounded-full bg-slate-800" />
+        </div>
 
-      {/* button row */}
-      <div className="flex justify-end gap-2 mt-4">
-        <div className="h-8 w-14 bg-gray-300 rounded" />
-        <div className="h-8 w-14 bg-gray-300 rounded" />
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
+            <div className="mb-2 h-3 w-16 rounded-full bg-slate-800" />
+            <div className="h-4 w-40 rounded-full bg-slate-700" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
+              <div className="mb-2 h-3 w-12 rounded-full bg-slate-800" />
+              <div className="h-4 w-16 rounded-full bg-slate-700" />
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
+              <div className="mb-2 h-3 w-12 rounded-full bg-slate-800" />
+              <div className="h-4 w-16 rounded-full bg-slate-700" />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
+            <div className="mb-2 h-3 w-28 rounded-full bg-slate-800" />
+            <div className="h-4 w-full rounded-full bg-slate-700" />
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-col gap-3 border-t border-slate-800 pt-5 sm:flex-row sm:justify-end">
+          <div className="h-10 w-full rounded-xl bg-slate-800 sm:w-20" />
+          <div className="h-10 w-full rounded-xl bg-slate-800 sm:w-24" />
+        </div>
       </div>
     </div>
   );

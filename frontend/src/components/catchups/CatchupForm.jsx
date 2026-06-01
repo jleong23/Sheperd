@@ -21,7 +21,7 @@ export function CatchupForm({
       startTime: initialData.startTime || "",
       endTime: initialData.endTime || "",
     }),
-    [initialData]
+    [initialData],
   );
   const [kidid, setKidid] = useState(initialData.kidid || "");
   const [purpose, setPurpose] = useState(initialData.purpose || "");
@@ -38,44 +38,69 @@ export function CatchupForm({
     startTime !== initial.startTime ||
     endTime !== initial.endTime;
 
+  const inputClass =
+    "w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30";
+
   return (
-    <>
+    <div className="space-y-6">
       <KidSelect
         kids={kids}
         value={kidid}
         disabled={isEdit}
         onChange={setKidid}
       />
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-slate-300">
+            Catchup Date <span className="text-red-400">*</span>
+          </label>
 
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        className="w-full border rounded p-2"
-      />
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={inputClass}
+          />
+        </div>
 
-      <TimeRangeInput
-        startTime={startTime}
-        endTime={endTime}
-        onStartChange={setStartTime}
-        onEndChange={setEndTime}
-      />
+        <div className="space-y-2">
+          <TimeRangeInput
+            startTime={startTime}
+            endTime={endTime}
+            onStartChange={setStartTime}
+            onEndChange={setEndTime}
+            className={inputClass}
+          />
+        </div>
+      </div>
 
-      <input
-        type="text"
-        placeholder="Purpose"
-        value={purpose}
-        onChange={(e) => setPurpose(e.target.value)}
-        className="w-full border rounded p-2"
-      />
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-slate-300">
+          Catchup Purpose <span className="text-red-400">*</span>
+        </label>
 
-      <textarea
-        placeholder="Comments"
-        value={comments}
-        onChange={(e) => setComments(e.target.value)}
-        rows={3}
-        className="w-full border rounded p-2"
-      />
+        <textarea
+          rows={2}
+          placeholder="Follow up, pastoral care, prayer request, school discussion..."
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value)}
+          className={inputClass}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-slate-300">
+          Catchup Comments
+        </label>
+
+        <textarea
+          placeholder="Comments"
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
+          rows={5}
+          className={inputClass}
+        />
+      </div>
 
       <CatchupActions
         isEdit={isEdit}
@@ -83,7 +108,13 @@ export function CatchupForm({
         onCancel={onCancel}
         onChange={hasChanges}
         onSave={() => {
+          if (!kidid || !date || !purpose.trim()) {
+            alert("Please fill in all required fields.");
+            return;
+          }
+
           if (!hasChanges) return;
+
           onSubmit({
             kidid,
             catchupdate: date,
@@ -94,6 +125,6 @@ export function CatchupForm({
           });
         }}
       />
-    </>
+    </div>
   );
 }

@@ -23,6 +23,7 @@ import profileIcon from "../../assets/profileIcon.png";
 import ExportAttendance from "./ExportAttendance.jsx";
 import ImportAttendance from "./ImportAttendance.jsx";
 import InlineSpinner from "../ui/InlineSpinner.jsx";
+import { CgProfile } from "react-icons/cg";
 
 export default function AttendanceResult({
   currentAttendance,
@@ -419,17 +420,9 @@ const StudentCard = ({
       {/* Student Header */}
       <div className="flex items-center justify-between gap-2">
         {/* Student Info */}
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="relative flex-shrink-0">
-            <img
-              src={profileIcon}
-              alt={record.name}
-              className="w-12 h-12 rounded-full object-cover border border-white/10"
-            />
-          </div>
-          <span className="font-bold text-white text-sm sm:text-base truncate">
-            {record.name}
-          </span>
+        <div className="flex items-center gap-2 text-md font-bold text-white">
+          <CgProfile className="text-indigo-400 w-5 h-5" />
+          <span className="line-clamp-1">{record.name}</span>
         </div>
 
         {/* Status Dropdown */}

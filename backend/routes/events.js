@@ -28,7 +28,19 @@ router.get("/", async (req, res) => {
 
     let query = supabase
       .from("events")
-      .select("eventid, eventname, eventstartdate, eventenddate, eventstarttime, eventendtime, updated_at", { count: "exact" })
+        .select(
+            `
+          eventid,
+          eventname,
+          eventstartdate,
+          eventenddate,
+          eventstarttime,
+          eventendtime,
+          eventassignedpeople,
+          updated_at
+          `,
+            { count: "exact" }
+        )
       .eq("user_id", req.userId);
 
     // --------------------
@@ -166,7 +178,6 @@ router.post("/", async (req, res) => {
       eventenddate,
       eventstarttime,
       eventendtime,
-      eventphoto,
       eventassignedpeople,
     } = req.body;
 
@@ -196,7 +207,6 @@ router.post("/", async (req, res) => {
         eventenddate,
         eventstarttime: eventstarttime || null,
         eventendtime: eventendtime || null,
-        eventphoto: eventphoto || null,
         eventassignedpeople: eventassignedpeople || null,
         user_id: req.userId,
       })
@@ -237,7 +247,6 @@ router.patch("/:id", async (req, res) => {
       eventenddate,
       eventstarttime,
       eventendtime,
-      eventphoto,
       eventassignedpeople,
     } = req.body;
 
@@ -248,7 +257,6 @@ router.patch("/:id", async (req, res) => {
       eventenddate === undefined &&
       eventstarttime === undefined &&
       eventendtime === undefined &&
-      eventphoto === undefined &&
       eventassignedpeople === undefined
     ) {
       return res.status(400).json({
@@ -275,7 +283,6 @@ router.patch("/:id", async (req, res) => {
         eventenddate,
         eventstarttime,
         eventendtime,
-        eventphoto,
         eventassignedpeople,
         updated_at: new Date(),
       })
