@@ -111,21 +111,31 @@ export default function NewPeople() {
 
         {error && <p className="text-red-500">{error}</p>}
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div>
           {loading ? (
             Array.from({ length: 3 }).map((_, i) => <KidCardSkeleton key={i} />)
           ) : kids.length === 0 ? (
-            <p>No new people found.</p>
+            <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900/60 p-10 text-center">
+              <p className="text-lg font-semibold text-white">
+                No New People Yet
+              </p>
+
+              <p className="mt-2 text-sm text-slate-400">
+                When new visitors are added, they'll appear here for follow-up.
+              </p>
+            </div>
           ) : (
             kids.map((kid) => (
-              <KidCard
-                key={kid.id}
-                kid={kid}
-                onToggleCall={handleToggleCall}
-                onFeedbackChange={handleFeedbackChange}
-                onSave={handleSaveFeedback}
-                onDelete={handleDelete}
-              />
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <KidCard
+                  key={kid.id}
+                  kid={kid}
+                  onToggleCall={handleToggleCall}
+                  onFeedbackChange={handleFeedbackChange}
+                  onSave={handleSaveFeedback}
+                  onDelete={handleDelete}
+                />
+              </div>
             ))
           )}
         </div>
