@@ -1,5 +1,4 @@
 import { useState } from "react";
-import LoadingSpinner from "../ui/LoadingSpinner";
 import AddCatchup from "./AddCatchup";
 import CatchupToolbar from "./CatchupToolBar";
 import CatchupResults from "./CatchupResults";
@@ -24,6 +23,20 @@ export default function CatchupList() {
 
   const [selectedCatchup, setSelectedCatchup] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleClearFilters = () => {
+    const currentYear = new Date().getFullYear();
+
+    setSearchTerm("");
+    setMonth("");
+    setYear(currentYear);
+
+    fetchCatchups({
+      searchTerm: "",
+      month: "",
+      year: currentYear,
+    });
+  };
 
   if (loading) return <CatchupPageSkeleton fullPage />;
   if (error) return <div className="text-red-500">{error}</div>;
@@ -68,13 +81,7 @@ export default function CatchupList() {
           year={year}
           onMonthChange={setMonth}
           onYearChange={setYear}
-          onClear={() => {
-            const currentYear = new Date().getFullYear();
-            setSearchTerm("");
-            setMonth("");
-            setYear(currentYear);
-            fetchCatchups(); // IMPORTANT
-          }}
+          onClear={handleClearFilters}
           onSearch={fetchCatchups}
         />
 

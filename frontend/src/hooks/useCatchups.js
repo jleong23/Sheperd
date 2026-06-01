@@ -11,25 +11,39 @@ export function useCatchups() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchCatchups = useCallback(async () => {
-    setLoading(true);
+  const fetchCatchups = useCallback(
+    async (overrideFilters = {}) => {
+      setLoading(true);
 
-    try {
-      const params = {
-        month: month || undefined,
-        year: year || undefined,
-        purpose: searchTerm || undefined,
-      };
+      try {
+        const finalSearchTerm =
+          overrideFilters.searchTerm !== undefined
+            ? overrideFilters.searchTerm
+            : searchTerm;
 
-      const res = await getCatchups(params);
-      setCatchups(res?.data || []);
-      setError(null);
-    } catch (err) {
-      setError("Failed to fetch catchups");
-    } finally {
-      setLoading(false);
-    }
-  }, [month, year, searchTerm]);
+        const finalMonth =
+          overrideFilters.month !== undefined ? overrideFilters.month : month;
+
+        const finalYear =
+          overrideFilters.year !== undefined ? overrideFilters.year : year;
+
+        const params = {
+          month: finalMonth || undefined,
+          year: finalYear || undefined,
+          purpose: finalSearchTerm || undefined,
+        };
+
+        const res = await getCatchups(params);
+        setCatchups(res?.data || []);
+        setError(null);
+      } catch (err) {
+        setError("Failed to fetch catchups");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [month, year, searchTerm],
+  );
 
   // Optional: initial load only
   useEffect(() => {
