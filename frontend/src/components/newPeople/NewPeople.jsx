@@ -64,28 +64,71 @@ export default function NewPeople() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">New People Follow-up</h1>
+    <div className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <section className="mb-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-2xl shadow-indigo-500/10 backdrop-blur sm:p-8">
+          <div>
+            <div className="mb-4 w-fit rounded-full border border-indigo-500/40 bg-indigo-500/10 px-4 py-2 text-sm text-indigo-300">
+              ✨ New People Follow Up
+            </div>
 
-      {error && <p className="text-red-500">{error}</p>}
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+              Manage{" "}
+              <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                New People
+              </span>
+            </h1>
 
-      <div className="grid gap-6">
-        {loading ? (
-          Array.from({ length: 3 }).map((_, i) => <KidCardSkeleton key={i} />)
-        ) : kids.length === 0 ? (
-          <p>No new people found.</p>
-        ) : (
-          kids.map((kid) => (
-            <KidCard
-              key={kid.id}
-              kid={kid}
-              onToggleCall={handleToggleCall}
-              onFeedbackChange={handleFeedbackChange}
-              onSave={handleSaveFeedback}
-              onDelete={handleDelete}
-            />
-          ))
-        )}
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
+              Track first and second follow-up calls, record feedback, and help
+              new people stay connected.
+            </p>
+          </div>
+        </section>
+
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
+            <p className="text-sm text-slate-400">Total New People</p>
+            <h3 className="mt-2 text-3xl font-bold text-white">
+              {kids.length}
+            </h3>
+          </div>
+
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
+            <p className="text-sm text-slate-400">First Calls Done</p>
+            <h3 className="mt-2 text-3xl font-bold text-green-400">
+              {kids.filter((k) => k.first_call).length}
+            </h3>
+          </div>
+
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
+            <p className="text-sm text-slate-400">Second Calls Done</p>
+            <h3 className="mt-2 text-3xl font-bold text-indigo-400">
+              {kids.filter((k) => k.second_call).length}
+            </h3>
+          </div>
+        </div>
+
+        {error && <p className="text-red-500">{error}</p>}
+
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => <KidCardSkeleton key={i} />)
+          ) : kids.length === 0 ? (
+            <p>No new people found.</p>
+          ) : (
+            kids.map((kid) => (
+              <KidCard
+                key={kid.id}
+                kid={kid}
+                onToggleCall={handleToggleCall}
+                onFeedbackChange={handleFeedbackChange}
+                onSave={handleSaveFeedback}
+                onDelete={handleDelete}
+              />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
