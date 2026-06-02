@@ -23,7 +23,16 @@ import { useState } from "react";
 import { Settings, X } from "lucide-react";
 import AddYearTerm from "./AddYearTerm";
 import useUser from "../../hooks/useUser";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+
+const SELECT_BASE_CLASS =
+  "w-full appearance-none border text-sm font-medium rounded-xl block min-h-[44px] px-4 pr-10 transition-all";
+
+const SELECT_ACTIVE_CLASS =
+  "bg-white/10 border-white/10 text-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 cursor-pointer";
+
+const SELECT_DISABLED_CLASS =
+  "bg-white/5 border-white/10 text-slate-500 cursor-not-allowed";
 
 export default function AttendanceSort({
   selectedYear,
@@ -126,7 +135,7 @@ export default function AttendanceSort({
 
           <div className="relative">
             <select
-              className="w-full appearance-none bg-white/10 border border-white/10 text-white text-sm font-medium rounded-xl focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 block min-h-[44px] px-4 pr-10 transition-all cursor-pointer"
+              className={`${SELECT_BASE_CLASS} ${SELECT_ACTIVE_CLASS}`}
               // Controlled component value
               value={selectedYear || ""}
               // Convert dropdown string value into Number
@@ -177,16 +186,11 @@ export default function AttendanceSort({
 
           <div className="relative">
             <select
-              className={`w-full appearance-none border text-sm font-medium rounded-xl block min-h-[44px] px-4 pr-10 transition-all ${
-                // Disable styling when no year selected
-                !selectedYear
-                  ? "bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed"
-                  : "bg-gray-50 border-gray-300 text-gray-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+              className={`${SELECT_BASE_CLASS} ${
+                !selectedYear ? SELECT_DISABLED_CLASS : SELECT_ACTIVE_CLASS
               }`}
               value={selectedTerm || ""}
-              // Convert selected value to Number
               onChange={(e) => onTermChange(Number(e.target.value))}
-              // Disable term dropdown until a year is selected
               disabled={!selectedYear}
             >
               <option value="">Select Term</option>
@@ -202,9 +206,7 @@ export default function AttendanceSort({
             {/* Custom dropdown icon */}
             <div
               className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 ${
-                !selectedYear
-                  ? "bg-white/5 border-white/10 text-slate-500 cursor-not-allowed"
-                  : "bg-white/10 border-white/10 text-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 cursor-pointer"
+                !selectedYear ? "text-slate-500" : "text-slate-300"
               }`}
             >
               <svg
