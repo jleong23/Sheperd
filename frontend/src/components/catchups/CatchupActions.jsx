@@ -1,5 +1,8 @@
 import { motion } from "framer-motion";
 
+const BUTTON_BASE =
+  "min-h-[44px] px-5 py-3 text-sm font-bold rounded-xl transition";
+
 export function CatchupActions({
   isEdit,
   isDirty,
@@ -19,7 +22,7 @@ export function CatchupActions({
             boxShadow: "0px 0px 20px rgba(239,68,68,0.3)",
           }}
           whileTap={{ scale: 0.97 }}
-          className="rounded-xl border border-red-500/40 bg-red-500/10 px-5 py-3 text-sm font-bold text-red-300 transition hover:bg-red-500/20 hover:text-red-200"
+          className={`${BUTTON_BASE} border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:text-red-200`}
         >
           Delete
         </motion.button>
@@ -30,7 +33,7 @@ export function CatchupActions({
         onClick={onCancel}
         whileHover={{ y: -2, scale: 1.02 }}
         whileTap={{ scale: 0.97 }}
-        className="rounded-xl border border-slate-700 bg-slate-950 px-5 py-3 text-sm font-bold text-slate-300 transition hover:border-slate-500 hover:bg-slate-900 hover:text-white"
+        className={`${BUTTON_BASE} border border-slate-700 bg-slate-950 text-slate-300 hover:border-slate-500 hover:bg-slate-900 hover:text-white`}
       >
         Cancel
       </motion.button>
@@ -49,7 +52,7 @@ export function CatchupActions({
             : {}
         }
         whileTap={isDirty ? { scale: 0.97 } : {}}
-        className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
+        className={`${BUTTON_BASE} bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none`}
       >
         Save
       </motion.button>
