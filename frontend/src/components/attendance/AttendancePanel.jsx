@@ -19,6 +19,34 @@ import ExportAttendance from "./ExportAttendance.jsx";
 import ImportAttendance from "./ImportAttendance.jsx";
 import InlineSpinner from "../ui/InlineSpinner.jsx";
 
+// ---------------------------------------------------
+// Framer Motion Animation Variants
+// ---------------------------------------------------
+const panelVariants = {
+  open: {
+    height: "auto",
+    opacity: 1,
+  },
+  closed: {
+    height: 0,
+    opacity: 0,
+  },
+};
+
+const descriptionVariants = {
+  open: {
+    opacity: 1,
+    y: "0%",
+    transition: {
+      delay: 0.125,
+    },
+  },
+  closed: {
+    opacity: 0,
+    y: "20px",
+  },
+};
+
 export default function AttendancePanel({
   open,
   setOpen,
@@ -189,31 +217,3 @@ export default function AttendancePanel({
     </>
   );
 }
-
-// ---------------------------------------------------
-// Framer Motion Animation Variants
-// ---------------------------------------------------
-const panelVariants = {
-  open: {
-    height: "auto",
-    opacity: 1,
-  },
-  closed: {
-    height: 0,
-    opacity: 0,
-  },
-};
-
-const descriptionVariants = {
-  open: {
-    opacity: 1,
-    y: "0%",
-    transition: {
-      delay: 0.125,
-    },
-  },
-  closed: {
-    opacity: 0,
-    y: "20px",
-  },
-};
