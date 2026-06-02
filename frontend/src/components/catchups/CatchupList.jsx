@@ -38,6 +38,21 @@ export default function CatchupList() {
     });
   };
 
+  const openCreateModal = () => {
+    setSelectedCatchup(null);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedCatchup(null);
+  };
+
+  const handleSaved = () => {
+    fetchCatchups();
+    closeModal();
+  };
+
   if (loading) return <CatchupPageSkeleton fullPage />;
   if (error) return <div className="text-red-500">{error}</div>;
 
@@ -65,12 +80,7 @@ export default function CatchupList() {
               </p>
             </div>
 
-            <AddCatchup
-              onClick={() => {
-                setSelectedCatchup(null);
-                setIsModalOpen(true);
-              }}
-            />
+            <AddCatchup onClick={openCreateModal} />
           </div>
         </section>
 
@@ -93,17 +103,10 @@ export default function CatchupList() {
 
         {(isModalOpen || selectedCatchup) && (
           <CatchupModal
-            open={true}
+            open
             catchup={selectedCatchup}
-            onClose={() => {
-              setIsModalOpen(false);
-              setSelectedCatchup(null);
-            }}
-            onSaved={() => {
-              fetchCatchups();
-              setIsModalOpen(false);
-              setSelectedCatchup(null);
-            }}
+            onClose={closeModal}
+            onSaved={handleSaved}
           />
         )}
       </div>
