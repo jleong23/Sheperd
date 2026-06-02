@@ -1,284 +1,72 @@
-/**
- * AttendanceList Page
- * ---------------------------------------------------
- * Main attendance management page.
- *
- * Responsibilities:
- * - Fetch attendance + kids data from backend
- * - Manage selected year and term filters
- * - Merge kid info into attendance records
- * - Handle attendance status updates
- * - Handle attendance reason updates
- * - Handle Excel import functionality
- * - Pass processed data into child UI components
- *
- * This acts as the State manager + business logic layer for the Attendance feature.
- */
+import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
-import { useState, useEffect, useMemo } from "react";
 import AttendanceResult from "../../components/attendance/AttendanceResult.jsx";
 import AttendanceSort from "../../components/attendance/AttendanceSort.jsx";
 import AttendancePageSkeleton from "./AttendanceSkeleton/AttendancePageSkeleton.jsx";
+
 import {
   addBulkAttendance,
   getAttendance,
   updateAttendance,
 } from "../../api/attendance.js";
 import { fetchKids } from "../../api/kids.js";
-import toast from "react-hot-toast";
 
 export default function AttendanceList() {
-  // ---------------------------------------------------
-  // State Management
-  // ---------------------------------------------------
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
   const [allAttendance, setAllAttendance] = useState([]);
-  const [currentAttendance, setCurrentAttendance] = useState([]);
+  const [kids, setKids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
-  const [kids, setKids] = useState([]);
 
-  // -----------------------------
-  // Fetch ALL attendance records and kids
-  // -----------------------------
-  const fetchAllAttendance = async () => {
+  const fetchAllAttendance = useCallback(async () => {
     try {
       const data = await getAttendance();
-      if (!Array.isArray(data)) return;
 
-      const normalized = data.map((r) => ({
-        ...r,
-        kidId: r.kidid ?? r.kidId,
+      if (!Array.isArray(data)) {
+        setAllAttendance([]);
+        return;
+      }
+
+      const normalized = data.map((record) => ({
+        ...record,
+        kidId: record.kidId ?? record.kidid,
       }));
 
       setAllAttendance(normalized);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("Failed to fetch attendance:", error);
+      toast.error("Failed to load attendance.");
     }
-  };
+  }, []);
 
-  // ---------------------------------------------------
-  // Initial page load
-  // Fetch attendance + kids once
-  // ---------------------------------------------------
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      await fetchAllAttendance(); // Fetch Attendance records
+    const fetchPageData = async () => {
       try {
-        const data = await fetchKids();
-        setKids(data);
-      } catch (err) {
-        console.error("Failed to fetch kids:", err);
+        setLoading(true);
+
+        const [kidsData] = await Promise.all([
+          fetchKids(),
+          fetchAllAttendance(),
+        ]);
+
+        setKids(Array.isArray(kidsData) ? kidsData : []);
+      } catch (error) {
+        console.error("Failed to load attendance page:", error);
+        toast.error("Failed to load attendance page.");
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, []); // empty dependency array = runs ONCE when page loads
 
-  // -----------------------------
-  // Auto-select latest available year
-  // -----------------------------
-  useEffect(() => {
-    /**
-     * Only auto-select if:
-     * - attendance exists
-     * - user hasn't selected year yet
-     */
-    if (allAttendance.length > 0 && !selectedYear) {
-      const latestYear = Math.max(...allAttendance.map((a) => a.year)); // find highest year value (latest year)
-      setSelectedYear(latestYear);
-    }
-  }, [allAttendance, selectedYear]);
-  // -----------------------------
-  // Auto-select latest term for selected year
-  // -----------------------------
-  useEffect(() => {
-    if (selectedYear) {
-      // Get all terms inside selected year
-      const terms = allAttendance
-        .filter((a) => a.year === selectedYear)
-        .map((a) => a.term);
-      if (terms.length > 0) {
-        // Select highest/latest term
-        setSelectedTerm(Math.max(...terms));
-      }
-    }
-  }, [selectedYear]);
+    fetchPageData();
+  }, [fetchAllAttendance]);
 
-  // -----------------------------
-  // Filter attendance by year + term
-  // -----------------------------
-  useEffect(() => {
-    // wait until required data exists
-    if (!selectedYear || !selectedTerm || kids.length === 0) return;
-
-    // Keep ONLY selected year + term
-    const filtered = allAttendance
-      .filter(
-        (a) =>
-          a.year === Number(selectedYear) && a.term === Number(selectedTerm),
-      )
-      // Merge kid info into attendance records
-      .map((record) => {
-        // Find matching kid profile
-        const kid = kids.find(
-          (k) => Number(k.id) === Number(record.kidId ?? record.kidid),
-        );
-        return {
-          ...record,
-          // Use kid name if found
-          name: kid
-            ? kid.name
-            : `Unknown (ID: ${record.kidId ?? record.kidid})`,
-          // Attach kid profile photo
-          photo: kid?.photo ?? null,
-        };
-      })
-      // Sort newest week first
-      .sort((a, b) => b.week - a.week);
-
-    setCurrentAttendance(filtered);
-  }, [selectedYear, selectedTerm, allAttendance, kids]);
-
-  // -----------------------------
-  // Change Attendance Status
-  // -----------------------------
-  const handleStatusChange = async (recordId, newStatus) => {
-    const previous = currentAttendance.find((r) => r.id === recordId);
-
-    // optimistic update
-    updateAttendanceRecord({
-      ...previous,
-      status: newStatus,
-    });
-
-    try {
-      await updateAttendance(recordId, { status: newStatus });
-    } catch (err) {
-      console.error(err);
-
-      // rollback if needed
-      updateAttendanceRecord(previous);
-    }
-  };
-
-  // -----------------------------
-  // Reason Handlers (frontend only until submits)
-  // -----------------------------
-  const handleReasonChange = (recordId, reason) => {
-    setCurrentAttendance((prev) =>
-      prev.map((r) => (r.id === recordId ? { ...r, reason } : r)),
-    );
-  };
-
-  // ---------------------------------------------------
-  // Save & submit attendance reason to backend
-  // ---------------------------------------------------
-  const handleReasonSubmit = async (recordId) => {
-    const record = currentAttendance.find((r) => r.id === recordId);
-    if (!record) return;
-
-    try {
-      const updated = await updateAttendance(recordId, {
-        reason: record.reason,
-      });
-      updateAttendanceRecord(updated);
-      alert(`Reason for ${record.name} updated!`);
-    } catch (err) {
-      console.error("Failed to update reason:", err);
-      alert("Failed to update reason.");
-    }
-  };
-
-  // -----------------------------
-  // Update attendance record everywhere
-  // -----------------------------
-  const updateAttendanceRecord = (updatedRecord) => {
-    const kidId = updatedRecord.kidid ?? updatedRecord.kidId;
-    // Find kid profile for extra info
-    const kid = kids.find((k) => Number(k.id) === Number(kidId));
-
-    // Rebuild full frontend-friendly record
-    const fullRecord = {
-      ...updatedRecord,
-      kidId,
-      name: kid ? kid.name : `Unknown (ID: ${kidId})`,
-      photo: kid?.photo ?? null,
-    };
-
-    // Reusable state update helper
-    const updateState = (setter) =>
-      setter((prev) =>
-        prev.map((r) => (r.id === fullRecord.id ? fullRecord : r)),
-      );
-
-    updateState(setAllAttendance);
-    updateState(setCurrentAttendance);
-  };
-
-  // ---------------------------------------------------
-  // Transform imported Excel rows into backend-compatible format
-  // ---------------------------------------------------
-  const transformData = (rows, kids) => {
-    return (
-      rows
-        .map((row) => {
-          if (!row.name) return null;
-
-          // Match Excel row name with kid database
-          const kid = kids.find(
-            (k) =>
-              k.name?.trim().toLowerCase() === row.name.trim().toLowerCase(),
-          );
-
-          if (!kid) {
-            console.warn("Kid not found:", row.name);
-            return null;
-          }
-
-          // Convert imported row into backend structure
-          return {
-            kidid: kid.id,
-            week: row.week,
-            term: row.term,
-            year: row.year,
-            status: row.status?.toLowerCase() || "maybe",
-            reason: row.reason || "",
-          };
-        })
-        // Remove invalid/null rows
-        .filter(Boolean)
-    );
-  };
-
-  // -----------------------------
-  // Handle Import Excel
-  // -----------------------------
-  const handleImport = async (rows) => {
-    setImporting(true);
-
-    const transformed = transformData(rows, kids);
-
-    try {
-      await addBulkAttendance(transformed);
-
-      // ALWAYS refetch clean state
-      await fetchAllAttendance();
-
-      toast.success("Attendance imported successfully!");
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  // ---------------------------------------------------
-  // Dropdown options
-  // ---------------------------------------------------
   const availableYears = useMemo(() => {
-    return [...new Set(allAttendance.map((a) => a.year))].sort((a, b) => b - a);
+    return [...new Set(allAttendance.map((record) => Number(record.year)))]
+      .filter(Boolean)
+      .sort((a, b) => b - a);
   }, [allAttendance]);
 
   const availableTerms = useMemo(() => {
@@ -286,40 +74,180 @@ export default function AttendanceList() {
 
     return [
       ...new Set(
-        allAttendance.filter((a) => a.year === selectedYear).map((a) => a.term),
+        allAttendance
+          .filter((record) => Number(record.year) === Number(selectedYear))
+          .map((record) => Number(record.term)),
       ),
-    ].sort((a, b) => a - b);
+    ]
+      .filter(Boolean)
+      .sort((a, b) => a - b);
   }, [allAttendance, selectedYear]);
 
-  // ---------------------------------------------------
-  // Selection Safety Guard
-  // ---------------------------------------------------
   useEffect(() => {
-    if (availableYears.length === 0) return;
-
-    if (!availableYears.includes(selectedYear)) {
-      setSelectedYear(availableYears[0] ?? null);
-      setSelectedTerm(null);
+    if (!selectedYear && availableYears.length > 0) {
+      setSelectedYear(availableYears[0]);
     }
-  }, [availableYears]);
+  }, [availableYears, selectedYear]);
 
-  // -----------------------------
-  // Render ( loading screen )
-  // -----------------------------
+  useEffect(() => {
+    if (!selectedYear || availableTerms.length === 0) return;
+
+    if (!availableTerms.includes(Number(selectedTerm))) {
+      setSelectedTerm(availableTerms.at(-1));
+    }
+  }, [availableTerms, selectedYear, selectedTerm]);
+
+  const currentAttendance = useMemo(() => {
+    if (!selectedYear || !selectedTerm || kids.length === 0) return [];
+
+    return allAttendance
+      .filter(
+        (record) =>
+          Number(record.year) === Number(selectedYear) &&
+          Number(record.term) === Number(selectedTerm),
+      )
+      .map((record) => {
+        const kidId = record.kidId ?? record.kidid;
+        const kid = kids.find((item) => Number(item.id) === Number(kidId));
+
+        return {
+          ...record,
+          kidId,
+          name: kid ? kid.name : `Unknown (ID: ${kidId})`,
+          photo: kid?.photo ?? null,
+        };
+      })
+      .sort((a, b) => Number(b.week) - Number(a.week));
+  }, [allAttendance, kids, selectedYear, selectedTerm]);
+
+  const updateAttendanceRecord = useCallback(
+    (updatedRecord) => {
+      const kidId = updatedRecord.kidId ?? updatedRecord.kidid;
+      const kid = kids.find((item) => Number(item.id) === Number(kidId));
+
+      const fullRecord = {
+        ...updatedRecord,
+        kidId,
+        name: kid ? kid.name : `Unknown (ID: ${kidId})`,
+        photo: kid?.photo ?? null,
+      };
+
+      setAllAttendance((prev) =>
+        prev.map((record) =>
+          record.id === fullRecord.id ? fullRecord : record,
+        ),
+      );
+    },
+    [kids],
+  );
+
+  const handleStatusChange = async (recordId, newStatus) => {
+    const previousRecord = currentAttendance.find(
+      (record) => record.id === recordId,
+    );
+
+    if (!previousRecord) return;
+
+    updateAttendanceRecord({
+      ...previousRecord,
+      status: newStatus,
+    });
+
+    try {
+      await updateAttendance(recordId, { status: newStatus });
+    } catch (error) {
+      console.error("Failed to update attendance status:", error);
+      updateAttendanceRecord(previousRecord);
+      toast.error("Failed to update attendance status.");
+    }
+  };
+
+  const handleReasonChange = (recordId, reason) => {
+    setAllAttendance((prev) =>
+      prev.map((record) =>
+        record.id === recordId ? { ...record, reason } : record,
+      ),
+    );
+  };
+
+  const handleReasonSubmit = async (recordId) => {
+    const record = currentAttendance.find((item) => item.id === recordId);
+
+    if (!record) return;
+
+    try {
+      const updatedRecord = await updateAttendance(recordId, {
+        reason: record.reason,
+      });
+
+      updateAttendanceRecord(updatedRecord);
+      toast.success(`Reason for ${record.name} updated.`);
+    } catch (error) {
+      console.error("Failed to update reason:", error);
+      toast.error("Failed to update reason.");
+    }
+  };
+
+  const transformImportedRows = (rows) => {
+    return rows
+      .map((row) => {
+        if (!row.name) return null;
+
+        const kid = kids.find(
+          (item) =>
+            item.name?.trim().toLowerCase() === row.name.trim().toLowerCase(),
+        );
+
+        if (!kid) {
+          console.warn("Kid not found:", row.name);
+          return null;
+        }
+
+        return {
+          kidid: kid.id,
+          week: Number(row.week),
+          term: Number(row.term),
+          year: Number(row.year),
+          status: row.status?.toLowerCase() || "maybe",
+          reason: row.reason || "",
+        };
+      })
+      .filter(Boolean);
+  };
+
+  const handleImport = async (rows) => {
+    try {
+      setImporting(true);
+
+      const transformedRows = transformImportedRows(rows);
+
+      if (transformedRows.length === 0) {
+        toast.error("No valid attendance rows found.");
+        return;
+      }
+
+      await addBulkAttendance(transformedRows);
+      await fetchAllAttendance();
+
+      toast.success("Attendance imported successfully.");
+    } catch (error) {
+      console.error("Failed to import attendance:", error);
+      toast.error("Failed to import attendance.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   if (loading) {
     return <AttendancePageSkeleton />;
   }
 
-  // ---------------------------------------------------
-  // Main UI
-  // ---------------------------------------------------
   return (
     <div className="min-h-screen bg-[#0f172a] relative overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
       <div className="absolute top-20 left-10 w-96 h-96 bg-blue-500/20 blur-[120px]" />
       <div className="absolute right-10 top-80 w-96 h-96 bg-purple-500/20 blur-[120px]" />
 
       <div className="relative max-w-6xl mx-auto">
-        {/*Filter Controls*/}
         <AttendanceSort
           selectedYear={selectedYear}
           selectedTerm={selectedTerm}
@@ -327,11 +255,10 @@ export default function AttendanceList() {
           availableTerms={availableTerms}
           onYearChange={setSelectedYear}
           onTermChange={setSelectedTerm}
-          hideWeek={true}
+          hideWeek
           refreshAttendance={fetchAllAttendance}
         />
 
-        {/*Only render attendance if year + term selected*/}
         {selectedYear && selectedTerm ? (
           currentAttendance.length > 0 ? (
             <AttendanceResult
