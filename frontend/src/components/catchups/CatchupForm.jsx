@@ -10,7 +10,6 @@ export function CatchupForm({
   onSubmit,
   onCancel,
   onDelete,
-  onChange,
 }) {
   const initial = useMemo(
     () => ({
@@ -106,7 +105,7 @@ export function CatchupForm({
         isEdit={isEdit}
         onDelete={onDelete}
         onCancel={onCancel}
-        onChange={hasChanges}
+        isDirty={hasChanges}
         onSave={() => {
           if (!kidid || !date || !purpose.trim()) {
             alert("Please fill in all required fields.");
