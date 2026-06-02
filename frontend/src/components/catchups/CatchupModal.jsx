@@ -39,7 +39,6 @@ export function CatchupModal({
         toast.success("Catchup added successfully");
       }
       onSaved();
-      onClose();
     } catch {
       toast.error("Failed to save catchup");
     }
@@ -50,7 +49,6 @@ export function CatchupModal({
       await deleteCatchup(catchup.catchupid);
       toast.success("Catchup deleted");
       onSaved();
-      onClose();
     } catch {
       toast.error("Failed to delete catchup");
     }
