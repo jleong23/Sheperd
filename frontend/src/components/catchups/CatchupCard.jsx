@@ -2,14 +2,18 @@ import { motion } from "framer-motion";
 import KidStatusBadge from "../ui/KidStatusBadge";
 import KidFlagBadge from "../ui/KidFlagBadge";
 
+function formatCatchupDate(date) {
+  if (!date) return "N/A";
+
+  return new Date(date).toLocaleDateString("en-AU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export function CatchupCard({ catchup, onClick }) {
-  const formattedDate = catchup.catchupdate
-    ? new Date(catchup.catchupdate).toLocaleDateString("en-AU", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    : "N/A";
+  const formattedDate = formatCatchupDate(catchup.catchupdate);
 
   return (
     <motion.article
