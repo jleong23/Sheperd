@@ -3,6 +3,9 @@ import { KidSelect } from "./KidSelect";
 import { TimeRangeInput } from "./CatchupTimeRangeInput";
 import { CatchupActions } from "./CatchupActions";
 
+const INPUT_CLASS =
+  "w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30";
+
 export function CatchupForm({
   kids,
   isEdit,
@@ -37,9 +40,6 @@ export function CatchupForm({
     startTime !== initial.startTime ||
     endTime !== initial.endTime;
 
-  const inputClass =
-    "w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30";
-
   return (
     <div className="space-y-6">
       <KidSelect
@@ -58,7 +58,7 @@ export function CatchupForm({
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className={inputClass}
+            className={INPUT_CLASS}
           />
         </div>
 
@@ -68,7 +68,7 @@ export function CatchupForm({
             endTime={endTime}
             onStartChange={setStartTime}
             onEndChange={setEndTime}
-            className={inputClass}
+            className={INPUT_CLASS}
           />
         </div>
       </div>
@@ -83,7 +83,7 @@ export function CatchupForm({
           placeholder="Follow up, pastoral care, prayer request, school discussion..."
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
-          className={inputClass}
+          className={INPUT_CLASS}
         />
       </div>
 
@@ -97,7 +97,7 @@ export function CatchupForm({
           value={comments}
           onChange={(e) => setComments(e.target.value)}
           rows={5}
-          className={inputClass}
+          className={INPUT_CLASS}
         />
       </div>
 
