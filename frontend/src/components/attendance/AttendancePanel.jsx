@@ -10,6 +10,7 @@
  * - Displays student cards
  */
 
+import { useMemo } from "react";
 import { Calendar, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -36,15 +37,17 @@ export default function AttendancePanel({
   const isOpen = open === id; // Check if this week is currently open
 
   // Calculate summary stats
-  const summary = records.reduce(
-    (acc, r) => {
-      if (r.status === "coming") acc.coming += 1;
-      else if (r.status === "maybe") acc.maybe += 1;
-      else if (r.status === "not coming") acc.notComing += 1;
-      return acc;
-    },
-    { coming: 0, maybe: 0, notComing: 0 },
-  );
+  const summary = useMemo(() => {
+    return records.reduce(
+      (acc, r) => {
+        if (r.status === "coming") acc.coming += 1;
+        else if (r.status === "maybe") acc.maybe += 1;
+        else if (r.status === "not coming") acc.notComing += 1;
+        return acc;
+      },
+      { coming: 0, maybe: 0, notComing: 0 },
+    );
+  }, [records]);
 
   return (
     <>
