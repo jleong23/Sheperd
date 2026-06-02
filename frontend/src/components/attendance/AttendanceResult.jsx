@@ -16,7 +16,7 @@
  * - AttendancePanel → Expandable week section
  * - AttendanceStudentCard → Individual student attendance card
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Calendar } from "lucide-react";
 
@@ -43,20 +43,28 @@ export default function AttendanceResult({
   //   2: [records...]
   // }
   // ---------------------------------------------------
-  const attendanceByWeek = currentAttendance.reduce((acc, record) => {
-    if (!acc[record.week]) acc[record.week] = [];
-    acc[record.week].push(record);
-    return acc;
-  }, {});
+  const attendanceByWeek = useMemo(() => {
+    return currentAttendance.reduce((acc, record) => {
+      if (!acc[record.week]) {
+        acc[record.week] = [];
+      }
+
+      acc[record.week].push(record);
+
+      return acc;
+    }, {});
+  }, [currentAttendance]);
 
   // ---------------------------------------------------
   // Convert grouped week keys into sorted number array
   // Example:
   // ["1","2"] -> [1,2]
   // ---------------------------------------------------
-  const sortedWeeks = Object.keys(attendanceByWeek)
-    .map(Number)
-    .sort((a, b) => a - b);
+  const sortedWeeks = useMemo(() => {
+    return Object.keys(attendanceByWeek)
+      .map(Number)
+      .sort((a, b) => a - b);
+  }, [attendanceByWeek]);
 
   // Controls which week panel is currently open
   const [open, setOpen] = useState(null);
