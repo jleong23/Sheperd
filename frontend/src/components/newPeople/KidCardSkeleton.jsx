@@ -1,3 +1,9 @@
+const SKELETON_PANEL_CLASS =
+  "rounded-2xl border border-slate-800 bg-slate-950/50 p-3";
+
+const SKELETON_CALL_PANEL_CLASS =
+  "rounded-2xl border border-slate-800 bg-slate-950/50 p-4";
+
 export default function KidCardSkeleton() {
   return (
     <div className="flex h-full animate-pulse flex-col rounded-3xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-indigo-500/5 backdrop-blur">
@@ -12,12 +18,12 @@ export default function KidCardSkeleton() {
       </div>
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
+        <div className={SKELETON_PANEL_CLASS}>
           <div className="mb-2 h-3 w-12 rounded-full bg-slate-800" />
           <div className="h-4 w-28 rounded-full bg-slate-700" />
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
+        <div className={SKELETON_PANEL_CLASS}>
           <div className="mb-2 h-3 w-16 rounded-full bg-slate-800" />
           <div className="h-4 w-32 rounded-full bg-slate-700" />
           <div className="mt-2 h-3 w-24 rounded-full bg-slate-800" />
