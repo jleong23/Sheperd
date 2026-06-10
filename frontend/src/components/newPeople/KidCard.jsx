@@ -1,6 +1,7 @@
 import { FaTrash, FaCheck } from "react-icons/fa";
 import { motion } from "framer-motion";
 import KidStatusBadge from "../ui/KidStatusBadge";
+import React from "react";
 
 const INPUT_CLASS =
   "w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30";
@@ -66,13 +67,7 @@ function CallBlock({
   );
 }
 
-export default function KidCard({
-  kid,
-  onToggleCall,
-  onFeedbackChange,
-  onSave,
-  onDelete,
-}) {
+function KidCard({ kid, onToggleCall, onFeedbackChange, onSave, onDelete }) {
   return (
     <motion.article
       whileHover={{
@@ -188,3 +183,4 @@ export default function KidCard({
     </motion.article>
   );
 }
+export default React.memo(KidCard);
