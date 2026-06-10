@@ -125,8 +125,8 @@ export default function NewPeople() {
               </p>
             </div>
           ) : (
-            kids.map((kid) => (
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              {kids.map((kid) => (
                 <KidCard
                   key={kid.id}
                   kid={kid}
@@ -135,8 +135,8 @@ export default function NewPeople() {
                   onSave={handleSaveFeedback}
                   onDelete={handleDelete}
                 />
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>
