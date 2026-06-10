@@ -2,6 +2,64 @@ import { FaTrash, FaCheck } from "react-icons/fa";
 import { motion } from "framer-motion";
 import KidStatusBadge from "../ui/KidStatusBadge";
 
+const INPUT_CLASS =
+  "w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30";
+
+function CallBlock({
+  title,
+  kid,
+  field,
+  feedbackField,
+  glow,
+  accentClass,
+  onToggleCall,
+  onFeedbackChange,
+}) {
+  const isDone = !!kid[field];
+
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h3 className="font-bold text-white">{title}</h3>
+          <p className="mt-1 text-xs text-slate-500">
+            {isDone ? "Follow-up completed" : "Follow-up pending"}
+          </p>
+        </div>
+
+        <motion.button
+          type="button"
+          onClick={() => onToggleCall(kid, field)}
+          whileHover={{
+            y: -2,
+            scale: 1.04,
+            boxShadow: isDone ? `0px 0px 20px ${glow}` : undefined,
+          }}
+          whileTap={{ scale: 0.96 }}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition ${
+            isDone
+              ? `${accentClass} text-white shadow-lg`
+              : "border-slate-700 bg-slate-900 text-slate-500 hover:border-indigo-500/50 hover:text-slate-300"
+          }`}
+          title={isDone ? "Mark as not done" : "Mark as done"}
+        >
+          {isDone && <FaCheck size={14} />}
+        </motion.button>
+      </div>
+
+      <textarea
+        className={INPUT_CLASS}
+        rows="3"
+        placeholder={`Add ${title.toLowerCase()} notes...`}
+        value={kid[feedbackField] || ""}
+        onChange={(e) =>
+          onFeedbackChange(kid.id, feedbackField, e.target.value)
+        }
+      />
+    </div>
+  );
+}
+
 export default function KidCard({
   kid,
   onToggleCall,
@@ -9,61 +67,6 @@ export default function KidCard({
   onSave,
   onDelete,
 }) {
-  const inputClass =
-    "w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30";
-
-  const renderCallBlock = ({
-    title,
-    field,
-    feedbackField,
-    glow,
-    accentClass,
-  }) => {
-    const isDone = !!kid[field];
-
-    return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <h3 className="font-bold text-white">{title}</h3>
-            <p className="mt-1 text-xs text-slate-500">
-              {isDone ? "Follow-up completed" : "Follow-up pending"}
-            </p>
-          </div>
-
-          <motion.button
-            type="button"
-            onClick={() => onToggleCall(kid, field)}
-            whileHover={{
-              y: -2,
-              scale: 1.04,
-              boxShadow: isDone ? `0px 0px 20px ${glow}` : undefined,
-            }}
-            whileTap={{ scale: 0.96 }}
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition ${
-              isDone
-                ? `${accentClass} text-white shadow-lg`
-                : "border-slate-700 bg-slate-900 text-slate-500 hover:border-indigo-500/50 hover:text-slate-300"
-            }`}
-            title={isDone ? "Mark as not done" : "Mark as done"}
-          >
-            {isDone && <FaCheck size={14} />}
-          </motion.button>
-        </div>
-
-        <textarea
-          className={inputClass}
-          rows="3"
-          placeholder={`Add ${title.toLowerCase()} notes...`}
-          value={kid[feedbackField] || ""}
-          onChange={(e) =>
-            onFeedbackChange(kid.id, feedbackField, e.target.value)
-          }
-        />
-      </div>
-    );
-  };
-
   return (
     <motion.article
       whileHover={{
@@ -139,21 +142,26 @@ export default function KidCard({
       </div>
 
       <div className="grid flex-1 grid-cols-1 gap-4 xl:grid-cols-2">
-        {renderCallBlock({
-          title: "First Call",
-          field: "first_call",
-          feedbackField: "first_call_feedback",
-          glow: "rgba(34,197,94,0.3)",
-          accentClass: "border-green-400/40 bg-green-600",
-        })}
-
-        {renderCallBlock({
-          title: "Second Call",
-          field: "second_call",
-          feedbackField: "second_call_feedback",
-          glow: "rgba(99,102,241,0.35)",
-          accentClass: "border-indigo-400/40 bg-indigo-600",
-        })}
+        <CallBlock
+          title="First Call"
+          kid={kid}
+          field="first_call"
+          feedbackField="first_call_feedback"
+          glow="rgba(34,197,94,0.3)"
+          accentClass="border-green-400/40 bg-green-600"
+          onToggleCall={onToggleCall}
+          onFeedbackChange={onFeedbackChange}
+        />
+        <CallBlock
+          title="Second Call"
+          kid={kid}
+          field="second_call"
+          feedbackField="second_call_feedback"
+          glow="rgba(99,102,241,0.35)"
+          accentClass="border-indigo-400/40 bg-indigo-600"
+          onToggleCall={onToggleCall}
+          onFeedbackChange={onFeedbackChange}
+        />
       </div>
 
       <div className="mt-5 flex justify-end border-t border-slate-800 pt-5">
