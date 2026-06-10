@@ -5,6 +5,12 @@ import KidStatusBadge from "../ui/KidStatusBadge";
 const INPUT_CLASS =
   "w-full resize-none rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30";
 
+const ICON_BUTTON_CLASS =
+  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition";
+
+const ACTION_BUTTON_CLASS =
+  "min-h-[44px] rounded-xl px-4 py-3 text-sm font-bold transition";
+
 function CallBlock({
   title,
   kid,
@@ -36,7 +42,7 @@ function CallBlock({
             boxShadow: isDone ? `0px 0px 20px ${glow}` : undefined,
           }}
           whileTap={{ scale: 0.96 }}
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition ${
+          className={`${ICON_BUTTON_CLASS} ${
             isDone
               ? `${accentClass} text-white shadow-lg`
               : "border-slate-700 bg-slate-900 text-slate-500 hover:border-indigo-500/50 hover:text-slate-300"
@@ -102,7 +108,7 @@ export default function KidCard({
             boxShadow: "0px 0px 20px rgba(239,68,68,0.3)",
           }}
           whileTap={{ scale: 0.96 }}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 transition hover:bg-red-500/20 hover:text-red-200"
+          className={`${ACTION_BUTTON_CLASS} border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20`}
           title="Delete new person"
         >
           <FaTrash size={14} />
@@ -174,7 +180,7 @@ export default function KidCard({
             boxShadow: "0px 0px 24px rgba(99,102,241,0.35)",
           }}
           whileTap={{ scale: 0.97 }}
-          className="w-full rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 sm:w-fit"
+          className={`${ACTION_BUTTON_CLASS} bg-indigo-600 text-white hover:bg-indigo-500`}
         >
           Save Feedback
         </motion.button>
