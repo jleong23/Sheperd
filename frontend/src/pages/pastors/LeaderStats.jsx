@@ -94,7 +94,7 @@ export default function LeaderStats() {
 
         <LeaderAttendancePanel attendance={attendance} />
         <PastorAddKidModal leaderId={leaderId} onKidAdded={refreshLeaderKids} />
-        <LeaderKidsPanel kids={kids} />
+        <LeaderKidsPanel kids={kids} onKidUpdated={refreshLeaderKids} />
       </section>
     </main>
   );

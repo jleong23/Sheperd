@@ -1,4 +1,6 @@
 import { Baby, CheckCircle, XCircle } from "lucide-react";
+import { useState } from "react";
+import PastorEditKidModal from "./PastorEditKidModal";
 
 function BooleanBadge({ value, trueLabel, falseLabel }) {
   return (
@@ -30,7 +32,15 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function LeaderKidsPanel({ kids }) {
+export default function LeaderKidsPanel({ kids, onKidUpdated }) {
+  const [selectedKid, setSelectedKid] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
+
+  const handleEditKid = (kid) => {
+    setSelectedKid(kid);
+    setEditOpen(true);
+  };
+
   if (kids.length === 0) {
     return (
       <section className="mt-8 rounded-2xl bg-white p-6 text-center shadow-sm">
@@ -65,6 +75,12 @@ export default function LeaderKidsPanel({ kids }) {
                   {kid.school || "No school added"}
                 </p>
               </div>
+              <button
+                onClick={() => handleEditKid(kid)}
+                className="mt-4 rounded-full bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-500"
+              >
+                Edit Kid
+              </button>
 
               <StatusBadge status={kid.status_code} />
             </div>
@@ -114,6 +130,12 @@ export default function LeaderKidsPanel({ kids }) {
           </article>
         ))}
       </div>
+      <PastorEditKidModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        kid={selectedKid}
+        onSaved={onKidUpdated}
+      />
     </section>
   );
 }

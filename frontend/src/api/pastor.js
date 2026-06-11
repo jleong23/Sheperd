@@ -74,3 +74,16 @@ export async function createKidForLeader(leaderId, kidData) {
 
   return data;
 }
+
+export async function updateKidForLeader(kidId, updates) {
+  const { data, error } = await supabase
+    .from("kids")
+    .update(updates)
+    .eq("id", kidId)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
