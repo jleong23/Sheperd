@@ -7,6 +7,7 @@ import {
   getLeaderCatchups,
 } from "../../api/pastor.js";
 import LeaderAttendancePanel from "./LeaderAttendancePanel.jsx";
+import LeaderKidsPanel from "./LeaderKidsPanel.jsx";
 
 export default function LeaderStats() {
   const { leaderId } = useParams();
@@ -83,6 +84,7 @@ export default function LeaderStats() {
         </div>
 
         <LeaderAttendancePanel attendance={attendance} />
+        <LeaderKidsPanel kids={kids} />
       </section>
     </main>
   );
