@@ -24,6 +24,8 @@ import KidProfile from "./components/kids/KidProfile";
 import Footer from "./components/ui/Footer";
 import NewPeople from "./components/newPeople/NewPeople";
 import Splash from "./pages/leaders/Splash.jsx";
+import PastorDashboard from "./pages/pastors/PastorDashboard.jsx";
+import LeaderStats from "./pages/pastors/LeaderStats.jsx";
 
 // Helper component to protect routes
 const PrivateRoute = ({ children }) => {
@@ -52,6 +54,11 @@ function AppRoutes() {
                 <NavBar />
                 <main className="pt-20">
                   <Routes>
+                    <Route path="/pastor" element={<PastorDashboard />} />
+                    <Route
+                      path="/pastor/leaders/:leaderId"
+                      element={<LeaderStats />}
+                    />
                     <Route path="/" element={<LeaderHome />} />
                     <Route path="/kid-list" element={<Kids />} />
                     <Route path="/kids/:id" element={<KidProfile />} />
