@@ -8,6 +8,7 @@ import {
 } from "../../api/pastor.js";
 import LeaderAttendancePanel from "./LeaderAttendancePanel.jsx";
 import LeaderKidsPanel from "./LeaderKidsPanel.jsx";
+import PastorAddKidModal from "./PastorAddKidModal.jsx";
 
 export default function LeaderStats() {
   const { leaderId } = useParams();
@@ -46,6 +47,14 @@ export default function LeaderStats() {
   if (loading) {
     return <p className="p-6 text-gray-500">Loading leader stats...</p>;
   }
+  const refreshLeaderKids = async () => {
+    try {
+      const kidsData = await getLeaderKids(leaderId);
+      setKids(kidsData);
+    } catch (error) {
+      console.error("Failed to refresh leader kids:", error.message);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6">
@@ -84,6 +93,7 @@ export default function LeaderStats() {
         </div>
 
         <LeaderAttendancePanel attendance={attendance} />
+        <PastorAddKidModal leaderId={leaderId} onKidAdded={refreshLeaderKids} />
         <LeaderKidsPanel kids={kids} />
       </section>
     </main>

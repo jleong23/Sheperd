@@ -57,3 +57,20 @@ export async function getLeaderCatchups(leaderId) {
   if (error) throw error;
   return data;
 }
+
+export async function createKidForLeader(leaderId, kidData) {
+  const { data, error } = await supabase
+    .from("kids")
+    .insert([
+      {
+        ...kidData,
+        user_id: leaderId,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
