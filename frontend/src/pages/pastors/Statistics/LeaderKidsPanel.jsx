@@ -32,7 +32,7 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function LeaderKidsPanel({ kids, onKidUpdated }) {
+export default function LeaderKidsPanel({ kids, onKidUpdated, onTransferKid }) {
   const [selectedKid, setSelectedKid] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -75,12 +75,20 @@ export default function LeaderKidsPanel({ kids, onKidUpdated }) {
                   {kid.school || "No school added"}
                 </p>
               </div>
-              <button
-                onClick={() => handleEditKid(kid)}
-                className="mt-4 rounded-full bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-500"
-              >
-                Edit Kid
-              </button>
+              <div className="mt-4 flex flex-col gap-2">
+                <button
+                  onClick={() => handleEditKid(kid)}
+                  className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-500"
+                >
+                  Edit Kid
+                </button>
+                <button
+                  onClick={() => onTransferKid?.(kid)}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Transfer
+                </button>
+              </div>
 
               <StatusBadge status={kid.status_code} />
             </div>

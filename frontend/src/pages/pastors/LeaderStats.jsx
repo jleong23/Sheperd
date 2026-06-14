@@ -9,6 +9,7 @@ import {
 import LeaderAttendancePanel from "./Attendance/LeaderAttendancePanel.jsx";
 import LeaderKidsPanel from "./Statistics/LeaderKidsPanel.jsx";
 import PastorAddKidModal from "./Statistics/PastorAddKidModal.jsx";
+import PastorTransferKidModal from "./Statistics/PastorTransferKidModal.jsx";
 import LeaderCatchupPanel from "./Catchups/LeaderCatchupPanel.jsx";
 
 export default function LeaderStats() {
@@ -19,6 +20,8 @@ export default function LeaderStats() {
   const [attendance, setAttendance] = useState([]);
   const [catchups, setCatchups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [selectedKidForTransfer, setSelectedKidForTransfer] = useState(null);
 
   useEffect(() => {
     async function fetchLeaderData() {
@@ -66,6 +69,11 @@ export default function LeaderStats() {
     }
   };
 
+  const handleOpenTransferModal = (kid) => {
+    setSelectedKidForTransfer(kid);
+    setTransferOpen(true);
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6">
       <section className="mx-auto max-w-5xl">
@@ -104,12 +112,24 @@ export default function LeaderStats() {
 
         <LeaderAttendancePanel attendance={attendance} />
         <PastorAddKidModal leaderId={leaderId} onKidAdded={refreshLeaderKids} />
-        <LeaderKidsPanel kids={kids} onKidUpdated={refreshLeaderKids} />
+        <LeaderKidsPanel
+          kids={kids}
+          onKidUpdated={refreshLeaderKids}
+          onTransferKid={handleOpenTransferModal}
+        />
         <LeaderCatchupPanel
           catchups={catchups}
           leaderId={leaderId}
           kids={kids}
           onCatchupAdded={refreshLeaderCatchups}
+        />
+
+        <PastorTransferKidModal
+          open={transferOpen}
+          kid={selectedKidForTransfer}
+          currentLeader={leader}
+          onClose={() => setTransferOpen(false)}
+          onTransferred={refreshLeaderKids}
         />
       </section>
     </main>

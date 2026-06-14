@@ -60,16 +60,26 @@ export async function getLeaderKids(leaderId) {
 }
 
 export async function getLeaderAttendance(leaderId) {
+  const kids = await getLeaderKids(leaderId);
+  const kidIds = kids.map((kid) => kid.id);
+
+  if (kidIds.length === 0) return [];
+
   const { data, error } = await supabase
     .from("attendance")
     .select("*")
-    .eq("user_id", leaderId);
+    .in("kidid", kidIds);
 
   if (error) throw error;
   return data;
 }
 
 export async function getLeaderCatchups(leaderId) {
+  const kids = await getLeaderKids(leaderId);
+  const kidIds = kids.map((kid) => kid.id);
+
+  if (kidIds.length === 0) return [];
+
   const { data, error } = await supabase
     .from("catchups")
     .select(
@@ -83,7 +93,7 @@ export async function getLeaderCatchups(leaderId) {
       )
     `,
     )
-    .eq("user_id", leaderId)
+    .in("kidid", kidIds)
     .order("catchupdate", { ascending: false });
 
   if (error) throw error;
@@ -112,6 +122,19 @@ export async function updateKidForLeader(kidId, updates) {
   const { data, error } = await supabase
     .from("kids")
     .update(updates)
+    .eq("id", kidId)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function transferKidToLeader(kidId, newLeaderId) {
+  const { data, error } = await supabase
+    .from("kids")
+    .update({ user_id: newLeaderId })
     .eq("id", kidId)
     .select()
     .single();
