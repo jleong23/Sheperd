@@ -129,7 +129,10 @@ export default function LeaderStats() {
           kid={selectedKidForTransfer}
           currentLeader={leader}
           onClose={() => setTransferOpen(false)}
-          onTransferred={refreshLeaderKids}
+          onTransferred={async () => {
+            await refreshLeaderKids();
+            await refreshLeaderCatchups();
+          }}
         />
       </section>
     </main>

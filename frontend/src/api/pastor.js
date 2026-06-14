@@ -141,6 +141,18 @@ export async function transferKidToLeader(kidId, newLeaderId) {
 
   if (error) throw error;
 
+  // Also update catchups to the new leader
+  const { error: catchupError } = await supabase
+    .from("catchups")
+    .update({ user_id: newLeaderId })
+    .eq("kidid", kidId);
+
+  if (catchupError) {
+    console.error("Failed to transfer catchups:", catchupError);
+    // We don't necessarily want to fail the whole operation if catchups fail to move,
+    // but it's good to know.
+  }
+
   return data;
 }
 
