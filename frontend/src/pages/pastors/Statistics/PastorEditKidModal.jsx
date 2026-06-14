@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Modal from "../../components/ui/Modals/Modal.jsx";
-import { updateKidForLeader } from "../../api/pastor.js";
-import FormInput from "../../components/kids/FormInput.jsx";
-import FormActions from "../../components/kids/FormActions.jsx";
+import Modal from "../../../components/ui/Modals/Modal.jsx";
+import { updateKidForLeader } from "../../../api/pastor.js";
+import FormInput from "../../../components/kids/FormInput.jsx";
+import FormActions from "../../../components/kids/FormActions.jsx";
 
 export default function PastorEditKidModal({ open, onClose, kid, onSaved }) {
   const [formData, setFormData] = useState({

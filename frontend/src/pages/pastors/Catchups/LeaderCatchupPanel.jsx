@@ -1,17 +1,18 @@
 import { useMemo, useState } from "react";
 import { MessageCircle } from "lucide-react";
-import AddCatchup from "../../components/catchups/AddCatchup.jsx";
-import { CatchupCard } from "../../components/catchups/CatchupCard.jsx";
-import { CatchupModal } from "../../components/catchups/CatchupModal.jsx";
+import AddCatchup from "../../../components/catchups/AddCatchup.jsx";
+import PastorCatchupModal from "./PastorCatchupModal.jsx";
+import { CatchupCard } from "../../../components/catchups/CatchupCard.jsx";
 
 export default function LeaderCatchupPanel({
-  kids = [],
   catchups,
-  onCatchupsChanged,
+  leaderId,
+  kids = [],
+  onCatchupAdded,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCatchup, setSelectedCatchup] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   const filteredCatchups = useMemo(() => {
     return catchups.filter((catchup) =>
@@ -41,16 +42,16 @@ export default function LeaderCatchupPanel({
 
   const openCreateModal = () => {
     setSelectedCatchup(null);
-    setIsModalOpen(true);
+    setShowModal(true);
   };
 
   const closeModal = () => {
-    setIsModalOpen(false);
+    setShowModal(false);
     setSelectedCatchup(null);
   };
 
-  const handleSaved = () => {
-    onCatchupsChanged();
+  const handleSaved = async () => {
+    await onCatchupAdded?.();
     closeModal();
   };
 
@@ -112,15 +113,19 @@ export default function LeaderCatchupPanel({
             <CatchupCard
               key={catchup.catchupid}
               catchup={catchup}
-              onClick={() => setSelectedCatchup(catchup)}
+              onClick={() => {
+                setSelectedCatchup(catchup);
+                setShowModal(true);
+              }}
             />
           ))}
         </div>
       )}
 
-      {(isModalOpen || selectedCatchup) && (
-        <CatchupModal
-          open
+      {showModal && (
+        <PastorCatchupModal
+          open={showModal}
+          leaderId={leaderId}
           catchup={selectedCatchup}
           kids={kids}
           onClose={closeModal}

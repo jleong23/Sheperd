@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import Modal from "../../components/ui/Modals/Modal.jsx";
-import FormInput from "../../components/kids/FormInput.jsx";
-import FormActions from "../../components/kids/FormActions.jsx";
-import { createKidForLeader } from "../../api/pastor";
+import Modal from "../../../components/ui/Modals/Modal.jsx";
+import FormInput from "../../../components/kids/FormInput.jsx";
+import FormActions from "../../../components/kids/FormActions.jsx";
+import { createKidForLeader } from "../../../api/pastor.js";
 
 export default function PastorAddKidModal({ leaderId, onKidAdded }) {
   const [open, setOpen] = useState(false);

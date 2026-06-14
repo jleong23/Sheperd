@@ -1,6 +1,6 @@
 import { Baby, CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
-import PastorEditKidModal from "./PastorEditKidModal";
+import PastorEditKidModal from "./PastorEditKidModal.jsx";
 
 function BooleanBadge({ value, trueLabel, falseLabel }) {
   return (

@@ -6,10 +6,10 @@ import {
   getLeaderAttendance,
   getLeaderCatchups,
 } from "../../api/pastor.js";
-import LeaderAttendancePanel from "./LeaderAttendancePanel.jsx";
-import LeaderKidsPanel from "./LeaderKidsPanel.jsx";
-import PastorAddKidModal from "./PastorAddKidModal.jsx";
-import LeaderCatchupPanel from "./LeaderCatchupPanel.jsx";
+import LeaderAttendancePanel from "./Attendance/LeaderAttendancePanel.jsx";
+import LeaderKidsPanel from "./Statistics/LeaderKidsPanel.jsx";
+import PastorAddKidModal from "./Statistics/PastorAddKidModal.jsx";
+import LeaderCatchupPanel from "./Catchups/LeaderCatchupPanel.jsx";
 
 export default function LeaderStats() {
   const { leaderId } = useParams();
@@ -44,6 +44,15 @@ export default function LeaderStats() {
 
     fetchLeaderData();
   }, [leaderId]);
+
+  const refreshLeaderCatchups = async () => {
+    try {
+      const catchupsData = await getLeaderCatchups(leaderId);
+      setCatchups(catchupsData);
+    } catch (error) {
+      console.error("Failed to refresh leader catchups:", error.message);
+    }
+  };
 
   if (loading) {
     return <p className="p-6 text-gray-500">Loading leader stats...</p>;
@@ -96,7 +105,12 @@ export default function LeaderStats() {
         <LeaderAttendancePanel attendance={attendance} />
         <PastorAddKidModal leaderId={leaderId} onKidAdded={refreshLeaderKids} />
         <LeaderKidsPanel kids={kids} onKidUpdated={refreshLeaderKids} />
-        <LeaderCatchupPanel catchups={catchups} />
+        <LeaderCatchupPanel
+          catchups={catchups}
+          leaderId={leaderId}
+          kids={kids}
+          onCatchupAdded={refreshLeaderCatchups}
+        />
       </section>
     </main>
   );

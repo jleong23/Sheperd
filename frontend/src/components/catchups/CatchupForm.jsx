@@ -9,7 +9,7 @@ const INPUT_CLASS =
 export function CatchupForm({
   kids,
   isEdit,
-  initialData,
+  initialData = {},
   onSubmit,
   onCancel,
   onDelete,

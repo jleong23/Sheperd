@@ -1,4 +1,26 @@
 import { supabase } from "../supabaseClient";
+import api from "./index.js";
+
+function normalizeCatchup(record) {
+  return {
+    ...record,
+    kidName: record.kids?.name,
+    kidStatus: record.kids?.status_code,
+    kidBaptised: record.kids?.baptised,
+    kidSundayRegulars: record.kids?.sunday_regulars,
+    catchupstarttime: record.catchupstarttime?.slice(0, 5),
+    catchupendtime: record.catchupendtime?.slice(0, 5),
+  };
+}
+
+function cleanCatchupPayload(payload) {
+  return {
+    ...payload,
+    kidid: Number(payload.kidid),
+    catchupstarttime: payload.catchupstarttime || null,
+    catchupendtime: payload.catchupendtime || null,
+  };
+}
 
 export async function getLeaders() {
   const { data, error } = await supabase
@@ -66,13 +88,7 @@ export async function getLeaderCatchups(leaderId) {
 
   if (error) throw error;
 
-  return data.map((record) => ({
-    ...record,
-    kidName: record.kids?.name,
-    kidStatus: record.kids?.status_code,
-    kidBaptised: record.kids?.baptised,
-    kidSundayRegulars: record.kids?.sunday_regulars,
-  }));
+  return data.map(normalizeCatchup);
 }
 
 export async function createKidForLeader(leaderId, kidData) {
@@ -104,3 +120,60 @@ export async function updateKidForLeader(kidId, updates) {
 
   return data;
 }
+
+export async function createCatchupForLeader(leaderId, catchupData) {
+  const { data, error } = await supabase
+    .from("catchups")
+    .insert([
+      {
+        ...cleanCatchupPayload(catchupData),
+        user_id: leaderId,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function updateCatchupForLeader(leaderId, catchupId, updates) {
+  const { data, error } = await supabase
+    .from("catchups")
+    .update({
+      ...cleanCatchupPayload(updates),
+      updatedate: new Date().toISOString(),
+    })
+    .eq("catchupid", catchupId)
+    .eq("user_id", leaderId)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function deleteCatchupForLeader(leaderId, catchupId) {
+  const { data, error } = await supabase
+    .from("catchups")
+    .delete()
+    .eq("catchupid", catchupId)
+    .eq("user_id", leaderId)
+    .select();
+
+  if (error) throw error;
+
+  return data?.[0] || null;
+}
+
+export const deleteCatchup = async (id) => {
+  try {
+    const response = await api.delete(`/catchups/${id}`);
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to delete catchup ${id}:`, err);
+    throw err;
+  }
+};
