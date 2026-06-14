@@ -62,7 +62,9 @@ export default function PastorCatchupModal({
       await onSaved?.();
     } catch (err) {
       console.error(err);
-      toast.error(isEdit ? "Failed to update catchup" : "Failed to create catchup");
+      toast.error(
+        isEdit ? "Failed to update catchup" : "Failed to create catchup",
+      );
     }
   };
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const createSupabaseClient = require("../supabaseClient");
+const supabaseAdmin = require("../lib/supabaseClient");
 
 // --------------------
 // Date formatter
@@ -118,6 +119,53 @@ router.get("/", async (req, res) => {
   } catch (err) {
     console.error("Error fetching catchups:", err);
     res.status(500).json({ error: "Failed to fetch catchups" });
+  }
+});
+
+// =====================================================
+// DELETE /catchups/pastor/:id
+// Pastor deletes a catchup owned by a selected leader
+// =====================================================
+router.delete("/pastor/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { leaderId } = req.body;
+
+    if (!leaderId) {
+      return res.status(400).json({ error: "Missing leaderId" });
+    }
+
+    const { data: currentUser, error: userError } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    if (userError) {
+      return res.status(400).json({ error: userError.message });
+    }
+
+    if (currentUser?.role?.toLowerCase() !== "pastor") {
+      return res.status(403).json({ error: "Only pastors can delete leader catchups" });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("catchups")
+      .delete()
+      .eq("catchupid", id)
+      .eq("user_id", leaderId)
+      .select();
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    if (!data?.length) {
+      return res.status(404).json({ error: "Catchup not found" });
+    }
+
+    res.json({ message: "Deleted successfully", deleted: data[0] });
+  } catch (err) {
+    console.error("Error deleting pastor catchup:", err);
+    res.status(500).json({ error: "Failed to delete pastor catchup" });
   }
 });
 

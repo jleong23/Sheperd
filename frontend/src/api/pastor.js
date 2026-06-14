@@ -156,16 +156,11 @@ export async function updateCatchupForLeader(leaderId, catchupId, updates) {
 }
 
 export async function deleteCatchupForLeader(leaderId, catchupId) {
-  const { data, error } = await supabase
-    .from("catchups")
-    .delete()
-    .eq("catchupid", catchupId)
-    .eq("user_id", leaderId)
-    .select();
+  const response = await api.delete(`/catchups/pastor/${catchupId}`, {
+    data: { leaderId },
+  });
 
-  if (error) throw error;
-
-  return data?.[0] || null;
+  return response.data;
 }
 
 export const deleteCatchup = async (id) => {
