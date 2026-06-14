@@ -50,12 +50,29 @@ export async function getLeaderAttendance(leaderId) {
 export async function getLeaderCatchups(leaderId) {
   const { data, error } = await supabase
     .from("catchups")
-    .select("*")
+    .select(
+      `
+      *,
+      kids (
+        name,
+        status_code,
+        baptised,
+        sunday_regulars
+      )
+    `,
+    )
     .eq("user_id", leaderId)
     .order("catchupdate", { ascending: false });
 
   if (error) throw error;
-  return data;
+
+  return data.map((record) => ({
+    ...record,
+    kidName: record.kids?.name,
+    kidStatus: record.kids?.status_code,
+    kidBaptised: record.kids?.baptised,
+    kidSundayRegulars: record.kids?.sunday_regulars,
+  }));
 }
 
 export async function createKidForLeader(leaderId, kidData) {

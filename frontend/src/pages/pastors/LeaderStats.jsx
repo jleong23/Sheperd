@@ -9,6 +9,7 @@ import {
 import LeaderAttendancePanel from "./LeaderAttendancePanel.jsx";
 import LeaderKidsPanel from "./LeaderKidsPanel.jsx";
 import PastorAddKidModal from "./PastorAddKidModal.jsx";
+import LeaderCatchupPanel from "./LeaderCatchupPanel.jsx";
 
 export default function LeaderStats() {
   const { leaderId } = useParams();
@@ -95,6 +96,7 @@ export default function LeaderStats() {
         <LeaderAttendancePanel attendance={attendance} />
         <PastorAddKidModal leaderId={leaderId} onKidAdded={refreshLeaderKids} />
         <LeaderKidsPanel kids={kids} onKidUpdated={refreshLeaderKids} />
+        <LeaderCatchupPanel catchups={catchups} />
       </section>
     </main>
   );
