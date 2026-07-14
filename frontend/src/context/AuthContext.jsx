@@ -32,7 +32,17 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await syncUser();
+      setProfile(response.user);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
 
   useEffect(() => {
     // 1. Check if user is already existed on page load
@@ -40,8 +50,11 @@ export const AuthProvider = ({ children }) => {
       setSession(session);
       setUser(session?.user ?? null);
 
-      if (session) syncUser().catch(console.error); // Sync user to backend if session exists
-      setLoading(false);
+      if (session) {
+        fetchProfile().finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
     });
 
     // 2. Auth state listener ( Handles login, logout, token refresh, and session updates )
@@ -52,8 +65,9 @@ export const AuthProvider = ({ children }) => {
       setUser(session?.user ?? null);
 
       if (event === "SIGNED_IN" && session) {
-        // Sync user on login events
-        syncUser().catch(console.error);
+        fetchProfile();
+      } else if (event === "SIGNED_OUT") {
+        setProfile(null);
       }
       setLoading(false);
     });
@@ -74,7 +88,14 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ token: session?.access_token, user, logout, loading }}
+      value={{
+        token: session?.access_token,
+        user,
+        profile,
+        role: profile?.role,
+        logout,
+        loading,
+      }}
     >
       {!loading && children}
     </AuthContext.Provider>

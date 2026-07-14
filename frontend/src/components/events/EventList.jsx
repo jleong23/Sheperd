@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { deleteEvent } from "../../api/events";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
+import { useAuth } from "../../context/AuthContext";
 
 import AddEvent from "./AddEvent";
 import DeleteEvent from "./DeleteEvent";
@@ -11,6 +12,9 @@ import EventCardSkeleton from "./EventCardSkeleton.jsx";
 import useEvents from "../../hooks/useEvents";
 
 export default function EventList() {
+  const { role } = useAuth();
+  const isPastor = role === "pastor";
+
   const { events, loading, error, fetchEvents } = useEvents({
     sortBy: "eventstartdate",
     order: "desc",
@@ -90,34 +94,37 @@ export default function EventList() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="mb-4 w-fit rounded-full border border-indigo-500/40 bg-indigo-500/10 px-4 py-2 text-sm text-indigo-300">
-                📅 Events Management
+                {isPastor ? "📅 Events Management" : "📅 View Events"}
               </div>
 
               <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-                Manage{" "}
+                {isPastor ? "Manage " : "Our "}
                 <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                   Events
                 </span>
               </h1>
 
               <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-                Create, organise, filter, and update upcoming youth events in
-                one simple place.
+                {isPastor
+                  ? "Create, organise, filter, and update upcoming youth events in one simple place."
+                  : "View, search, and filter upcoming youth events."}
               </p>
             </div>
 
-            <motion.button
-              onClick={() => setAddOpen(true)}
-              whileHover={{
-                y: -3,
-                scale: 1.03,
-                boxShadow: "0px 0px 28px rgba(99,102,241,0.35)",
-              }}
-              whileTap={{ scale: 0.97 }}
-              className="w-full rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 sm:w-fit"
-            >
-              + Add Event
-            </motion.button>
+            {isPastor && (
+              <motion.button
+                onClick={() => setAddOpen(true)}
+                whileHover={{
+                  y: -3,
+                  scale: 1.03,
+                  boxShadow: "0px 0px 28px rgba(99,102,241,0.35)",
+                }}
+                whileTap={{ scale: 0.97 }}
+                className="w-full rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 sm:w-fit"
+              >
+                + Add Event
+              </motion.button>
+            )}
           </div>
         </motion.section>
 
@@ -230,28 +237,30 @@ export default function EventList() {
                     </div>
                   </div>
 
-                  <div className="mt-5 flex flex-col gap-3 border-t border-slate-800 pt-5 sm:flex-row sm:justify-end">
-                    <motion.button
-                      onClick={() => {
-                        setSelectedEvent(event);
-                        setEditOpen(true);
-                      }}
-                      whileHover={{
-                        y: -2,
-                        scale: 1.03,
-                        boxShadow: "0px 0px 20px rgba(99,102,241,0.3)",
-                      }}
-                      whileTap={{ scale: 0.97 }}
-                      className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-500"
-                    >
-                      Edit
-                    </motion.button>
+                  {isPastor && (
+                    <div className="mt-5 flex flex-col gap-3 border-t border-slate-800 pt-5 sm:flex-row sm:justify-end">
+                      <motion.button
+                        onClick={() => {
+                          setSelectedEvent(event);
+                          setEditOpen(true);
+                        }}
+                        whileHover={{
+                          y: -2,
+                          scale: 1.03,
+                          boxShadow: "0px 0px 20px rgba(99,102,241,0.3)",
+                        }}
+                        whileTap={{ scale: 0.97 }}
+                        className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-indigo-500"
+                      >
+                        Edit
+                      </motion.button>
 
-                    <DeleteEvent
-                      eventId={event.eventid}
-                      onDeleted={handleDelete}
-                    />
-                  </div>
+                      <DeleteEvent
+                        eventId={event.eventid}
+                        onDeleted={handleDelete}
+                      />
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))
