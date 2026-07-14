@@ -94,7 +94,7 @@ export default function EventList() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="mb-4 w-fit rounded-full border border-indigo-500/40 bg-indigo-500/10 px-4 py-2 text-sm text-indigo-300">
-                {isPastor ? "📅 Events Management" : "📅 View Events"}
+                {isPastor ? "📅 Events Management" : "📅 Upcoming Events"}
               </div>
 
               <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
@@ -107,7 +107,7 @@ export default function EventList() {
               <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
                 {isPastor
                   ? "Create, organise, filter, and update upcoming youth events in one simple place."
-                  : "View, search, and filter upcoming youth events."}
+                  : "View and stay updated with upcoming youth events."}
               </p>
             </div>
 

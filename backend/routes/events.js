@@ -41,7 +41,6 @@ router.get("/", async (req, res) => {
           `,
             { count: "exact" }
         )
-      .eq("user_id", req.userId);
 
     // --------------------
     // Filtering
@@ -134,7 +133,6 @@ router.get("/:id", async (req, res) => {
       .from("events")
       .select("*")
       .eq("eventid", id)
-      .eq("user_id", req.userId)
       .single();
 
     if (error) return res.status(400).json({ error: error.message });
@@ -287,7 +285,6 @@ router.patch("/:id", async (req, res) => {
         updated_at: new Date(),
       })
       .eq("eventid", id)
-      .eq("user_id", req.userId)
       .select()
       .single();
 
@@ -360,7 +357,6 @@ router.delete("/", async (req, res) => {
       .from("events")
       .delete()
       .in("eventid", ids)
-      .eq("user_id", req.userId)
       .select();
 
     if (error) return res.status(400).json({ error: error.message });
