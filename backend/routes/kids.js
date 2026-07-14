@@ -78,8 +78,8 @@ router.get("/:id", async (req, res) => {
     const { data, error } = await supabase
       .from("kids")
       .select("*")
-      .eq("user_id", req.userId)
       .eq("id", id)
+      .eq("user_id", req.userId)
       .single();
 
     if (error || !data) {
@@ -203,7 +203,6 @@ router.put("/:id", async (req, res) => {
         updated_at: new Date(),
       })
       .eq("id", id)
-      .eq("user_id", req.userId)
       .select()
       .single();
 
@@ -235,7 +234,6 @@ router.delete("/:id", async (req, res) => {
             .from("kids")
             .delete()
             .eq("id", id)
-            .eq("user_id", req.userId)
             .select();
 
         if (error) return res.status(400).json({ error: error.message });
@@ -270,7 +268,6 @@ router.delete("/", async (req, res) => {
       .from("kids")
       .delete()
       .in("id", ids)
-      .eq("user_id", req.userId)
       .select();
 
     if (error) return res.status(400).json({ error: error.message });

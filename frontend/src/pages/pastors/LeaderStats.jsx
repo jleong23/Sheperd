@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import LeaderAttendancePanel from "./Attendance/LeaderAttendancePanel.jsx";
+import LeaderKidsPanel from "./Statistics/LeaderKidsPanel.jsx";
+import AddKidModal from "../../components/kids/AddKidModal.jsx";
+import TransferKidModal from "../../components/kids/TransferKidModal.jsx";
+import LeaderCatchupPanel from "./Catchups/LeaderCatchupPanel.jsx";
 import {
   getLeaderById,
   getLeaderKids,
   getLeaderAttendance,
   getLeaderCatchups,
+  createKidForLeader,
+  transferKidToLeader,
 } from "../../api/pastor.js";
-import LeaderAttendancePanel from "./Attendance/LeaderAttendancePanel.jsx";
-import LeaderKidsPanel from "./Statistics/LeaderKidsPanel.jsx";
-import PastorAddKidModal from "./Statistics/PastorAddKidModal.jsx";
-import PastorTransferKidModal from "./Statistics/PastorTransferKidModal.jsx";
-import LeaderCatchupPanel from "./Catchups/LeaderCatchupPanel.jsx";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 export default function LeaderStats() {
   const { leaderId } = useParams();
@@ -20,8 +24,8 @@ export default function LeaderStats() {
   const [attendance, setAttendance] = useState([]);
   const [catchups, setCatchups] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [transferOpen, setTransferOpen] = useState(false);
-  const [selectedKidForTransfer, setSelectedKidForTransfer] = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     async function fetchLeaderData() {
@@ -57,9 +61,6 @@ export default function LeaderStats() {
     }
   };
 
-  if (loading) {
-    return <p className="p-6 text-gray-500">Loading leader stats...</p>;
-  }
   const refreshLeaderKids = async () => {
     try {
       const kidsData = await getLeaderKids(leaderId);
@@ -69,10 +70,46 @@ export default function LeaderStats() {
     }
   };
 
-  const handleOpenTransferModal = (kid) => {
-    setSelectedKidForTransfer(kid);
-    setTransferOpen(true);
+  const handleAddKid = async (formData) => {
+    setActionLoading(true);
+    try {
+      await createKidForLeader(leaderId, {
+        name: formData.name,
+        birthday: formData.birthday || null,
+        school: formData.school || "",
+        phone: formData.phone || "",
+        parent_phone: formData.parent_phone || "",
+      });
+
+      toast.success("Kid added to leader successfully.");
+      await refreshLeaderKids();
+      setAddModalOpen(false);
+    } catch (err) {
+      console.error("Error adding kid for leader:", err);
+      toast.error(err.message || "Error adding kid.");
+    } finally {
+      setActionLoading(false);
+    }
   };
+
+  const handleTransferConfirm = async (kidId, newLeaderId) => {
+    setActionLoading(true);
+    try {
+      await transferKidToLeader(kidId, newLeaderId);
+      toast.success("Kid transferred successfully.");
+      await refreshLeaderKids();
+      await refreshLeaderCatchups();
+    } catch (err) {
+      console.error("Failed to transfer kid", err);
+      toast.error("Failed to transfer kid.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <p className="p-6 text-gray-500">Loading leader stats...</p>;
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6">
@@ -111,11 +148,21 @@ export default function LeaderStats() {
         </div>
 
         <LeaderAttendancePanel attendance={attendance} />
-        <PastorAddKidModal leaderId={leaderId} onKidAdded={refreshLeaderKids} />
+
+        <motion.button
+          onClick={() => setAddModalOpen(true)}
+          whileHover={{ y: -3, scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 mt-6"
+        >
+          + Add Kid for Leader
+        </motion.button>
+
         <LeaderKidsPanel
           kids={kids}
           onKidUpdated={refreshLeaderKids}
-          onTransferKid={handleOpenTransferModal}
+          onTransferKid={handleTransferConfirm}
+          onKidDeleted={refreshLeaderKids}
         />
         <LeaderCatchupPanel
           catchups={catchups}
@@ -124,15 +171,13 @@ export default function LeaderStats() {
           onCatchupAdded={refreshLeaderCatchups}
         />
 
-        <PastorTransferKidModal
-          open={transferOpen}
-          kid={selectedKidForTransfer}
-          currentLeader={leader}
-          onClose={() => setTransferOpen(false)}
-          onTransferred={async () => {
-            await refreshLeaderKids();
-            await refreshLeaderCatchups();
-          }}
+        <AddKidModal
+          open={addModalOpen}
+          onClose={() => setAddModalOpen(false)}
+          onAdded={handleAddKid}
+          loading={actionLoading}
+          leaderId={leaderId}
+          showExtendedFields={true}
         />
       </section>
     </main>

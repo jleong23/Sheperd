@@ -1,32 +1,46 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fetchKidById } from "../../api/kids";
 import { getCatchups } from "../../api/catchups";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { CatchupModal } from "../catchups/CatchupModal";
-import EditKidProfileModal from "./EditKidProfileModal";
 import KidStatusBadge from "../ui/KidStatusBadge";
 import KidFlagBadge from "../ui/KidFlagBadge";
 
-export default function KidProfile() {
-  const { id } = useParams();
+export default function KidProfile({ id: propId, kid: propKid }) {
+  const { id: paramId } = useParams();
+  const location = useLocation();
+  const id = propId || paramId;
   const navigate = useNavigate();
-  const [kid, setKid] = useState(null);
+
+  // Prefer propKid, then location.state.kid, then null
+  const initialKid = propKid || location.state?.kid || null;
+
+  const [kid, setKid] = useState(initialKid);
   const [catchups, setCatchups] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialKid);
+  const [loadingCatchups, setLoadingCatchups] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCatchup, setSelectedCatchup] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const loadData = async () => {
+  const loadData = async (forceFetchKid = false) => {
     try {
-      setLoading(true);
+      if (forceFetchKid || !kid) {
+        setLoading(true);
+        const kidData = await fetchKidById(id);
+        setKid(kidData);
+      }
+    } catch (err) {
+      console.error("Failed to load kid data", err);
+    } finally {
+      setLoading(false);
+    }
 
-      const kidData = await fetchKidById(id);
-      setKid(kidData);
-
+    try {
+      setLoadingCatchups(true);
       const catchupsResponse = await getCatchups({ kidid: id });
       const kidCatchups = catchupsResponse.data || [];
 
@@ -36,15 +50,27 @@ export default function KidProfile() {
 
       setCatchups(kidCatchups);
     } catch (err) {
-      console.error("Failed to load profile data", err);
+      console.error("Failed to load catchups", err);
     } finally {
-      setLoading(false);
+      setLoadingCatchups(false);
     }
   };
 
   useEffect(() => {
-    if (id) loadData();
+    if (id) {
+      loadData();
+    }
   }, [id]);
+
+  useEffect(() => {
+    if (propKid) {
+      setKid(propKid);
+      setLoading(false);
+    } else if (location.state?.kid) {
+      setKid(location.state.kid);
+      setLoading(false);
+    }
+  }, [propKid, location.state?.kid]);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -71,7 +97,55 @@ export default function KidProfile() {
     { label: "Address", value: kid?.address || "N/A", icon: "📍" },
   ];
 
-  if (loading) return <LoadingSpinner fullPage />;
+  const Skeleton = () => (
+    <div className="animate-pulse">
+      <div className="mb-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-2xl sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <div className="h-20 w-20 rounded-3xl bg-slate-800" />
+            <div className="space-y-3">
+              <div className="h-6 w-32 rounded-full bg-slate-800" />
+              <div className="h-10 w-64 rounded-xl bg-slate-800" />
+              <div className="flex gap-2">
+                <div className="h-6 w-20 rounded-full bg-slate-800" />
+                <div className="h-6 w-20 rounded-full bg-slate-800" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-8 grid grid-cols-1 gap-4 border-t border-slate-800 pt-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-20 rounded-2xl bg-slate-800/50" />
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-2xl sm:p-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-8 w-48 rounded-lg bg-slate-800" />
+            <div className="h-4 w-64 rounded-lg bg-slate-800" />
+          </div>
+          <div className="h-12 w-32 rounded-full bg-slate-800" />
+        </div>
+        <div className="space-y-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-32 rounded-2xl bg-slate-800/50" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading && !kid) {
+    return (
+      <div className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <Skeleton />
+        </div>
+      </div>
+    );
+  }
 
   if (!kid) {
     return (
@@ -86,14 +160,16 @@ export default function KidProfile() {
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        <motion.button
-          onClick={() => navigate(-1)}
-          whileHover={{ x: -3 }}
-          whileTap={{ scale: 0.97 }}
-          className="mb-6 rounded-full border border-slate-700 bg-slate-900/70 px-5 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-500/50 hover:text-white"
-        >
-          ← Back
-        </motion.button>
+        {!propId && (
+          <motion.button
+            onClick={() => navigate(-1)}
+            whileHover={{ x: -3 }}
+            whileTap={{ scale: 0.97 }}
+            className="mb-6 rounded-full border border-slate-700 bg-slate-900/70 px-5 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-500/50 hover:text-white"
+          >
+            ← Back
+          </motion.button>
+        )}
 
         <motion.section
           initial={{ opacity: 0, y: 24 }}
@@ -125,19 +201,6 @@ export default function KidProfile() {
                 </div>
               </div>
             </div>
-
-            <motion.button
-              onClick={() => setIsEditModalOpen(true)}
-              whileHover={{
-                y: -3,
-                scale: 1.03,
-                boxShadow: "0px 0px 24px rgba(99,102,241,0.35)",
-              }}
-              whileTap={{ scale: 0.97 }}
-              className="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500"
-            >
-              Edit Profile
-            </motion.button>
           </div>
 
           <div className="mt-8 grid grid-cols-1 gap-4 border-t border-slate-800 pt-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -191,7 +254,13 @@ export default function KidProfile() {
             </motion.button>
           </div>
 
-          {catchups.length === 0 ? (
+          {loadingCatchups ? (
+            <div className="space-y-4 animate-pulse">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-32 rounded-2xl bg-slate-800/50" />
+              ))}
+            </div>
+          ) : catchups.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-950/50 p-10 text-center">
               <p className="text-lg font-semibold text-white">
                 No catchups recorded yet
@@ -246,16 +315,9 @@ export default function KidProfile() {
         defaultKidId={Number(id)}
         onClose={handleCloseModal}
         onSaved={() => {
-          loadData();
+          loadData(true);
           handleCloseModal();
         }}
-      />
-
-      <EditKidProfileModal
-        open={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        kid={kid}
-        onSaved={loadData}
       />
     </div>
   );

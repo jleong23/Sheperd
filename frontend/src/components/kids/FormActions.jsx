@@ -6,7 +6,20 @@ export default function FormActions({
   loading = false,
   submitText = "Save",
   cancelText = "Cancel",
+  submitColor = "indigo",
 }) {
+  const colorStyles = {
+    indigo: "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20",
+    emerald: "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20",
+    red: "bg-red-600 hover:bg-red-500 shadow-red-500/20",
+  };
+
+  const shadowColors = {
+    indigo: "rgba(99,102,241,0.35)",
+    emerald: "rgba(16,185,129,0.35)",
+    red: "rgba(239,68,68,0.35)",
+  };
+
   return (
     <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
       <motion.button
@@ -27,10 +40,12 @@ export default function FormActions({
         whileHover={{
           y: -2,
           scale: 1.02,
-          boxShadow: "0px 0px 24px rgba(99,102,241,0.35)",
+          boxShadow: `0px 0px 24px ${shadowColors[submitColor] || shadowColors.indigo}`,
         }}
         whileTap={{ scale: 0.97 }}
-        className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+        className={`rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-60 ${
+          colorStyles[submitColor] || colorStyles.indigo
+        }`}
       >
         {loading ? "Saving..." : submitText}
       </motion.button>

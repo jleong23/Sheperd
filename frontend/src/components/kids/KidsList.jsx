@@ -1,12 +1,20 @@
-import { KidsGrid } from "./KidsProfileCard/KidsGrid";
-import AddKids from "./AddKids";
+import AddKidModal from "./AddKidModal";
+import EditKidModal from "./EditKidModal";
+import KidListGrid from "./KidListGrid";
 import DeleteKids from "./DeleteKids";
 import { useKids } from "../../hooks/useKids";
 import { useBulkDelete } from "../../hooks/useBulkDelete";
 import KidStatusFilter from "./KidStatusFilter";
+import { useState } from "react";
+import { createKid, updateKid } from "../../api/kids";
+import { motion } from "framer-motion";
 
 export default function KidsList() {
   const { kids, isLoading, error, getKids, status, setStatus } = useKids();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedKid, setSelectedKid] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const {
     selected,
@@ -16,6 +24,45 @@ export default function KidsList() {
     cancelSelection,
     enterBulkMode,
   } = useBulkDelete(kids, getKids);
+
+  const handleAddKid = async (formData) => {
+    setActionLoading(true);
+    try {
+      await createKid({
+        name: formData.name,
+        birthday: formData.birthday || null,
+        school: formData.school || "",
+        phone: formData.phone || "",
+        parent_phone: formData.parent_phone,
+      });
+      await getKids();
+      setIsAddModalOpen(false);
+    } catch (err) {
+      console.error("Error adding kid:", err);
+      alert(err.response?.data?.error || "Error adding kid");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEditKid = (kid) => {
+    setSelectedKid(kid);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateKid = async (formData) => {
+    setActionLoading(true);
+    try {
+      await updateKid(selectedKid.id, formData);
+      await getKids();
+      setIsEditModalOpen(false);
+    } catch (err) {
+      console.error("Error updating kid:", err);
+      alert(err.response?.data?.error || "Error updating kid");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   if (error) {
     return (
@@ -51,7 +98,18 @@ export default function KidsList() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row lg:items-center">
-              <AddKids onKidAdded={getKids} />
+              <motion.button
+                onClick={() => setIsAddModalOpen(true)}
+                whileHover={{
+                  y: -3,
+                  scale: 1.03,
+                  boxShadow: "0px 0px 28px rgba(99,102,241,0.35)",
+                }}
+                whileTap={{ scale: 0.97 }}
+                className="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500"
+              >
+                + Add Kid
+              </motion.button>
 
               <DeleteKids
                 bulkMode={bulkMode}
@@ -68,15 +126,32 @@ export default function KidsList() {
           <KidStatusFilter value={status} onChange={setStatus} />
         </section>
 
-        <KidsGrid
+        <KidListGrid
           kids={kids}
           selected={selected}
           toggleSelect={toggleSelect}
           bulkMode={bulkMode}
-          refresh={getKids}
           loading={isLoading}
+          onEdit={handleEditKid}
+          actions={{ edit: true, delete: false, transfer: false }}
         />
       </div>
+
+      <AddKidModal
+        open={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdded={handleAddKid}
+        loading={actionLoading}
+      />
+
+      <EditKidModal
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        kid={selectedKid}
+        onSaved={handleUpdateKid}
+        loading={actionLoading}
+        showExtendedFields={false}
+      />
     </div>
   );
 }
