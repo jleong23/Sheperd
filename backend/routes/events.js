@@ -325,7 +325,6 @@ router.delete("/:id", async (req, res) => {
       .from("events")
       .delete()
       .eq("eventid", id)
-      .eq("user_id", req.userId)
       .select();
 
     if (error) return res.status(400).json({ error: error.message });
