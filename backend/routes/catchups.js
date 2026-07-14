@@ -33,12 +33,25 @@ router.get("/", async (req, res) => {
       limit,
     } = req.query;
 
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
     let query = supabase
         .from("catchups")
         .select("*, kids(name, status_code, baptised, sunday_regulars)", {
           count: "exact",
-        })
-        .eq("user_id", req.userId);
+        });
+
+    // Leaders only see their own catchups
+    if (!isPastor) {
+      query = query.eq("user_id", req.userId);
+    }
 
     // --------------------
     // Filtering
@@ -178,12 +191,26 @@ router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { data, error } = await supabase
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
+    let query = supabase
         .from("catchups")
         .select("*")
-        .eq("catchupid", id)
-        .eq("user_id", req.userId)
-        .single();
+        .eq("catchupid", id);
+
+    // Leaders only see their own catchups
+    if (!isPastor) {
+      query = query.eq("user_id", req.userId);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) return res.status(400).json({ error: error.message });
     if (!data) {
@@ -222,15 +249,30 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Invalid kidid" });
     }
 
-    const { data: kidCheck } = await supabase
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
+    // Check if kid exists and user has access
+    let kidQuery = supabase
         .from("kids")
         .select("id")
-        .eq("id", kidid)
-        .eq("user_id", req.userId)
-        .single();
+        .eq("id", kidid);
+
+    // Leaders only create catchups for their own kids
+    if (!isPastor) {
+        kidQuery = kidQuery.eq("user_id", req.userId);
+    }
+
+    const { data: kidCheck } = await kidQuery.single();
 
     if (!kidCheck) {
-      return res.status(404).json({ error: "Kid not found" });
+      return res.status(404).json({ error: "Kid not found or access denied" });
     }
 
     const { data, error } = await supabase
@@ -265,16 +307,29 @@ router.patch("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { data, error } = await supabase
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
+    let updateQuery = supabase
         .from("catchups")
         .update({
           ...req.body,
           updatedate: new Date(),
         })
-        .eq("catchupid", id)
-        .eq("user_id", req.userId)
-        .select()
-        .single();
+        .eq("catchupid", id);
+
+    // Leaders only update their own catchups
+    if (!isPastor) {
+      updateQuery = updateQuery.eq("user_id", req.userId);
+    }
+
+    const { data, error } = await updateQuery.select().single();
 
     if (error) return res.status(400).json({ error: error.message });
     if (!data) {
@@ -297,12 +352,26 @@ router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { data, error } = await supabase
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
+    let deleteQuery = supabase
         .from("catchups")
         .delete()
-        .eq("catchupid", id)
-        .eq("user_id", req.userId)
-        .select();
+        .eq("catchupid", id);
+
+    // Leaders only delete their own catchups
+    if (!isPastor) {
+      deleteQuery = deleteQuery.eq("user_id", req.userId);
+    }
+
+    const { data, error } = await deleteQuery.select();
 
     if (error) return res.status(400).json({ error: error.message });
     if (!data?.length) {
@@ -329,12 +398,26 @@ router.delete("/", async (req, res) => {
       return res.status(400).json({ error: "No IDs provided" });
     }
 
-    const { data, error } = await supabase
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
+    let deleteQuery = supabase
         .from("catchups")
         .delete()
-        .in("catchupid", ids)
-        .eq("user_id", req.userId)
-        .select();
+        .in("catchupid", ids);
+
+    // Leaders only delete their own catchups
+    if (!isPastor) {
+      deleteQuery = deleteQuery.eq("user_id", req.userId);
+    }
+
+    const { data, error } = await deleteQuery.select();
 
     if (error) return res.status(400).json({ error: error.message });
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const createSupabaseClient = require("../supabaseClient");
+const supabaseAdmin = require("../lib/supabaseClient");
 
 /**
  * @route GET /kids
@@ -12,11 +13,23 @@ router.get("/", async (req, res) => {
   try {
     const { status } = req.query;
 
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin.from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
     let query = supabase
       .from("kids")
       .select("*")
-      .eq("user_id", req.userId)
       .order("id");
+
+    // Leaders only see their own kids
+    if (!isPastor) {
+      query = query.eq("user_id", req.userId);
+    }
 
     if (status && ["CORE", "FRINGE", "NP"].includes(status)) {
       query = query.eq("status_code", status);
@@ -39,24 +52,41 @@ router.get("/", async (req, res) => {
 router.get("/stats", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
-    const { count: total_kids, error: totalError } = await supabase
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin.from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
+    let totalQuery = supabase
+      .from("kids")
+      .select("user_id", { count: "exact", head: true });
+
+    let regularQuery = supabase
       .from("kids")
       .select("user_id", { count: "exact", head: true })
-      .eq("user_id", req.userId);
+      .eq("sunday_regulars", true);
+
+    let baptisedQuery = supabase
+      .from("kids")
+      .select("user_id", { count: "exact", head: true })
+      .eq("baptised", true);
+
+    if (!isPastor) {
+      totalQuery = totalQuery.eq("user_id", req.userId);
+      regularQuery = regularQuery.eq("user_id", req.userId);
+      baptisedQuery = baptisedQuery.eq("user_id", req.userId);
+    }
+
+    const { count: total_kids, error: totalError } = await totalQuery;
     if (totalError) return res.status(400).json({ error: totalError.message });
 
-    const { count: regular_kids, error: regularError } = await supabase
-      .from("kids")
-      .select("user_id", { count: "exact", head: true })
-      .eq("user_id", req.userId)
-      .eq("sunday_regulars", true);
+    const { count: regular_kids, error: regularError } = await regularQuery;
     if (regularError) return res.status(400).json({ error: regularError.message });
 
-    const { count: baptised_kids, error: baptisedError } = await supabase
-      .from("kids")
-      .select("user_id", { count: "exact", head: true })
-      .eq("user_id", req.userId)
-      .eq("baptised", true);
+    const { count: baptised_kids, error: baptisedError } = await baptisedQuery;
     if (baptisedError) return res.status(400).json({ error: baptisedError.message });
 
     res.json({ total_kids, regular_kids, baptised_kids });
@@ -75,12 +105,26 @@ router.get("/:id", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params; // Get the ID from URL parameters
-    const { data, error } = await supabase
-      .from("kids")
-      .select("*")
-      .eq("id", id)
+
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin.from("users")
+      .select("role")
       .eq("user_id", req.userId)
       .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
+    let query = supabase
+      .from("kids")
+      .select("*")
+      .eq("id", id);
+
+    // Leaders only see their own kids
+    if (!isPastor) {
+      query = query.eq("user_id", req.userId);
+    }
+
+    const { data, error } = await query.single();
 
     if (error || !data) {
       return res.status(404).json({ error: "Kid not found" });
@@ -183,7 +227,15 @@ router.put("/:id", async (req, res) => {
       return res.status(400).json({ error: "Name is required" });
     }
 
-    const { data, error } = await supabase
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin.from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
+    let updateQuery = supabase
       .from("kids")
       .update({
         name,
@@ -202,9 +254,14 @@ router.put("/:id", async (req, res) => {
         second_call_feedback: second_call_feedback || "",
         updated_at: new Date(),
       })
-      .eq("id", id)
-      .select()
-      .single();
+      .eq("id", id);
+
+    // Leaders only update their own kids
+    if (!isPastor) {
+      updateQuery = updateQuery.eq("user_id", req.userId);
+    }
+
+    const { data, error } = await updateQuery.select().single();
 
     if (error) return res.status(400).json({ error: error.message });
 
@@ -224,31 +281,44 @@ router.put("/:id", async (req, res) => {
  * @access Public
  */
 router.delete("/:id", async (req, res) => {
-    try {
-        const { id } = req.params;
-        console.log("AUTH HEADER:", req.headers.authorization);
+  try {
+    const { id } = req.params;
 
-        const supabase = createSupabaseClient(req);
+    const supabase = createSupabaseClient(req);
 
-        const { data, error } = await supabase
-            .from("kids")
-            .delete()
-            .eq("id", id)
-            .select();
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin.from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
 
-        if (error) return res.status(400).json({ error: error.message });
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
-        if (!data || data.length === 0) {
-            return res.status(404).json({
-                error: "Kid not found or you don't have permission to delete it.",
-            });
-        }
+    let deleteQuery = supabase
+      .from("kids")
+      .delete()
+      .eq("id", id);
 
-        res.json({ message: "Kid deleted successfully", deleted: data[0] });
-    } catch (err) {
-        console.error("Error deleting kid:", err);
-        res.status(500).json({ error: "Failed to delete kid" });
+    // Leaders only delete their own kids
+    if (!isPastor) {
+      deleteQuery = deleteQuery.eq("user_id", req.userId);
     }
+
+    const { data, error } = await deleteQuery.select();
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({
+        error: "Kid not found or you don't have permission to delete it.",
+      });
+    }
+
+    res.json({ message: "Kid deleted successfully", deleted: data[0] });
+  } catch (err) {
+    console.error("Error deleting kid:", err);
+    res.status(500).json({ error: "Failed to delete kid" });
+  }
 });
 
 /**
@@ -264,11 +334,25 @@ router.delete("/", async (req, res) => {
       return res.status(400).json({ error: "Array of IDs is required" });
     }
 
-    const { data, error } = await supabase
+    // Fetch user role
+    const { data: currentUser } = await supabaseAdmin.from("users")
+      .select("role")
+      .eq("user_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
+
+    let deleteQuery = supabase
       .from("kids")
       .delete()
-      .in("id", ids)
-      .select();
+      .in("id", ids);
+
+    // Leaders only delete their own kids
+    if (!isPastor) {
+      deleteQuery = deleteQuery.eq("user_id", req.userId);
+    }
+
+    const { data, error } = await deleteQuery.select();
 
     if (error) return res.status(400).json({ error: error.message });
 
