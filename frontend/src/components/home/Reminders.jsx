@@ -27,6 +27,7 @@ export default function Reminders() {
         "Update Pastoral Care Logs",
       ].map((title) => (
         <motion.div
+          key={title}
           whileHover={{
             x: 5,
           }}

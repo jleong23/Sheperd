@@ -1,7 +1,7 @@
 import { FaTrash, FaCheck, FaEdit, FaExchangeAlt } from "react-icons/fa";
 import KidDetails from "./KidsProfileCard/KidDetails";
 import KidPhones from "./KidsProfileCard/KidPhones";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 export default function KidCard({
@@ -23,12 +23,22 @@ export default function KidCard({
       onSelect?.(kid.id);
       return;
     }
+
     if (onCardClick) {
       e.preventDefault();
       e.stopPropagation();
       onCardClick(kid);
+      return;
+    }
+
+    if (linkToProfile) {
+      navigate(`/kids/${kid.id}`, {
+        state: { kid },
+      });
     }
   };
+
+  const navigate = useNavigate();
 
   const cardContent = (
     <motion.div
@@ -126,10 +136,5 @@ export default function KidCard({
   if (showCheckbox || !linkToProfile) {
     return cardContent;
   }
-
-  return (
-    <Link to={`/kids/${kid.id}`} state={{ kid }} className="block h-full">
-      {cardContent}
-    </Link>
-  );
+  return cardContent;
 }
