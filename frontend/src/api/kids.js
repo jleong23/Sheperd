@@ -19,6 +19,26 @@ export async function fetchKids(status = "ALL") {
 }
 
 /**
+ * Fetch all kids (Pastor only)
+ * Supports filtering and sorting
+ */
+export async function fetchAllKids(status = "ALL") {
+  try {
+    const params = status !== "ALL" ? { status } : {};
+
+    const response = await api.get("/kids/all", {
+      params,
+    });
+
+    return response.data;
+  } catch (err) {
+    console.error("Failed to fetch all kids:", err);
+
+    throw err;
+  }
+}
+
+/**
  * Create a new kid
  * POST kid data to /kids
  */

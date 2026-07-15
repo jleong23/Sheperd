@@ -37,7 +37,7 @@ router.get("/", async (req, res) => {
     const { data: currentUser } = await supabaseAdmin
       .from("users")
       .select("role")
-      .eq("user_id", req.userId)
+      .eq("leader_id", req.userId)
       .single();
 
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
@@ -50,7 +50,7 @@ router.get("/", async (req, res) => {
 
     // Leaders only see their own catchups
     if (!isPastor) {
-      query = query.eq("user_id", req.userId);
+      query = query.eq("leader_id", req.userId);
     }
 
     // --------------------
@@ -151,7 +151,7 @@ router.delete("/pastor/:id", async (req, res) => {
     const { data: currentUser, error: userError } = await supabaseAdmin
       .from("users")
       .select("role")
-      .eq("user_id", req.userId)
+      .eq("leader_id", req.userId)
       .single();
 
     if (userError) {
@@ -166,7 +166,7 @@ router.delete("/pastor/:id", async (req, res) => {
       .from("catchups")
       .delete()
       .eq("catchupid", id)
-      .eq("user_id", leaderId)
+      .eq("leader_id", leaderId)
       .select();
 
     if (error) return res.status(400).json({ error: error.message });
@@ -195,7 +195,7 @@ router.get("/:id", async (req, res) => {
     const { data: currentUser } = await supabaseAdmin
       .from("users")
       .select("role")
-      .eq("user_id", req.userId)
+      .eq("leader_id", req.userId)
       .single();
 
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
@@ -207,7 +207,7 @@ router.get("/:id", async (req, res) => {
 
     // Leaders only see their own catchups
     if (!isPastor) {
-      query = query.eq("user_id", req.userId);
+      query = query.eq("leader_id", req.userId);
     }
 
     const { data, error } = await query.single();
@@ -253,7 +253,7 @@ router.post("/", async (req, res) => {
     const { data: currentUser } = await supabaseAdmin
       .from("users")
       .select("role")
-      .eq("user_id", req.userId)
+      .eq("leader_id", req.userId)
       .single();
 
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
@@ -266,7 +266,7 @@ router.post("/", async (req, res) => {
 
     // Leaders only create catchups for their own kids
     if (!isPastor) {
-        kidQuery = kidQuery.eq("user_id", req.userId);
+        kidQuery = kidQuery.eq("leader_id", req.userId);
     }
 
     const { data: kidCheck } = await kidQuery.single();
@@ -284,7 +284,7 @@ router.post("/", async (req, res) => {
           catchupendtime,
           catchuppurpose,
           catchupcomments,
-          user_id: req.userId,
+          leader_id: req.userId,
         })
         .select()
         .single();
@@ -311,7 +311,7 @@ router.patch("/:id", async (req, res) => {
     const { data: currentUser } = await supabaseAdmin
       .from("users")
       .select("role")
-      .eq("user_id", req.userId)
+      .eq("leader_id", req.userId)
       .single();
 
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
@@ -326,7 +326,7 @@ router.patch("/:id", async (req, res) => {
 
     // Leaders only update their own catchups
     if (!isPastor) {
-      updateQuery = updateQuery.eq("user_id", req.userId);
+      updateQuery = updateQuery.eq("leader_id", req.userId);
     }
 
     const { data, error } = await updateQuery.select().single();
@@ -356,7 +356,7 @@ router.delete("/:id", async (req, res) => {
     const { data: currentUser } = await supabaseAdmin
       .from("users")
       .select("role")
-      .eq("user_id", req.userId)
+      .eq("leader_id", req.userId)
       .single();
 
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
@@ -368,7 +368,7 @@ router.delete("/:id", async (req, res) => {
 
     // Leaders only delete their own catchups
     if (!isPastor) {
-      deleteQuery = deleteQuery.eq("user_id", req.userId);
+      deleteQuery = deleteQuery.eq("leader_id", req.userId);
     }
 
     const { data, error } = await deleteQuery.select();
@@ -402,7 +402,7 @@ router.delete("/", async (req, res) => {
     const { data: currentUser } = await supabaseAdmin
       .from("users")
       .select("role")
-      .eq("user_id", req.userId)
+      .eq("leader_id", req.userId)
       .single();
 
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
@@ -414,7 +414,7 @@ router.delete("/", async (req, res) => {
 
     // Leaders only delete their own catchups
     if (!isPastor) {
-      deleteQuery = deleteQuery.eq("user_id", req.userId);
+      deleteQuery = deleteQuery.eq("leader_id", req.userId);
     }
 
     const { data, error } = await deleteQuery.select();

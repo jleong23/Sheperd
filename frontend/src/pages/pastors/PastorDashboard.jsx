@@ -44,8 +44,8 @@ export default function PastorDashboard() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {leaders.map((leader) => (
               <Link
-                key={leader.user_id}
-                to={`/pastor/leaders/${leader.user_id}`}
+                key={leader.id}
+                to={`/pastor/leaders/${leader.leader_id}`}
                 className="rounded-xl bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
                 <h2 className="text-lg font-semibold text-slate-900">

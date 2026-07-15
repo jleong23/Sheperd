@@ -32,7 +32,9 @@ export default function PastorTransferKidModal({
   }, [open]);
 
   const transferOptions = useMemo(() => {
-    return leaders.filter((leader) => leader.user_id !== currentLeader?.user_id);
+    return leaders.filter(
+      (leader) => leader.leader_id !== currentLeader?.leader_id,
+    );
   }, [leaders, currentLeader]);
 
   const handleTransfer = async () => {
@@ -92,7 +94,7 @@ export default function PastorTransferKidModal({
             >
               <option value="">Select a leader</option>
               {transferOptions.map((leader) => (
-                <option key={leader.user_id} value={leader.user_id}>
+                <option key={leader.leader_id} value={leader.leader_id}>
                   {leader.user_name || leader.email}
                 </option>
               ))}

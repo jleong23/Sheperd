@@ -42,6 +42,7 @@ export default function NavBar() {
     { to: "/", label: "Home" },
     { to: "/attendance", label: "Attendance" },
     { to: "/kid-list", label: "Kid List" },
+    { to: "/all-kids", label: "All Kids List" },
     { to: "/events", label: "Events" },
     { to: "/catchups", label: "Catchups" },
     { to: "/new-people", label: "New People" },

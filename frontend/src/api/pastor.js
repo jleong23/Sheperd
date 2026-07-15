@@ -25,7 +25,7 @@ function cleanCatchupPayload(payload) {
 export async function getLeaders() {
   const { data, error } = await supabase
     .from("users")
-    .select("user_id, user_name, email, group_graduation_year, role")
+    .select("leader_id, user_name, email, group_graduation_year, role")
     .eq("role", "leader")
     .order("user_name", { ascending: true });
 
@@ -40,8 +40,8 @@ export async function getLeaders() {
 export async function getLeaderById(leaderId) {
   const { data, error } = await supabase
     .from("users")
-    .select("user_id, user_name, email, group_graduation_year, role")
-    .eq("user_id", leaderId)
+    .select("leader_id, user_name, email, group_graduation_year, role")
+    .eq("leader_id", leaderId)
     .single();
 
   if (error) throw error;
@@ -52,7 +52,7 @@ export async function getLeaderKids(leaderId) {
   const { data, error } = await supabase
     .from("kids")
     .select("*")
-    .eq("user_id", leaderId)
+    .eq("leader_id", leaderId)
     .order("name", { ascending: true });
 
   if (error) throw error;
@@ -107,7 +107,7 @@ export async function createKidForLeader(leaderId, kidData) {
     .insert([
       {
         ...kidData,
-        user_id: leaderId,
+        leader_id: leaderId,
       },
     ])
     .select()
@@ -134,7 +134,7 @@ export async function updateKidForLeader(kidId, updates) {
 export async function transferKidToLeader(kidId, newLeaderId) {
   const { data, error } = await supabase
     .from("kids")
-    .update({ user_id: newLeaderId })
+    .update({ leader_id: newLeaderId })
     .eq("id", kidId)
     .select()
     .single();
@@ -144,7 +144,7 @@ export async function transferKidToLeader(kidId, newLeaderId) {
   // Also update catchups to the new leader
   const { error: catchupError } = await supabase
     .from("catchups")
-    .update({ user_id: newLeaderId })
+    .update({ leader_id: newLeaderId })
     .eq("kidid", kidId);
 
   if (catchupError) {
@@ -162,7 +162,7 @@ export async function createCatchupForLeader(leaderId, catchupData) {
     .insert([
       {
         ...cleanCatchupPayload(catchupData),
-        user_id: leaderId,
+        leader_id: leaderId,
       },
     ])
     .select()
@@ -181,7 +181,7 @@ export async function updateCatchupForLeader(leaderId, catchupId, updates) {
       updatedate: new Date().toISOString(),
     })
     .eq("catchupid", catchupId)
-    .eq("user_id", leaderId)
+    .eq("leader_id", leaderId)
     .select()
     .single();
 

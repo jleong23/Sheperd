@@ -8,7 +8,7 @@
  * - Managing bulk operations (year/term creation, bulk upserts)
  * - Deleting attendance data by record, year, or term
  *
- * Data model is user-scoped via `user_id` to ensure multi-tenancy isolation.
+ * Data model is user-scoped via `leader_id` to ensure multi-tenancy isolation.
  * All queries are restricted using `req.userId`.
  *
  * Core concept:
@@ -40,7 +40,7 @@ router.get("/",async (req, res) => {
     let query = supabase
         .from("attendance")
         .select("*")
-        .eq("user_id", req.userId); // WHERE user_id = req.userID
+        .eq("leader_id", req.userId); // WHERE leader_id = req.userID
 
     // Filter by year if provided
     if (year) {
@@ -74,8 +74,8 @@ router.get("/:id", async (req, res) => {
     const { data, error } = await supabase
       .from("attendance")
       .select("*")
-      .eq("id", id) // WHERE user_id = req.userID
-      .eq("user_id", req.userId) // WHERE user_id = req.userID
+      .eq("id", id) // WHERE id = req.userID
+      .eq("leader_id", req.userId) // WHERE leader_id = req.userID
       .single(); // expects EXACTLY one row (throws error if 0 or >1)
 
     if (error || !data) {
@@ -114,7 +114,7 @@ router.post("/", async (req, res) => {
       .from("kids")
       .select("name")
       .eq("id", kidId) // WHERE id = kidId
-      .eq("user_id", req.userId) // WHERE user_id = req.userID
+      .eq("leader_id", req.userId) // WHERE leader_id = req.userID
       .single();
 
     if (kidError || !kidCheck) {
@@ -133,7 +133,7 @@ router.post("/", async (req, res) => {
         reason: reason || null,
         term: term || null,
         year: year || null,
-        user_id: req.userId, // Attaches record to logged-in user
+        leader_id: req.userId, // Attaches record to logged-in user
       })
       .select()
       .single();
@@ -150,7 +150,7 @@ router.post("/", async (req, res) => {
 /**
  * @route PATCH /attendance/:id
  * @desc Partially update an attendance record (status or reason)
- * @access Protected
+ * @access Private
  *
  * Flow:
  * 1. Validate at least one field provided
@@ -185,7 +185,7 @@ router.patch("/:id", async (req, res) => {
         // Update attendance SET
       .update(updatePayload)
       .eq("id", id) // WHERE id = record to update
-      .eq("user_id", req.userId) // extra safety: ensures user owns record
+      .eq("leader_id", req.userId) // extra safety: ensures user owns record
       .select()
       .single();
 
@@ -211,7 +211,7 @@ router.delete("/:id", async (req, res) => {
         // Delete from Attendance
       .delete()
       .eq("id", id)
-      .eq("user_id", req.userId);
+      .eq("leader_id", req.userId);
 
     if (error) return res.status(400).json({ error: error.message });
 
@@ -238,9 +238,9 @@ router.post("/year", async (req, res) => {
     // Check if the year already exists
     const { count, error: countError } = await supabase
       .from("attendance")
-      .select("user_id", { count: "exact", head: true })
+      .select("leader_id", { count: "exact", head: true })
       .eq("year", year)
-      .eq("user_id", req.userId);
+      .eq("leader_id", req.userId);
     if (countError) return res.status(400).json({ error: countError.message });
     if (count > 0) {
       return res.status(400).json({ error: `Year ${year} already exists.` });
@@ -250,7 +250,7 @@ router.post("/year", async (req, res) => {
     const { data: kids, error: kidsError } = await supabase
       .from("kids")
       .select("id, name")
-      .eq("user_id", req.userId);
+      .eq("leader_id", req.userId);
     if (kidsError) return res.status(400).json({ error: kidsError.message });
 
     // By default, term 1 and 10 weeks
@@ -269,7 +269,7 @@ router.post("/year", async (req, res) => {
           reason: "",
           term,
           year,
-          user_id: req.userId,
+          leader_id: req.userId,
         });
       }
     }
@@ -308,7 +308,7 @@ router.post("/term", async (req, res) => {
     const { data: kids, error: kidsError } = await supabase
       .from("kids")
       .select("id, name")
-      .eq("user_id", req.userId);
+      .eq("leader_id", req.userId);
     if (kidsError) return res.status(400).json({ error: kidsError.message });
 
     // Generate attendance records
@@ -323,7 +323,7 @@ router.post("/term", async (req, res) => {
           reason: "",
           term,
           year,
-          user_id: req.userId,
+          leader_id: req.userId,
         });
       }
     }
@@ -359,7 +359,7 @@ router.delete("/year/:year", async (req, res) => {
       .from("attendance")
       .delete()
       .eq("year", year) // Delete all records where year = X
-      .eq("user_id", req.userId);
+      .eq("leader_id", req.userId);
     if (error) return res.status(400).json({ error: error.message });
 
     res.json({ message: `Year ${year} deleted succesfully` });
@@ -389,7 +389,7 @@ router.delete("/term/:year/:term", async (req, res) => {
       .delete({ count: "exact" }) // also return how many rows were deleted
       .eq("year", Number(year)) // filter year
       .eq("term", Number(term)) // filter term inside the year
-      .eq("user_id", req.userId); // only this user's data
+      .eq("leader_id", req.userId); // only this user's data
 
     if (error) return res.status(400).json({ error: error.message });
 
@@ -450,7 +450,7 @@ router.post("/bulk", async (req, res) => {
         year: Number(r.year),
         status: r.status || "maybe",
         reason: r.reason || "",
-        user_id: req.userId,
+        leader_id: req.userId,
         updated_at: new Date(),
       };
     });
@@ -461,7 +461,7 @@ router.post("/bulk", async (req, res) => {
     const { data, error } = await supabase
         .from("attendance")
         .upsert(cleanedRecords, {
-          onConflict: "kidid,week,term,year,user_id"
+          onConflict: "kidid,week,term,year,leader_id"
           // if a row already exists the same -> UPDATE instead of insert
         })
         .select();

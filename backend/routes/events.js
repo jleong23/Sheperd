@@ -37,7 +37,8 @@ router.get("/", async (req, res) => {
           eventstarttime,
           eventendtime,
           eventassignedpeople,
-          updated_at
+          updated_at,
+          leader_id
           `,
             { count: "exact" }
         )
@@ -206,7 +207,7 @@ router.post("/", async (req, res) => {
         eventstarttime: eventstarttime || null,
         eventendtime: eventendtime || null,
         eventassignedpeople: eventassignedpeople || null,
-        user_id: req.userId,
+        leader_id: req.userId,
       })
       .select()
       .single();

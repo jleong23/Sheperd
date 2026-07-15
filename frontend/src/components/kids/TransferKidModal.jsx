@@ -66,9 +66,9 @@ export default function TransferKidModal({
               >
                 <option value="">-- Choose a leader --</option>
                 {leaders
-                  .filter((l) => l.user_id !== kid.user_id)
+                  .filter((l) => l.id !== kid.leader_id)
                   .map((leader) => (
-                    <option key={leader.user_id} value={leader.user_id}>
+                    <option key={leader.leader_id} value={leader.leader_id}>
                       {leader.user_name}
                     </option>
                   ))}

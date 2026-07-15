@@ -18,6 +18,7 @@ import Signup from "./pages/leaders/Signup";
 import LeaderHome from "./pages/leaders/Home";
 import Kids from "./pages/leaders/Kids";
 import Attendance from "./pages/leaders/Attendance";
+import AllKids from "./pages/pastors/AllKids.jsx";
 import Events from "./pages/leaders/Events";
 import Catchups from "./pages/leaders/Catchups";
 import KidProfile from "./components/kids/KidProfile";
@@ -66,6 +67,7 @@ function AppRoutes() {
                     <Route path="/events" element={<Events />} />
                     <Route path="/catchups" element={<Catchups />} />
                     <Route path="/new-people" element={<NewPeople />} />
+                    <Route path="/all-kids" element={<AllKids />} />
                   </Routes>
                 </main>
                 <Footer />

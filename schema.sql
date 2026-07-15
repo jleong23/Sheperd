@@ -119,7 +119,7 @@ CREATE TABLE public.attendance (
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     birthday date,
-    user_id uuid NOT NULL
+    leader_id uuid NOT NULL
 );
 
 
@@ -183,7 +183,7 @@ CREATE TABLE public.catchups (
     catchupcomments text,
     createdat timestamp without time zone DEFAULT now(),
     updatedat timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    user_id uuid
+    leader_id uuid
 );
 
 
@@ -225,7 +225,7 @@ CREATE TABLE public.events (
     eventphoto text,
     eventassignedpeople text,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    user_id uuid
+    leader_id uuid
 );
 
 
@@ -276,7 +276,7 @@ CREATE TABLE public.kids (
     second_call boolean DEFAULT false,
     first_call_feedback text DEFAULT ''::text,
     second_call_feedback text DEFAULT ''::text,
-    user_id integer
+    leader_id integer
 );
 
 
@@ -310,7 +310,7 @@ ALTER SEQUENCE public.kids_id_seq OWNED BY public.kids.id;
 
 CREATE TABLE public.notes (
     id integer NOT NULL,
-    user_id integer NOT NULL,
+    leader_id uuid NOT NULL,
     content text NOT NULL,
     created_at timestamp without time zone DEFAULT now()
 );
@@ -491,11 +491,11 @@ ALTER TABLE ONLY public.attendance
 
 
 --
--- Name: attendance attendance_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: jleong_23
+-- Name: attendance attendance_leader_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: jleong_23
 --
 
 ALTER TABLE ONLY public.attendance
-    ADD CONSTRAINT attendance_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+    ADD CONSTRAINT attendance_leader_id_fkey FOREIGN KEY (leader_id) REFERENCES public.users(id);
 
 
 --
@@ -507,35 +507,35 @@ ALTER TABLE ONLY public.catchups
 
 
 --
--- Name: catchups catchups_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: jleong_23
+-- Name: catchups catchups_leader_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: jleong_23
 --
 
 ALTER TABLE ONLY public.catchups
-    ADD CONSTRAINT catchups_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+    ADD CONSTRAINT catchups_leader_id_fkey FOREIGN KEY (leader_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: events events_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: jleong_23
+-- Name: events events_leader_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: jleong_23
 --
 
 ALTER TABLE ONLY public.events
-    ADD CONSTRAINT events_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+    ADD CONSTRAINT events_leader_id_fkey FOREIGN KEY (leader_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: kids kids_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: jleong_23
+-- Name: kids kids_leader_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: jleong_23
 --
 
 ALTER TABLE ONLY public.kids
-    ADD CONSTRAINT kids_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+    ADD CONSTRAINT kids_leader_id_fkey FOREIGN KEY (leader_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
--- Name: notes notes_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: jleong_23
+-- Name: notes notes_leader_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: jleong_23
 --
 
 ALTER TABLE ONLY public.notes
-    ADD CONSTRAINT notes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+    ADD CONSTRAINT notes_leader_id_fkey FOREIGN KEY (leader_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
