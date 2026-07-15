@@ -23,6 +23,7 @@ const attendanceRoutes = require("./routes/attendance");
 const eventsRouter = require("./routes/events");
 const catchupRouter = require("./routes/catchups");
 const usersRouter = require("./routes/users");
+const leadersRoutes = require("./routes/leaders");
 const authRoutes = require("./routes/auth");
 const requireAuth = require("./auth/requireAuth");
 
@@ -58,6 +59,7 @@ app.use("/attendance", requireAuth, attendanceRoutes); // Protected
 app.use("/events", requireAuth, eventsRouter); // Protected
 app.use("/catchups", requireAuth, catchupRouter); // Protected
 app.use("/users", requireAuth, usersRouter); // Protected
+app.use("/leaders", requireAuth, leadersRoutes);
 
 // Root route
 app.get("/", (_, res) => {

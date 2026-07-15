@@ -1,4 +1,3 @@
-import { supabase } from "../supabaseClient";
 import api from "./index.js";
 
 function normalizeCatchup(record) {
@@ -23,171 +22,69 @@ function cleanCatchupPayload(payload) {
 }
 
 export async function getLeaders() {
-  const { data, error } = await supabase
-    .from("users")
-    .select("leader_id, user_name, email, group_graduation_year, role")
-    .eq("role", "leader")
-    .order("user_name", { ascending: true });
-
-  console.log("leaders data:", data);
-  console.log("leaders error:", error);
-
-  if (error) throw error;
-
-  return data;
+  const response = await api.get("/leaders");
+  return response.data;
 }
 
 export async function getLeaderById(leaderId) {
-  const { data, error } = await supabase
-    .from("users")
-    .select("leader_id, user_name, email, group_graduation_year, role")
-    .eq("leader_id", leaderId)
-    .single();
-
-  if (error) throw error;
-  return data;
+  const response = await api.get(`/leaders/${leaderId}`);
+  return response.data;
 }
 
 export async function getLeaderKids(leaderId) {
-  const { data, error } = await supabase
-    .from("kids")
-    .select("*")
-    .eq("leader_id", leaderId)
-    .order("name", { ascending: true });
+  const response = await api.get(`/leaders/${leaderId}/kids`);
 
-  if (error) throw error;
-  return data;
+  return response.data;
 }
 
 export async function getLeaderAttendance(leaderId) {
-  const kids = await getLeaderKids(leaderId);
-  const kidIds = kids.map((kid) => kid.id);
+  const response = await api.get(`/leaders/${leaderId}/attendance`);
 
-  if (kidIds.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from("attendance")
-    .select("*")
-    .in("kidid", kidIds);
-
-  if (error) throw error;
-  return data;
+  return response.data;
 }
 
 export async function getLeaderCatchups(leaderId) {
-  const kids = await getLeaderKids(leaderId);
-  const kidIds = kids.map((kid) => kid.id);
+  const response = await api.get(`/leaders/${leaderId}/catchups`);
 
-  if (kidIds.length === 0) return [];
-
-  const { data, error } = await supabase
-    .from("catchups")
-    .select(
-      `
-      *,
-      kids (
-        name,
-        status_code,
-        baptised,
-        sunday_regulars
-      )
-    `,
-    )
-    .in("kidid", kidIds)
-    .order("catchupdate", { ascending: false });
-
-  if (error) throw error;
-
-  return data.map(normalizeCatchup);
+  return response.data.map(normalizeCatchup);
 }
 
 export async function createKidForLeader(leaderId, kidData) {
-  const { data, error } = await supabase
-    .from("kids")
-    .insert([
-      {
-        ...kidData,
-        leader_id: leaderId,
-      },
-    ])
-    .select()
-    .single();
+  const response = await api.post(`/leaders/${leaderId}/kids`, kidData);
 
-  if (error) throw error;
-
-  return data;
+  return response.data;
 }
 
 export async function updateKidForLeader(kidId, updates) {
-  const { data, error } = await supabase
-    .from("kids")
-    .update(updates)
-    .eq("id", kidId)
-    .select()
-    .single();
+  const response = await api.put(`/leaders/kids/${kidId}`, updates);
 
-  if (error) throw error;
-
-  return data;
+  return response.data;
 }
 
 export async function transferKidToLeader(kidId, newLeaderId) {
-  const { data, error } = await supabase
-    .from("kids")
-    .update({ leader_id: newLeaderId })
-    .eq("id", kidId)
-    .select()
-    .single();
+  const response = await api.put(`/leaders/kids/${kidId}/transfer`, {
+    newLeaderId,
+  });
 
-  if (error) throw error;
-
-  // Also update catchups to the new leader
-  const { error: catchupError } = await supabase
-    .from("catchups")
-    .update({ leader_id: newLeaderId })
-    .eq("kidid", kidId);
-
-  if (catchupError) {
-    console.error("Failed to transfer catchups:", catchupError);
-    // We don't necessarily want to fail the whole operation if catchups fail to move,
-    // but it's good to know.
-  }
-
-  return data;
+  return response.data;
 }
 
 export async function createCatchupForLeader(leaderId, catchupData) {
-  const { data, error } = await supabase
-    .from("catchups")
-    .insert([
-      {
-        ...cleanCatchupPayload(catchupData),
-        leader_id: leaderId,
-      },
-    ])
-    .select()
-    .single();
+  const response = await api.post(
+    `/leaders/${leaderId}/catchups`,
+    cleanCatchupPayload(catchupData),
+  );
 
-  if (error) throw error;
-
-  return data;
+  return response.data;
 }
 
 export async function updateCatchupForLeader(leaderId, catchupId, updates) {
-  const { data, error } = await supabase
-    .from("catchups")
-    .update({
-      ...cleanCatchupPayload(updates),
-      updatedate: new Date().toISOString(),
-    })
-    .eq("catchupid", catchupId)
-    .eq("leader_id", leaderId)
-    .select()
-    .single();
+  const response = await api.put(`/leaders/${leaderId}/catchups/${catchupId}`, {
+    ...cleanCatchupPayload(updates),
+    updatedate: new Date().toISOString(),
+  });
 
-  if (error) throw error;
-
-  return data;
+  return response.data;
 }
 
 export async function deleteCatchupForLeader(leaderId, catchupId) {
