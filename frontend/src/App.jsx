@@ -13,6 +13,7 @@ import LoadingSpinner from "./components/ui/LoadingSpinner";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/leaders/Login";
 import Signup from "./pages/leaders/Signup";
+import RoleRoute from "./auth/RoleRoute.jsx";
 
 // Leader Pages
 import LeaderHome from "./pages/leaders/Home";
@@ -55,10 +56,21 @@ function AppRoutes() {
                 <NavBar />
                 <main className="pt-20">
                   <Routes>
-                    <Route path="/pastor" element={<PastorDashboard />} />
+                    <Route
+                      path="/pastor"
+                      element={
+                        <RoleRoute allowedRole="pastor">
+                          <PastorDashboard />
+                        </RoleRoute>
+                      }
+                    />
                     <Route
                       path="/pastor/leaders/:leaderId"
-                      element={<LeaderStats />}
+                      element={
+                        <RoleRoute allowedRole="pastor">
+                          <LeaderStats />
+                        </RoleRoute>
+                      }
                     />
                     <Route path="/" element={<LeaderHome />} />
                     <Route path="/kid-list" element={<Kids />} />

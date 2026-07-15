@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }) => {
   const fetchProfile = async () => {
     try {
       const response = await syncUser();
+
       setProfile(response.user);
     } catch (error) {
       console.error("Error fetching user profile:", error);
@@ -60,15 +61,16 @@ export const AuthProvider = ({ children }) => {
     // 2. Auth state listener ( Handles login, logout, token refresh, and session updates )
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
 
       if (event === "SIGNED_IN" && session) {
-        fetchProfile();
+        await fetchProfile();
       } else if (event === "SIGNED_OUT") {
         setProfile(null);
       }
+
       setLoading(false);
     });
 
