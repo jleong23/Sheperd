@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { X, Menu } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { navigation } from "../../../config/navigation.js";
-import PastorDropdown from "./PastorDropdown";
+import PastorDropdown from "./PastorDropDown.jsx";
 import { useClickOutside } from "../../../hooks/useClickOutside.js";
 
 function ProfileAvatar({ email }) {
