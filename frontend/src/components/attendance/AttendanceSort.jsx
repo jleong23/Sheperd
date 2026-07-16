@@ -24,6 +24,7 @@ import { Settings, X } from "lucide-react";
 import AddYearTerm from "./AddYearTerm";
 import useUser from "../../hooks/useUser";
 import { motion } from "framer-motion";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const SELECT_BASE_CLASS =
   "w-full appearance-none border text-sm font-medium rounded-xl block min-h-[44px] px-4 pr-10 transition-all";
@@ -49,6 +50,9 @@ export default function AttendanceSort({
   // Custom hook to fetch current user information
   // yearLevel is displayed in the page heading
   const { yearLevel } = useUser(1);
+  const { profile } = useAuth();
+
+  const isPastor = profile?.role === "pastor";
 
   return (
     <motion.div
@@ -77,49 +81,49 @@ export default function AttendanceSort({
         {/* ======================================
             Toggle AddYearTerm Manager
         ====================================== */}
-        <button
-          // prev => !prev toggles boolean state
-          // true becomes false, false becomes true
-          onClick={() => setShowAddYearTerm((prev) => !prev)}
-          className={`bg-slate-200/10 flex items-center justify-center gap-2 px-4 py-2 min-h-[44px] rounded-xl font-bold transition-all duration-200 active:scale-95 ${
-            showAddYearTerm
-              ? "bg-white/10 text-slate-200 hover:bg-white/15 border border-white/10"
-              : "text-white shadow-[0_0_20px_rgba(99,102,241,0.35)] hover:shadow-[0_0_28px_rgba(99,102,241,0.55)]"
-          }`}
-        >
-          {/* Conditional rendering based on state */}
-          {showAddYearTerm ? (
-            <>
-              <X className="w-4 h-4" />
-              <span>Close Manager</span>
-            </>
-          ) : (
-            <>
-              <Settings className="w-4 h-4" />
-              <span>Manage Years & Terms</span>
-            </>
-          )}
-        </button>
+        {isPastor && (
+          <button
+            onClick={() => setShowAddYearTerm((prev) => !prev)}
+            className={`bg-slate-200/10 flex items-center justify-center gap-2 px-4 py-2 min-h-[44px] rounded-xl font-bold transition-all duration-200 active:scale-95 ${
+              showAddYearTerm
+                ? "bg-white/10 text-slate-200 hover:bg-white/15 border border-white/10"
+                : "text-white shadow-[0_0_20px_rgba(99,102,241,0.35)] hover:shadow-[0_0_28px_rgba(99,102,241,0.55)]"
+            }`}
+          >
+            {showAddYearTerm ? (
+              <>
+                <X className="w-4 h-4" />
+                <span>Close Manager</span>
+              </>
+            ) : (
+              <>
+                <Settings className="w-4 h-4" />
+                <span>Manage Years & Terms</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* ======================================
           Expandable AddYearTerm Panel
       ====================================== */}
-      <div
-        className={`overflow-hidden transition-all duration-500 ease-in-out ${
-          showAddYearTerm
-            ? "max-h-[1000px] opacity-100 mb-8"
-            : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-2 shadow-xl backdrop-blur-md">
-          <AddYearTerm
-            // Refresh attendance after adding/deleting year or term
-            onUpdate={refreshAttendance}
-            availableYears={availableYears}
-          />
+      {isPastor && (
+        <div
+          className={`overflow-hidden transition-all duration-500 ease-in-out ${
+            showAddYearTerm
+              ? "max-height-[1000px] opacity-100 mb-8"
+              : "max-h-0 opacity-0"
+          }`}
+        >
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-2 shadow-xl backdrop-blur-md">
+            <AddYearTerm
+              onUpdate={refreshAttendance}
+              availableYears={availableYears}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ======================================
           Filters Bar
