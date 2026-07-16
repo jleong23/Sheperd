@@ -8,22 +8,27 @@ function normalizeStatus(status) {
 
 function StatusList({ title, records, emptyText }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <h3 className="mb-3 text-sm font-bold text-slate-700">{title}</h3>
+    <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
+      <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+        {title}
+      </h3>
 
       {records.length === 0 ? (
-        <p className="text-sm text-slate-400">{emptyText}</p>
+        <p className="py-2 text-sm text-slate-400 italic">{emptyText}</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-2.5">
           {records.map((record) => (
             <li
               key={record.id}
-              className="rounded-lg bg-white px-3 py-2 text-sm text-slate-700 shadow-sm"
+              className="group flex flex-col rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200 transition-all hover:shadow-md hover:ring-indigo-500/20"
             >
-              {record.name}
+              <span className="font-semibold text-slate-900">
+                {record.name}
+              </span>
               {record.reason && (
-                <p className="mt-1 text-xs text-slate-400">
-                  Reason: {record.reason}
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  <span className="font-medium text-slate-400">Reason:</span>{" "}
+                  {record.reason}
                 </p>
               )}
             </li>
@@ -94,21 +99,29 @@ export default function LeaderAttendancePanel({ attendance }) {
 
   if (attendance.length === 0) {
     return (
-      <div className="mt-6 rounded-xl bg-white p-6 text-center shadow-sm">
-        <p className="text-slate-500">No attendance records found.</p>
+      <div className="flex flex-col items-center justify-center rounded-3xl bg-white p-12 text-center shadow-sm ring-1 ring-slate-200">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50 text-slate-400">
+          <Calendar size={32} />
+        </div>
+        <h3 className="text-xl font-bold text-slate-900">
+          No attendance records
+        </h3>
+        <p className="mt-2 text-slate-500">
+          Attendance data will appear here once recorded.
+        </p>
       </div>
     );
   }
 
   return (
-    <section className="mt-8 overflow-hidden rounded-2xl bg-white shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-slate-200 p-5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="flex flex-col gap-6 border-b border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
             Attendance Summary
           </h2>
-          <p className="text-sm text-slate-500">
-            Weekly breakdown of coming, maybe, and not coming kids.
+          <p className="mt-1 text-sm text-slate-500 font-medium">
+            Termly breakdown of weekly engagement.
           </p>
         </div>
 
@@ -117,7 +130,7 @@ export default function LeaderAttendancePanel({ attendance }) {
             <select
               value={selectedYear || ""}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
             >
               <option value="">Year</option>
               {availableYears.map((year) => (
@@ -131,7 +144,7 @@ export default function LeaderAttendancePanel({ attendance }) {
               value={selectedTerm || ""}
               onChange={(e) => setSelectedTerm(Number(e.target.value))}
               disabled={!selectedYear}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 disabled:bg-slate-50 disabled:text-slate-400"
             >
               <option value="">Term</option>
               {availableTerms.map((term) => (
@@ -150,134 +163,147 @@ export default function LeaderAttendancePanel({ attendance }) {
       </div>
 
       {sortedWeeks.length === 0 ? (
-        <div className="p-10 text-center">
-          <p className="text-slate-500">
+        <div className="p-16 text-center">
+          <p className="text-slate-500 font-medium">
             No records found for the selected year and term.
           </p>
         </div>
       ) : (
-        sortedWeeks.map(([week, records]) => {
-          const isOpen = openWeek === week;
+        <div className="divide-y divide-slate-100">
+          {sortedWeeks.map(([week, records]) => {
+            const isOpen = openWeek === week;
 
-          const coming = records.filter(
-            (record) => normalizeStatus(record.status) === "coming",
-          );
+            const coming = records.filter(
+              (record) => normalizeStatus(record.status) === "coming",
+            );
 
-          const maybe = records.filter(
-            (record) => normalizeStatus(record.status) === "maybe",
-          );
+            const maybe = records.filter(
+              (record) => normalizeStatus(record.status) === "maybe",
+            );
 
-          const notComing = records.filter(
-            (record) => normalizeStatus(record.status) === "notcoming",
-          );
+            const notComing = records.filter(
+              (record) => normalizeStatus(record.status) === "notcoming",
+            );
 
-          const attendanceRate =
-            records.length > 0
-              ? Math.round((coming.length / records.length) * 100)
-              : 0;
+            const attendanceRate =
+              records.length > 0
+                ? Math.round((coming.length / records.length) * 100)
+                : 0;
 
-          return (
-            <div
-              key={week}
-              className="border-b border-slate-200 last:border-b-0"
-            >
-              <button
-                onClick={() => setOpenWeek(isOpen ? null : week)}
-                className="flex w-full items-center justify-between p-5 text-left transition hover:bg-slate-50"
+            return (
+              <div
+                key={week}
+                className="transition-colors hover:bg-slate-50/50"
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                    <Calendar size={22} />
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">
-                      Week {week}
-                    </h3>
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                      {records.length} students
-                    </p>
-                  </div>
-                </div>
-
-                <ChevronDown
-                  className={`text-slate-400 transition ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {isOpen && (
-                <div className="space-y-5 bg-slate-50 p-5">
-                  <div className="grid gap-3 sm:grid-cols-4">
-                    <div className="rounded-xl bg-white p-4 shadow-sm">
-                      <p className="text-xs font-bold uppercase text-slate-400">
-                        Coming
-                      </p>
-                      <p className="mt-1 text-2xl font-bold text-green-600">
-                        {coming.length}
-                      </p>
+                <button
+                  onClick={() => setOpenWeek(isOpen ? null : week)}
+                  className="flex w-full items-center justify-between p-6 text-left"
+                >
+                  <div className="flex items-center gap-5">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                      <Calendar size={24} />
                     </div>
 
-                    <div className="rounded-xl bg-white p-4 shadow-sm">
-                      <p className="text-xs font-bold uppercase text-slate-400">
-                        Maybe
-                      </p>
-                      <p className="mt-1 text-2xl font-bold text-yellow-500">
-                        {maybe.length}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl bg-white p-4 shadow-sm">
-                      <p className="text-xs font-bold uppercase text-slate-400">
-                        Not Coming
-                      </p>
-                      <p className="mt-1 text-2xl font-bold text-red-500">
-                        {notComing.length}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl bg-white p-4 shadow-sm">
-                      <p className="text-xs font-bold uppercase text-slate-400">
-                        Attendance Rate
-                      </p>
-                      <p className="mt-1 text-2xl font-bold text-slate-900">
-                        {attendanceRate}%
-                      </p>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900">
+                        Week {week}
+                      </h3>
+                      <div className="mt-1 flex items-center gap-3">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          {records.length} Students
+                        </span>
+                        <span className="h-1 w-1 rounded-full bg-slate-300"></span>
+                        <span className="text-xs font-bold text-indigo-600">
+                          {attendanceRate}% Present
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-3">
-                    <ExportAttendance
-                      attendance={records}
-                      label={`Export Week ${week}`}
-                    />
+                  <div
+                    className={`rounded-full p-2 transition-transform ${isOpen ? "rotate-180 bg-slate-100 text-slate-900" : "text-slate-400"}`}
+                  >
+                    <ChevronDown size={20} />
                   </div>
+                </button>
 
-                  <div className="grid gap-4 lg:grid-cols-3">
-                    <StatusList
-                      title="Coming"
-                      records={coming}
-                      emptyText="No kids marked as coming."
-                    />
+                {isOpen && (
+                  <div className="bg-slate-50/50 p-6 pt-0">
+                    <div className="mb-6 grid gap-4 sm:grid-cols-4">
+                      {[
+                        {
+                          label: "Coming",
+                          val: coming.length,
+                          color: "text-emerald-600",
+                          bg: "bg-emerald-50",
+                        },
+                        {
+                          label: "Maybe",
+                          val: maybe.length,
+                          color: "text-amber-500",
+                          bg: "bg-amber-50",
+                        },
+                        {
+                          label: "Not Coming",
+                          val: notComing.length,
+                          color: "text-rose-500",
+                          bg: "bg-rose-50",
+                        },
+                        {
+                          label: "Rate",
+                          val: `${attendanceRate}%`,
+                          color: "text-slate-900",
+                          bg: "bg-slate-100",
+                        },
+                      ].map((stat) => (
+                        <div
+                          key={stat.label}
+                          className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200"
+                        >
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            {stat.label}
+                          </p>
+                          <p
+                            className={`mt-1 text-2xl font-black ${stat.color}`}
+                          >
+                            {stat.val}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
 
-                    <StatusList
-                      title="Maybe"
-                      records={maybe}
-                      emptyText="No kids marked as maybe."
-                    />
+                    <div className="mb-6 flex">
+                      <ExportAttendance
+                        attendance={records}
+                        label={`Export Week ${week}`}
+                      />
+                    </div>
 
-                    <StatusList
-                      title="Not Coming"
-                      records={notComing}
-                      emptyText="No kids marked as not coming."
-                    />
+                    <div className="grid gap-6 lg:grid-cols-3">
+                      <StatusList
+                        title="Coming"
+                        records={coming}
+                        emptyText="No kids marked as coming."
+                      />
+
+                      <StatusList
+                        title="Maybe"
+                        records={maybe}
+                        emptyText="No kids marked as maybe."
+                      />
+
+                      <StatusList
+                        title="Not Coming"
+                        records={notComing}
+                        emptyText="No kids marked as not coming."
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          );
-        })
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </section>
   );

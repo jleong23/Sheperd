@@ -3,7 +3,6 @@ import { useParams, Link } from "react-router-dom";
 import LeaderAttendancePanel from "./Attendance/LeaderAttendancePanel.jsx";
 import LeaderKidsPanel from "./Statistics/LeaderKidsPanel.jsx";
 import AddKidModal from "../../components/kids/AddKidModal.jsx";
-import TransferKidModal from "../../components/kids/TransferKidModal.jsx";
 import LeaderCatchupPanel from "./Catchups/LeaderCatchupPanel.jsx";
 import {
   getLeaderById,
@@ -15,6 +14,7 @@ import {
 } from "../../api/pastor.js";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { ArrowLeft, Users, Calendar, MessageSquare, Plus } from "lucide-react";
 
 export default function LeaderStats() {
   const { leaderId } = useParams();
@@ -108,68 +108,111 @@ export default function LeaderStats() {
   };
 
   if (loading) {
-    return <p className="p-6 text-gray-500">Loading leader stats...</p>;
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+      </div>
+    );
   }
 
+  const statCards = [
+    {
+      label: "Total Kids",
+      value: kids.length,
+      icon: Users,
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+    },
+    {
+      label: "Attendance Records",
+      value: attendance.length,
+      icon: Calendar,
+      color: "text-indigo-600",
+      bg: "bg-indigo-50",
+    },
+    {
+      label: "Catchups",
+      value: catchups.length,
+      icon: MessageSquare,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+    },
+  ];
+
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6">
-      <section className="mx-auto max-w-5xl">
-        <Link to="/pastor" className="mb-4 inline-block text-sm text-blue-600">
-          ← Back to Pastor Dashboard
+    <main className="min-h-screen bg-[#F8FAFC] px-4 py-8">
+      <section className="mx-auto max-w-6xl">
+        <Link
+          to="/pastor"
+          className="group mb-8 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition-colors hover:text-indigo-600"
+        >
+          <ArrowLeft
+            size={16}
+            className="transition-transform group-hover:-translate-x-1"
+          />
+          Back to Dashboard
         </Link>
 
-        <h1 className="text-2xl font-bold text-slate-900">
-          {leader?.user_name}
-        </h1>
-
-        <p className="mb-6 text-sm text-slate-500">{leader?.email}</p>
-
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Total Kids</p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-900">
-              {kids.length}
-            </h2>
+        <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+              {leader?.user_name}
+            </h1>
+            <p className="mt-2 text-lg text-slate-500">{leader?.email}</p>
           </div>
 
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Attendance Records</p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-900">
-              {attendance.length}
-            </h2>
-          </div>
+          <motion.button
+            onClick={() => setAddModalOpen(true)}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 hover:shadow-indigo-300"
+          >
+            <Plus size={20} />
+            Add Kid for Leader
+          </motion.button>
+        </header>
 
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Catchups</p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-900">
-              {catchups.length}
-            </h2>
-          </div>
+        <div className="mb-12 grid gap-6 sm:grid-cols-3">
+          {statCards.map((card, index) => (
+            <motion.div
+              key={card.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="group rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition-all hover:shadow-md"
+            >
+              <div
+                className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${card.bg} ${card.color}`}
+              >
+                <card.icon size={24} />
+              </div>
+              <p className="text-sm font-semibold text-slate-500">
+                {card.label}
+              </p>
+              <h2 className="mt-2 text-4xl font-black text-slate-900">
+                {card.value}
+              </h2>
+            </motion.div>
+          ))}
         </div>
 
-        <LeaderAttendancePanel attendance={attendance} />
+        <div className="space-y-12">
+          <LeaderAttendancePanel attendance={attendance} />
 
-        <motion.button
-          onClick={() => setAddModalOpen(true)}
-          whileHover={{ y: -3, scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="rounded-full bg-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/20 transition hover:bg-indigo-500 mt-6"
-        >
-          + Add Kid for Leader
-        </motion.button>
+          <LeaderKidsPanel
+            kids={kids}
+            onKidUpdated={refreshLeaderKids}
+            onTransferKid={handleTransferConfirm}
+            onKidDeleted={refreshLeaderKids}
+          />
 
-        <LeaderKidsPanel
-          kids={kids}
-          onKidUpdated={refreshLeaderKids}
-          onTransferKid={handleTransferConfirm}
-          onKidDeleted={refreshLeaderKids}
-        />
-        <LeaderCatchupPanel
-          catchups={catchups}
-          leaderId={leaderId}
-          kids={kids}
-          onCatchupAdded={refreshLeaderCatchups}
-        />
+          <LeaderCatchupPanel
+            catchups={catchups}
+            leaderId={leaderId}
+            kids={kids}
+            onCatchupAdded={refreshLeaderCatchups}
+          />
+        </div>
 
         <AddKidModal
           open={addModalOpen}

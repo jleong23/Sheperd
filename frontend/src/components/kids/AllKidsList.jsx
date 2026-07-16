@@ -1,19 +1,18 @@
 import AddKidModal from "./AddKidModal";
-import EditKidModal from "./EditKidModal";
-import KidListGrid from "./KidListGrid";
 import DeleteKids from "./DeleteKids";
 import { useAllKids } from "../../hooks/useAllKids";
 import { useBulkDelete } from "../../hooks/useBulkDelete";
 import KidStatusFilter from "./KidStatusFilter";
 import { useState } from "react";
-import { createKid, updateKid } from "../../api/kids";
+import { createKid } from "../../api/kids";
+import { transferKidToLeader } from "../../api/pastor";
 import { motion } from "framer-motion";
+import KidManagement from "./KidManagement.jsx";
+import toast from "react-hot-toast";
 
 export default function AllKidsList() {
   const { kids, isLoading, error, getKids, status, setStatus } = useAllKids();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedKid, setSelectedKid] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   const {
@@ -45,22 +44,14 @@ export default function AllKidsList() {
     }
   };
 
-  const handleEditKid = (kid) => {
-    setSelectedKid(kid);
-    setIsEditModalOpen(true);
-  };
-
-  const handleUpdateKid = async (formData) => {
-    setActionLoading(true);
+  const handleTransferConfirm = async (kidId, newLeaderId) => {
     try {
-      await updateKid(selectedKid.id, formData);
+      await transferKidToLeader(kidId, newLeaderId);
+      toast.success("Kid transferred successfully.");
       await getKids();
-      setIsEditModalOpen(false);
     } catch (err) {
-      console.error("Error updating kid:", err);
-      alert(err.response?.data?.error || "Error updating kid");
-    } finally {
-      setActionLoading(false);
+      console.error("Failed to transfer kid", err);
+      toast.error("Failed to transfer kid.");
     }
   };
 
@@ -125,14 +116,12 @@ export default function AllKidsList() {
           <KidStatusFilter value={status} onChange={setStatus} />
         </section>
 
-        <KidListGrid
+        <KidManagement
           kids={kids}
-          selected={selected}
-          toggleSelect={toggleSelect}
-          bulkMode={bulkMode}
+          onKidUpdated={getKids}
+          onTransferKid={handleTransferConfirm}
+          onKidDeleted={getKids}
           loading={isLoading}
-          onEdit={handleEditKid}
-          actions={{ edit: true, delete: false, transfer: false }}
         />
       </div>
 
@@ -141,15 +130,6 @@ export default function AllKidsList() {
         onClose={() => setIsAddModalOpen(false)}
         onAdded={handleAddKid}
         loading={actionLoading}
-      />
-
-      <EditKidModal
-        open={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        kid={selectedKid}
-        onSaved={handleUpdateKid}
-        loading={actionLoading}
-        showExtendedFields={false}
       />
     </div>
   );

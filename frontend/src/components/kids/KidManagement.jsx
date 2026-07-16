@@ -14,6 +14,7 @@ export default function KidManagement({
   onKidUpdated,
   onTransferKid,
   onKidDeleted,
+  loading: externalLoading,
 }) {
   const [selectedKid, setSelectedKid] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -21,6 +22,8 @@ export default function KidManagement({
   const [profileOpen, setProfileOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const isLoading = externalLoading || loading;
 
   const handleEditKid = (kid) => {
     setSelectedKid(kid);
@@ -87,7 +90,7 @@ export default function KidManagement({
 
   return (
     <>
-      <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+      <div className="rounded-2xlp-4">
         <KidListGrid
           kids={kids}
           onEdit={handleEditKid}
@@ -96,6 +99,7 @@ export default function KidManagement({
           actions={{ edit: true, delete: true, transfer: true }}
           linkToProfile={false}
           onCardClick={handleCardClick}
+          loading={isLoading}
         />
       </div>
 
