@@ -5,7 +5,7 @@ import {
   Navigate,
 } from "react-router-dom";
 // NavBar
-import NavBar from "./components/ui/NavBar";
+import NavBar from "./components/ui/navigation/NavBar.jsx";
 import { Toaster } from "react-hot-toast";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 

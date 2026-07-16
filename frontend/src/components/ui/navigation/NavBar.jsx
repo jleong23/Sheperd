@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { X, Menu } from "lucide-react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../../context/AuthContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
+import { navigation } from "../../../config/navigation.js";
+import PastorDropdown from "./PastorDropdown";
 
 function ProfileAvatar({ email }) {
   const initial = email?.charAt(0).toUpperCase() || "?";
@@ -18,9 +20,11 @@ export default function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
   const profileRef = useRef(null);
+
+  const isPastor = profile?.role === "pastor";
 
   const handleLogout = () => {
     logout();
@@ -34,27 +38,20 @@ export default function NavBar() {
         setProfileOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
-  const links = [
-    { to: "/", label: "Home" },
-    { to: "/attendance", label: "Attendance" },
-    { to: "/kid-list", label: "Kid List" },
-    { to: "/all-kids", label: "All Kids List" },
-    { to: "/events", label: "Events" },
-    { to: "/catchups", label: "Catchups" },
-    { to: "/new-people", label: "New People" },
-  ];
-
   const linkClass = ({ isActive }) =>
-    `relative rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300
-     ${
-       isActive
-         ? "bg-blue-500/15 text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.25)]"
-         : "text-slate-300 hover:bg-white/10 hover:text-white hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]"
-     }`;
+    `relative rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
+      isActive
+        ? "bg-blue-500/15 text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.25)]"
+        : "text-slate-300 hover:bg-white/10 hover:text-white hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]"
+    }`;
 
   return (
     <motion.nav
@@ -72,6 +69,7 @@ export default function NavBar() {
               alt="Dreamers Logo"
               className="h-11 w-11 rounded-xl object-cover shadow-[0_0_20px_rgba(59,130,246,0.25)]"
             />
+
             <span className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
               Dreamers{" "}
               <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -81,8 +79,8 @@ export default function NavBar() {
           </Link>
 
           {/* Desktop Links */}
-          <ul className="hidden lg:flex gap-2 items-center">
-            {links.map(({ to, label }) => (
+          <ul className="hidden items-center gap-2 lg:flex">
+            {navigation.main.map(({ to, label }) => (
               <motion.li
                 key={to}
                 whileHover={{ y: -2 }}
@@ -93,18 +91,20 @@ export default function NavBar() {
                 </NavLink>
               </motion.li>
             ))}
+
+            {isPastor && <PastorDropdown />}
           </ul>
 
           {/* Desktop Profile */}
           {user && (
             <div
               ref={profileRef}
-              className="relative hidden lg:flex items-center gap-3"
+              className="relative hidden items-center gap-3 lg:flex"
             >
               <motion.button
                 whileHover={{ scale: 1.06 }}
                 whileTap={{ scale: 0.96 }}
-                onClick={() => setProfileOpen((p) => !p)}
+                onClick={() => setProfileOpen((prev) => !prev)}
               >
                 <ProfileAvatar email={user.email} />
               </motion.button>
@@ -138,7 +138,7 @@ export default function NavBar() {
           <motion.button
             whileTap={{ scale: 0.9 }}
             className="rounded-xl border border-white/10 bg-white/5 p-2 text-white shadow-md transition hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.25)] lg:hidden"
-            onClick={() => setMenuOpen((m) => !m)}
+            onClick={() => setMenuOpen((prev) => !prev)}
           >
             {menuOpen ? <X size={26} /> : <Menu size={26} />}
           </motion.button>
@@ -157,7 +157,7 @@ export default function NavBar() {
           >
             <div className="px-4 py-5">
               <ul className="flex flex-col gap-2">
-                {links.map(({ to, label }) => (
+                {navigation.main.map(({ to, label }) => (
                   <li key={to}>
                     <NavLink
                       to={to}
@@ -174,6 +174,32 @@ export default function NavBar() {
                     </NavLink>
                   </li>
                 ))}
+
+                {isPastor && (
+                  <>
+                    <div className="my-3 border-t border-white/10" />
+
+                    <p className="px-4 text-xs uppercase text-slate-500">
+                      Pastor Tools
+                    </p>
+
+                    {navigation.pastor.map(({ to, label }) => (
+                      <NavLink
+                        key={to}
+                        to={to}
+                        onClick={() => setMenuOpen(false)}
+                        className="
+          block rounded-xl px-4 py-3
+          text-base font-semibold
+          text-indigo-300
+          hover:bg-white/10
+        "
+                      >
+                        {label}
+                      </NavLink>
+                    ))}
+                  </>
+                )}
               </ul>
 
               {user && (
