@@ -5,6 +5,7 @@ import { useAuth } from "../../../context/AuthContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { navigation } from "../../../config/navigation.js";
 import PastorDropdown from "./PastorDropdown";
+import { useClickOutside } from "../../../hooks/useClickOutside.js";
 
 function ProfileAvatar({ email }) {
   const initial = email?.charAt(0).toUpperCase() || "?";
@@ -32,19 +33,7 @@ export default function NavBar() {
   };
 
   // Close profile dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
-        setProfileOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  useClickOutside(profileRef, () => setProfileOpen(false));
 
   const linkClass = ({ isActive }) =>
     `relative rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
