@@ -23,7 +23,7 @@ router.post("/sync", async (req, res) => {
 
     res.status(200).json({
       message: "User synced successfully",
-      user: data
+      user: data,
     });
   } catch (err) {
     console.error("Error syncing user:", err);
@@ -37,11 +37,6 @@ router.post("/sync", async (req, res) => {
  * @access Private
  */
 router.get("/", async (req, res) => {
-  console.log("SUPABASE URL:", process.env.SUPABASE_URL);
-  console.log("SUPABASE KEY EXISTS:", !!process.env.SUPABASE_ANON_KEY);
-  console.log("USER TOKEN:", req.headers.authorization);
-  console.log("LEADER ID:", req.userId);
-
   const supabase = createSupabaseClient(req);
   try {
     // For security, this endpoint should only return the current user's data

@@ -53,6 +53,23 @@ export default function AttendanceSort({
   const { profile } = useAuth();
 
   const isPastor = profile?.role === "pastor";
+  const normalizedAvailableTerms = (availableTerms ?? []).map((term) => {
+    if (term && typeof term === "object") {
+      const termNumber = Number(term.term ?? term.id ?? 0);
+      const termValue = Number(term.id ?? term.term ?? 0);
+
+      return {
+        value: termValue,
+        label: Number.isFinite(termNumber) ? `Term ${termNumber}` : "Term",
+      };
+    }
+
+    const termNumber = Number(term);
+    return {
+      value: termNumber,
+      label: Number.isFinite(termNumber) ? `Term ${termNumber}` : String(term),
+    };
+  });
 
   return (
     <motion.div
@@ -120,6 +137,7 @@ export default function AttendanceSort({
             <AddYearTerm
               onUpdate={refreshAttendance}
               availableYears={availableYears}
+              availableTerms={availableTerms}
             />
           </div>
         </div>
@@ -200,9 +218,9 @@ export default function AttendanceSort({
               <option value="">Select Term</option>
 
               {/* Render available terms dynamically */}
-              {availableTerms.map((term) => (
-                <option key={term} value={term}>
-                  Term {term}
+              {normalizedAvailableTerms.map((term) => (
+                <option key={term.value} value={term.value}>
+                  {term.label}
                 </option>
               ))}
             </select>

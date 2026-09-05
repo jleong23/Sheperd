@@ -7,17 +7,31 @@
 import api from "./index";
 
 /**
- * Fetch attendance records
- * GET /attendance?year=YYYY&term=TERM
+ * Fetch attendance records for the selected term.
+ * GET /attendance?term_id=ID
  */
-export async function getAttendance(year, term) {
+export async function getAttendance(termId = null) {
   try {
     const response = await api.get("/attendance", {
-      params: { year, term }, // converst into query string (attendance?year=2026&term=1)
+      params: { term_id: termId },
     });
-    return response.data; // returns array of attendance records
+    return response.data;
   } catch (err) {
     console.error("getAttendance failed:", err);
+    throw err;
+  }
+}
+
+/**
+ * Fetch available attendance terms for the current user.
+ * GET /attendance/terms
+ */
+export async function getAttendanceTerms() {
+  try {
+    const response = await api.get("/attendance/terms");
+    return response.data;
+  } catch (err) {
+    console.error("getAttendanceTerms failed:", err);
     throw err;
   }
 }
@@ -29,11 +43,7 @@ export async function getAttendance(year, term) {
  */
 export async function updateAttendance(recordId, updates) {
   try {
-    const response = await api.patch(
-      `/attendance/${recordId}`,
-      updates, // request body example: { status: "coming", reason: "sick" }
-    );
-
+    const response = await api.patch(`/attendance/${recordId}`, updates);
     return response.data;
   } catch (err) {
     console.error(`Failed to update attendance ${recordId}:`, err);
@@ -64,10 +74,9 @@ export async function addYear(year) {
 export async function addTerm(year, term, weeks = 10) {
   try {
     const response = await api.post("/attendance/term", {
-      // backend uses below to generate records
       year,
       term,
-      weeks, // default to 10 weeks if not provided
+      weeks,
     });
     return response.data;
   } catch (err) {
@@ -96,15 +105,15 @@ export async function addBulkAttendance(cleanedData) {
 }
 
 /**
- * Delete a specific term in a year
- * DELETE /attendance/term/:year/:term
+ * Delete a specific term.
+ * DELETE /attendance/term/:id
  */
-export async function deleteTerm(year, term) {
+export async function deleteTerm(termId) {
   try {
-    const response = await api.delete(`/attendance/term/${year}/${term}`);
+    const response = await api.delete(`/attendance/term/${termId}`);
     return response.data;
   } catch (err) {
-    console.error(`Failed to delete term ${term} for year ${year}:`, err);
+    console.error(`Failed to delete term ${termId}:`, err);
     throw err;
   }
 }

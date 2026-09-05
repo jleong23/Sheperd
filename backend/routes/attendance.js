@@ -13,15 +13,48 @@
  *
  * Core concept:
  * Attendance is structured by:
- * - kidid (student reference)
+ * - kidid
  * - week
- * - term
- * - year
+ * - attendance_terms relationship
+ * - leader_id
  */
 
 const express = require("express");
 const router = express.Router();
 const createSupabaseClient = require("../supabaseClient");
+const {
+  getVisibleTermOwners,
+  getVisibleTermCreators,
+} = require("../lib/attendanceHierarchy");
+
+/**
+ * @route GET /attendance/terms
+ * @desc Get all available attendance years and terms
+ * @access Authenticated
+ */
+router.get("/terms", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+
+  try {
+    const visibleCreators = await getVisibleTermCreators(supabase, req.userId);
+
+    const { data, error } = await supabase
+      .from("attendance_terms")
+      .select("*")
+      .in("created_by", visibleCreators)
+      .order("year", { ascending: false })
+      .order("term", { ascending: true });
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.json(data);
+  } catch (err) {
+    console.error("Failed to fetch attendance terms:", err);
+    res.status(500).json({ error: "Failed to fetch attendance terms" });
+  }
+});
 
 /**
  * @route GET /attendance
@@ -32,34 +65,44 @@ const createSupabaseClient = require("../supabaseClient");
  * 3. Sort by week (descending) and kidid
  * 4. Return filtered dataset
  */
-router.get("/",async (req, res) => {
+router.get("/", async (req, res) => {
   const supabase = createSupabaseClient(req);
+
   try {
-    const { year, term } = req.query;
+    const { term_id } = req.query;
 
     let query = supabase
-        .from("attendance")
-        .select("*")
-        .eq("leader_id", req.userId); // WHERE leader_id = req.userID
+      .from("attendance")
+      .select(
+        `
+ *,
+ attendance_terms(
+    year,
+    term,
+    weeks
+ )
+`,
+      )
+      .eq("leader_id", req.userId);
 
-    // Filter by year if provided
-    if (year) {
-      query = query.eq("year", Number(year));
+    if (term_id) {
+      query = query.eq("term_id", Number(term_id));
     }
 
-    // Filter by term if provided
-    if (term) {
-      query = query.eq("term", Number(term));
-    }
+    const { data, error } = await query.order("week", { ascending: true });
 
-    const { data, error } = await query
-      .order("week", { ascending: false })
-      .order("kidid");
-    if (error) return res.status(400).json({ error: error.message });
+    if (error)
+      return res.status(400).json({
+        error: error.message,
+      });
+
     res.json(data);
   } catch (err) {
-    console.error("Error fetching attendance:", err);
-    res.status(500).json({ error: "Failed to fetch attendance" });
+    console.error(err);
+
+    res.status(500).json({
+      error: "Failed fetching attendance",
+    });
   }
 });
 
@@ -71,11 +114,12 @@ router.get("/:id", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params;
+    const visibleOwners = await getVisibleTermOwners(supabase, req.userId);
     const { data, error } = await supabase
       .from("attendance")
       .select("*")
       .eq("id", id) // WHERE id = req.userID
-      .eq("leader_id", req.userId) // WHERE leader_id = req.userID
+      .in("leader_id", visibleOwners.length > 0 ? visibleOwners : [req.userId])
       .single(); // expects EXACTLY one row (throws error if 0 or >1)
 
     if (error || !data) {
@@ -96,13 +140,20 @@ router.get("/:id", async (req, res) => {
  * - status must match allowed enum if provided
  * - kid must belong to authenticated user
  */
+
+/**
+ * @route POST /attendance
+ * @desc Create a new attendance record
+ */
 router.post("/", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
-    const { kidId, week, status, reason, name, term, year } = req.body;
+    const { kidId, week, status, reason, name, term_id } = req.body;
 
-    if (!kidId || !week) {
-      return res.status(400).json({ error: "kidId and week are required" });
+    if (!kidId || !week || !term_id) {
+      return res
+        .status(400)
+        .json({ error: "kidId, week and term_id are required" });
     }
 
     const validStatuses = ["coming", "maybe", "not coming"];
@@ -113,14 +164,30 @@ router.post("/", async (req, res) => {
     const { data: kidCheck, error: kidError } = await supabase
       .from("kids")
       .select("name")
-      .eq("id", kidId) // WHERE id = kidId
-      .eq("leader_id", req.userId) // WHERE leader_id = req.userID
+      .eq("id", kidId)
+      .eq("leader_id", req.userId)
       .single();
 
     if (kidError || !kidCheck) {
       return res
         .status(404)
         .json({ error: "Kid not found or does not belong to this user" });
+    }
+
+    // ↓↓↓ REPLACE THE OLD TERM CHECK WITH THIS ↓↓↓
+    const visibleCreators = await getVisibleTermCreators(supabase, req.userId);
+    const { data: termCheck, error: termError } = await supabase
+      .from("attendance_terms")
+      .select("id")
+      .eq("id", term_id)
+      .in("created_by", visibleCreators)
+      .single();
+    // ↑↑↑ REPLACE THE OLD TERM CHECK WITH THIS ↑↑↑
+
+    if (termError || !termCheck) {
+      return res
+        .status(404)
+        .json({ error: "Term not found or does not belong to user" });
     }
 
     const { data, error } = await supabase
@@ -131,14 +198,15 @@ router.post("/", async (req, res) => {
         week,
         status: status || "maybe",
         reason: reason || null,
-        term: term || null,
-        year: year || null,
-        leader_id: req.userId, // Attaches record to logged-in user
+        term_id,
+        leader_id: req.userId,
       })
       .select()
       .single();
 
-    if (error) return res.status(400).json({ error: error.message });
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
 
     res.status(201).json(data);
   } catch (err) {
@@ -182,7 +250,7 @@ router.patch("/:id", async (req, res) => {
 
     const { data, error } = await supabase
       .from("attendance")
-        // Update attendance SET
+      // Update attendance SET
       .update(updatePayload)
       .eq("id", id) // WHERE id = record to update
       .eq("leader_id", req.userId) // extra safety: ensures user owns record
@@ -198,6 +266,317 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
+router.delete("/term/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+
+  const { data, error } = await supabase
+    .from("attendance_terms")
+    .delete()
+    .eq("id", req.params.id)
+    .eq("created_by", req.userId)
+    .select();
+
+  if (error) {
+    return res.status(400).json({
+      error: error.message,
+    });
+  }
+
+  if (!data || data.length === 0) {
+    return res.status(404).json({
+      error: "Term not found",
+    });
+  }
+
+  res.json({
+    message: "Term deleted",
+  });
+});
+
+// Adding years and terms to the attendance table -------------
+/**
+ * @route POST /attendance/year
+ * @desc Add a new year (create attendance records for all kids)
+ * @access Public
+ */
+router.post("/year", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+  try {
+    const { year } = req.body;
+    if (!year) {
+      return res.status(400).json({ error: "Year required" });
+    }
+
+    // Guard: only pastors can create years
+    const { data: currentUser, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("leader_id", req.userId)
+      .single();
+
+    if (userError || currentUser?.role?.toLowerCase() !== "pastor") {
+      return res.status(403).json({ error: "Pastor access required" });
+    }
+
+    const term = 1;
+    const weeks = 10;
+
+    // 1. Find or create the ONE shared term row for (year, term:1)
+    let { data: termData, error: termFetchError } = await supabase
+      .from("attendance_terms")
+      .select("*")
+      .eq("year", year)
+      .eq("term", term)
+      .maybeSingle();
+
+    if (termFetchError) {
+      return res.status(400).json({ error: termFetchError.message });
+    }
+
+    if (!termData) {
+      const { data: newTerm, error: termInsertError } = await supabase
+        .from("attendance_terms")
+        .insert({ year, term, weeks, created_by: req.userId })
+        .select()
+        .single();
+
+      if (termInsertError) {
+        return res.status(400).json({ error: termInsertError.message });
+      }
+      termData = newTerm;
+    }
+
+    // 2. Fan out attendance rows to every leader in this pastor's hierarchy
+    const ownerIds = await getVisibleTermOwners(supabase, req.userId);
+    const createdRecords = [];
+
+    for (const ownerId of ownerIds) {
+      const { data: existingAttendance, error: existingError } = await supabase
+        .from("attendance")
+        .select("id")
+        .eq("term_id", termData.id)
+        .eq("leader_id", ownerId)
+        .limit(1);
+
+      if (existingError)
+        return res.status(400).json({ error: existingError.message });
+      if (existingAttendance.length > 0) continue;
+
+      const { data: kids, error: kidsError } = await supabase
+        .from("kids")
+        .select("id, name, leader_id")
+        .eq("leader_id", ownerId);
+
+      if (kidsError) return res.status(400).json({ error: kidsError.message });
+
+      const records = [];
+      for (const kid of kids) {
+        for (let week = 1; week <= termData.weeks; week++) {
+          records.push({
+            kidid: kid.id,
+            name: kid.name,
+            week,
+            term_id: termData.id,
+            status: "maybe",
+            reason: "",
+            leader_id: ownerId,
+          });
+        }
+      }
+
+      if (records.length > 0) {
+        const { data: inserted, error: insertError } = await supabase
+          .from("attendance")
+          .insert(records)
+          .select();
+        if (insertError)
+          return res.status(400).json({ error: insertError.message });
+        createdRecords.push(...inserted);
+      }
+    }
+
+    res.json({
+      message: `Year ${year} ready for ${ownerIds.length} leader scope(s)`,
+      term: termData,
+      createdRecords,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed creating year" });
+  }
+});
+
+/**
+ * @route POST /attendance/term
+ * @desc Add a new term (create attendance records for all kids for the new term)
+ * @access Public
+ */
+router.post("/term", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+  try {
+    const { year, term, weeks = 10 } = req.body;
+    if (!year || !term) {
+      return res.status(400).json({ error: "Year and term are required" });
+    }
+
+    // Guard: only pastors can create terms
+    const { data: currentUser, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("leader_id", req.userId)
+      .single();
+
+    if (userError || currentUser?.role?.toLowerCase() !== "pastor") {
+      return res.status(403).json({ error: "Pastor access required" });
+    }
+
+    // 1. Find or create the ONE shared term row for (year, term)
+    let { data: termData, error: termFetchError } = await supabase
+      .from("attendance_terms")
+      .select("*")
+      .eq("year", year)
+      .eq("term", term)
+      .maybeSingle();
+
+    if (termFetchError) {
+      return res.status(400).json({ error: termFetchError.message });
+    }
+
+    if (!termData) {
+      const { data: newTerm, error: termInsertError } = await supabase
+        .from("attendance_terms")
+        .insert({ year, term, weeks, created_by: req.userId })
+        .select()
+        .single();
+
+      if (termInsertError) {
+        return res.status(400).json({ error: termInsertError.message });
+      }
+      termData = newTerm;
+    }
+
+    // 2. Fan out attendance rows to every leader in this pastor's hierarchy
+    const ownerIds = await getVisibleTermOwners(supabase, req.userId);
+    const createdRecords = [];
+
+    for (const ownerId of ownerIds) {
+      // Skip a leader who already has rows for this term (idempotent retries)
+      const { data: existingAttendance, error: existingError } = await supabase
+        .from("attendance")
+        .select("id")
+        .eq("term_id", termData.id)
+        .eq("leader_id", ownerId)
+        .limit(1);
+
+      if (existingError)
+        return res.status(400).json({ error: existingError.message });
+      if (existingAttendance.length > 0) continue;
+
+      const { data: kids, error: kidsError } = await supabase
+        .from("kids")
+        .select("id, name, leader_id")
+        .eq("leader_id", ownerId);
+
+      if (kidsError) return res.status(400).json({ error: kidsError.message });
+
+      const records = [];
+      for (const kid of kids) {
+        for (let week = 1; week <= termData.weeks; week++) {
+          records.push({
+            kidid: kid.id,
+            name: kid.name,
+            week,
+            term_id: termData.id,
+            status: "maybe",
+            reason: "",
+            leader_id: ownerId,
+          });
+        }
+      }
+
+      if (records.length > 0) {
+        const { data: inserted, error: insertError } = await supabase
+          .from("attendance")
+          .insert(records)
+          .select();
+        if (insertError)
+          return res.status(400).json({ error: insertError.message });
+        createdRecords.push(...inserted);
+      }
+    }
+
+    res.json({
+      message: `Term ${term} ${year} ready for ${ownerIds.length} leader scope(s)`,
+      term: termData,
+      createdRecords,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed creating term" });
+  }
+});
+
+// Deleting years and terms to the attendance table -------------
+/**
+ * @route DELETE/attendance/year
+ * @desc Delete a year
+ * @access public
+ */
+router.delete("/year/:year", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+
+  try {
+    const { year } = req.params;
+
+    // 1. Find terms belonging to year
+
+    const { data: terms, error: termError } = await supabase
+      .from("attendance_terms")
+      .select("id")
+      .eq("year", Number(year))
+      .eq("created_by", req.userId);
+
+    if (termError) {
+      return res.status(400).json({
+        error: termError.message,
+      });
+    }
+
+    if (!terms || terms.length === 0) {
+      return res.status(404).json({
+        error: "No terms found for this year",
+      });
+    }
+
+    // 2. Delete terms
+    // Cascade deletes attendance automatically
+
+    const { error: deleteError } = await supabase
+      .from("attendance_terms")
+      .delete()
+      .in(
+        "id",
+        terms.map((t) => t.id),
+      );
+
+    if (deleteError) {
+      return res.status(400).json({
+        error: deleteError.message,
+      });
+    }
+
+    res.json({
+      message: `Year ${year} deleted successfully`,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: "Failed deleting year",
+    });
+  }
+});
+
 /**
  * @route DELETE /attendance/:id
  * @desc Delete a single attendance record
@@ -208,7 +587,7 @@ router.delete("/:id", async (req, res) => {
     const { id } = req.params;
     const { error } = await supabase
       .from("attendance")
-        // Delete from Attendance
+      // Delete from Attendance
       .delete()
       .eq("id", id)
       .eq("leader_id", req.userId);
@@ -222,158 +601,12 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// Adding years and terms to the attendance table -------------
-/**
- * @route POST /attendance/year
- * @desc Add a new year (create attendance records for all kids)
- * @access Public
- */
-router.post("/year", async (req, res) => {
-  const supabase = createSupabaseClient(req);
-  try {
-    const { year } = req.body;
-
-    if (!year) return res.status(400).json({ error: "Year is required" });
-
-    // Check if the year already exists
-    const { count, error: countError } = await supabase
-      .from("attendance")
-      .select("leader_id", { count: "exact", head: true })
-      .eq("year", year)
-      .eq("leader_id", req.userId);
-    if (countError) return res.status(400).json({ error: countError.message });
-    if (count > 0) {
-      return res.status(400).json({ error: `Year ${year} already exists.` });
-    }
-
-    // Fetch all kids for the current user
-    const { data: kids, error: kidsError } = await supabase
-      .from("kids")
-      .select("id, name")
-      .eq("leader_id", req.userId);
-    if (kidsError) return res.status(400).json({ error: kidsError.message });
-
-    // By default, term 1 and 10 weeks
-    const term = 1;
-    const weeks = 10;
-
-    // Generate attendance records for each kid for each week
-    const records = [];
-    for (const kid of kids) {
-      for (let week = 1; week <= weeks; week++) {
-        records.push({
-          kidid: kid.id,
-          name: kid.name,
-          week,
-          status: "maybe",
-          reason: "",
-          term,
-          year,
-          leader_id: req.userId,
-        });
-      }
-    }
-
-    // Insert into attendance table
-    const { data: createdRecords, error: insertError } = await supabase
-      .from("attendance")
-      .insert(records)
-      .select();
-    if (insertError) return res.status(400).json({ error: insertError.message });
-
-    res.json({
-      message: `Year ${year} added with default term 1 and 10 weeks`,
-      createdRecords,
-    });
-  } catch (err) {
-    console.error("Error adding year: ", err);
-    res.status(500).json({ error: "Failed to add year" });
-  }
-});
-
-/**
- * @route POST /attendance/term
- * @desc Add a new term (create attendance records for all kids for the new term)
- * @access Public
- */
-router.post("/term", async (req, res) => {
-  const supabase = createSupabaseClient(req);
-  try {
-    const { year, term, weeks = 10 } = req.body;
-
-    if (!year || !term)
-      return res.status(400).json({ error: "Year & Term is required" });
-
-    // Fetch all kids for the current user
-    const { data: kids, error: kidsError } = await supabase
-      .from("kids")
-      .select("id, name")
-      .eq("leader_id", req.userId);
-    if (kidsError) return res.status(400).json({ error: kidsError.message });
-
-    // Generate attendance records
-    const records = [];
-    for (const kid of kids) {
-      for (let week = 1; week <= weeks; week++) {
-        records.push({
-          kidid: kid.id,
-          name: kid.name,
-          week,
-          status: "maybe",
-          reason: "",
-          term,
-          year,
-          leader_id: req.userId,
-        });
-      }
-    }
-
-    // Insert into attendance tables
-    const { data, error: insertError } = await supabase
-      .from("attendance")
-      .insert(records)
-      .select();
-    if (insertError) return res.status(400).json({ error: insertError.message });
-
-    res.json({
-      message: `Term ${term} added for year ${year} with ${weeks} weeks`,
-      createdRecords: data,
-    });
-  } catch (err) {
-    console.log("Error adding term: ", err);
-    res.status(500).json({ error: "Failed to add term" });
-  }
-});
-
-// Deleting years and terms to the attendance table -------------
-/**
- * @route DELETE/attendance/year
- * @desc Delete a year
- * @access public
- */
-router.delete("/year/:year", async (req, res) => {
-  const supabase = createSupabaseClient(req);
-  try {
-    const { year } = req.params;
-    const { error } = await supabase
-      .from("attendance")
-      .delete()
-      .eq("year", year) // Delete all records where year = X
-      .eq("leader_id", req.userId);
-    if (error) return res.status(400).json({ error: error.message });
-
-    res.json({ message: `Year ${year} deleted succesfully` });
-  } catch (err) {
-    console.error("Error deleting attendance record: ", err);
-    res.status(500).json({ error: "Failed to delete year" });
-  }
-});
-
 /**
  * @route DELETE/attendance/term
  * @desc Delete a term in a year
  * @access public
  */
+/*
 router.delete("/term/:year/:term", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
@@ -407,7 +640,7 @@ router.delete("/term/:year/:term", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Failed to delete term" });
   }
-});
+}); */
 
 /**
  * @route POST /attendance/bulk
@@ -430,12 +663,7 @@ router.post("/bulk", async (req, res) => {
     // Validate & sanitize records
     // -----------------------------
     const cleanedRecords = records.map((r, index) => {
-      if (
-          r.kidid == null ||
-          r.week == null ||
-          r.term == null ||
-          r.year == null
-      ){
+      if (r.kidid == null || r.week == null || r.term_id == null) {
         throw new Error(`Missing required fields at index ${index}`);
       }
 
@@ -445,9 +673,9 @@ router.post("/bulk", async (req, res) => {
 
       return {
         kidid: r.kidid,
+
         week: Number(r.week),
-        term: Number(r.term),
-        year: Number(r.year),
+        term_id: Number(r.term_id),
         status: r.status || "maybe",
         reason: r.reason || "",
         leader_id: req.userId,
@@ -459,12 +687,12 @@ router.post("/bulk", async (req, res) => {
     // BULK UPSERT (insert or update)
     // -----------------------------
     const { data, error } = await supabase
-        .from("attendance")
-        .upsert(cleanedRecords, {
-          onConflict: "kidid,week,term,year,leader_id"
-          // if a row already exists the same -> UPDATE instead of insert
-        })
-        .select();
+      .from("attendance")
+      .upsert(cleanedRecords, {
+        onConflict: "kidid,week,term_id,leader_id",
+        // if a row already exists the same -> UPDATE instead of insert
+      })
+      .select();
 
     if (error) {
       console.error("Bulk upsert error:", error);

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const supabaseAdmin = require("../lib/supabaseClient");
+const { getManagedLeaderIds } = require("../lib/attendanceHierarchy");
 
 /**
  * @route GET /leaders
@@ -36,6 +37,12 @@ router.get("/", async(req,res)=>{
         }
 
 
+        const managedIds = await getManagedLeaderIds(supabaseAdmin, req.userId);
+
+        if (managedIds.length === 0) {
+            return res.json([]);
+        }
+
         const {data:leaders,error}
             = await supabaseAdmin
             .from("users")
@@ -46,6 +53,7 @@ router.get("/", async(req,res)=>{
                 "role",
                 "leader"
             )
+            .in("leader_id", managedIds)
             .order(
                 "user_name",
                 {
@@ -88,21 +96,12 @@ router.get("/:leaderId/kids", async(req,res)=>{
         const {leaderId}=req.params;
 
 
-        // Verify pastor
-        const {data:currentUser,error:userError}
-            = await supabaseAdmin
-            .from("users")
-            .select("role")
-            .eq("leader_id",req.userId)
-            .single();
+        const managedIds = await getManagedLeaderIds(supabaseAdmin, req.userId);
+        const isAllowed = managedIds.includes(Number(leaderId)) || managedIds.includes(leaderId);
 
-
-        if(
-            userError ||
-            currentUser.role.toLowerCase() !== "pastor"
-        ){
+        if (!isAllowed) {
             return res.status(403).json({
-                error:"Pastor access required"
+                error:"You do not have access to this leader"
             });
         }
 
@@ -152,20 +151,12 @@ router.get("/:leaderId/stats", async(req,res)=>{
         const {leaderId}=req.params;
 
 
-        const {data:currentUser}
-            = await supabaseAdmin
-            .from("users")
-            .select("role")
-            .eq("leader_id",req.userId)
-            .single();
+        const managedIds = await getManagedLeaderIds(supabaseAdmin, req.userId);
+        const isAllowed = managedIds.includes(Number(leaderId)) || managedIds.includes(leaderId);
 
-
-        if(
-            currentUser?.role?.toLowerCase()
-            !=="pastor"
-        ){
+        if (!isAllowed) {
             return res.status(403).json({
-                error:"Pastor access required"
+                error:"You do not have access to this leader"
             });
         }
 
@@ -250,6 +241,16 @@ router.get("/:leaderId/attendance", async(req,res)=>{
         const {leaderId}=req.params;
 
 
+        const managedIds = await getManagedLeaderIds(supabaseAdmin, req.userId);
+        const isAllowed = managedIds.includes(Number(leaderId)) || managedIds.includes(leaderId);
+
+        if (!isAllowed) {
+            return res.status(403).json({
+                error:"You do not have access to this leader"
+            });
+        }
+
+
         const {data:kids,error:kidError}
             = await supabaseAdmin
             .from("kids")
@@ -272,7 +273,7 @@ router.get("/:leaderId/attendance", async(req,res)=>{
         const {data,error}
             = await supabaseAdmin
             .from("attendance")
-            .select("*")
+            .select(`*, attendance_terms(year, term, weeks)`)
             .in("kidid",kidIds);
 
 
@@ -366,20 +367,12 @@ router.get("/:leaderId", async(req,res)=>{
         const {leaderId}=req.params;
 
 
-        // Check current user's role
-        const {data:currentUser,error}=await supabaseAdmin
-            .from("users")
-            .select("role")
-            .eq("leader_id",req.userId)
-            .single();
+        const managedIds = await getManagedLeaderIds(supabaseAdmin, req.userId);
+        const isAllowed = managedIds.includes(Number(leaderId)) || managedIds.includes(leaderId);
 
-
-        if(
-            error ||
-            currentUser.role.toLowerCase() !== "pastor"
-        ){
+        if (!isAllowed) {
             return res.status(403).json({
-                error:"Pastor access required"
+                error:"You do not have access to this leader"
             });
         }
 

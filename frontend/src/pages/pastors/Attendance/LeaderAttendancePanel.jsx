@@ -45,8 +45,7 @@ export default function LeaderAttendancePanel({ attendance }) {
   const [openWeek, setOpenWeek] = useState(null);
 
   const availableYears = useMemo(() => {
-    return [...new Set(attendance.map((record) => Number(record.year)))]
-      .filter(Boolean)
+    return [...new Set(attendance.map((record) => Number(record.attendance_terms?.year ?? record.year)).filter(Boolean))]
       .sort((a, b) => b - a);
   }, [attendance]);
 
@@ -55,8 +54,11 @@ export default function LeaderAttendancePanel({ attendance }) {
     return [
       ...new Set(
         attendance
-          .filter((record) => Number(record.year) === Number(selectedYear))
-          .map((record) => Number(record.term)),
+          .filter(
+            (record) =>
+              Number(record.attendance_terms?.year ?? record.year) === Number(selectedYear),
+          )
+          .map((record) => Number(record.attendance_terms?.term ?? record.term)),
       ),
     ]
       .filter(Boolean)
@@ -78,11 +80,11 @@ export default function LeaderAttendancePanel({ attendance }) {
 
   const filteredAttendance = useMemo(() => {
     if (!selectedYear || !selectedTerm) return [];
-    return attendance.filter(
-      (record) =>
-        Number(record.year) === Number(selectedYear) &&
-        Number(record.term) === Number(selectedTerm),
-    );
+    return attendance.filter((record) => {
+      const recordYear = Number(record.attendance_terms?.year ?? record.year);
+      const recordTerm = Number(record.attendance_terms?.term ?? record.term);
+      return recordYear === Number(selectedYear) && recordTerm === Number(selectedTerm);
+    });
   }, [attendance, selectedYear, selectedTerm]);
 
   const groupedWeeks = useMemo(() => {

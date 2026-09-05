@@ -39,7 +39,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await syncUser();
 
-      setProfile(response.user);
+      if (response?.user) {
+        setProfile(response.user);
+      }
     } catch (error) {
       console.error("Error fetching user profile:", error);
     }

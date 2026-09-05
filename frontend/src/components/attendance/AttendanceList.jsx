@@ -8,6 +8,7 @@ import AttendancePageSkeleton from "./AttendanceSkeleton/AttendancePageSkeleton.
 import {
   addBulkAttendance,
   getAttendance,
+  getAttendanceTerms,
   updateAttendance,
 } from "../../api/attendance.js";
 import { fetchKids } from "../../api/kids.js";
@@ -16,6 +17,7 @@ export default function AttendanceList() {
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
   const [allAttendance, setAllAttendance] = useState([]);
+  const [terms, setTerms] = useState([]);
   const [kids, setKids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
@@ -26,7 +28,7 @@ export default function AttendanceList() {
 
       if (!Array.isArray(data)) {
         setAllAttendance([]);
-        return;
+        return [];
       }
 
       const normalized = data.map((record) => ({
@@ -35,23 +37,51 @@ export default function AttendanceList() {
       }));
 
       setAllAttendance(normalized);
+      return normalized;
     } catch (error) {
       console.error("Failed to fetch attendance:", error);
       toast.error("Failed to load attendance.");
+      return [];
     }
   }, []);
+
+  const fetchAllTerms = useCallback(async () => {
+    try {
+      const data = await getAttendanceTerms();
+      const normalized = Array.isArray(data) ? data : [];
+      setTerms(normalized);
+      return normalized;
+    } catch (error) {
+      console.error("Failed to fetch attendance terms:", error);
+      toast.error("Failed to load attendance terms.");
+      return [];
+    }
+  }, []);
+
+  const refreshPageData = useCallback(async () => {
+    const [attendanceData, termsData] = await Promise.all([
+      fetchAllAttendance(),
+      fetchAllTerms(),
+    ]);
+
+    setAllAttendance(Array.isArray(attendanceData) ? attendanceData : []);
+    setTerms(Array.isArray(termsData) ? termsData : []);
+  }, [fetchAllAttendance, fetchAllTerms]);
 
   useEffect(() => {
     const fetchPageData = async () => {
       try {
         setLoading(true);
 
-        const [kidsData] = await Promise.all([
+        const [kidsData, attendanceData, termsData] = await Promise.all([
           fetchKids(),
           fetchAllAttendance(),
+          fetchAllTerms(),
         ]);
 
         setKids(Array.isArray(kidsData) ? kidsData : []);
+        setAllAttendance(Array.isArray(attendanceData) ? attendanceData : []);
+        setTerms(Array.isArray(termsData) ? termsData : []);
       } catch (error) {
         console.error("Failed to load attendance page:", error);
         toast.error("Failed to load attendance page.");
@@ -61,27 +91,20 @@ export default function AttendanceList() {
     };
 
     fetchPageData();
-  }, [fetchAllAttendance]);
+  }, [fetchAllAttendance, fetchAllTerms]);
 
   const availableYears = useMemo(() => {
-    return [...new Set(allAttendance.map((record) => Number(record.year)))]
-      .filter(Boolean)
+    return [...new Set(terms.map((term) => Number(term.year)).filter(Boolean))]
       .sort((a, b) => b - a);
-  }, [allAttendance]);
+  }, [terms]);
 
   const availableTerms = useMemo(() => {
     if (!selectedYear) return [];
 
-    return [
-      ...new Set(
-        allAttendance
-          .filter((record) => Number(record.year) === Number(selectedYear))
-          .map((record) => Number(record.term)),
-      ),
-    ]
-      .filter(Boolean)
-      .sort((a, b) => a - b);
-  }, [allAttendance, selectedYear]);
+    return terms
+      .filter((term) => Number(term.year) === Number(selectedYear))
+      .sort((a, b) => Number(a.term) - Number(b.term));
+  }, [selectedYear, terms]);
 
   useEffect(() => {
     if (!selectedYear && availableYears.length > 0) {
@@ -90,10 +113,13 @@ export default function AttendanceList() {
   }, [availableYears, selectedYear]);
 
   useEffect(() => {
-    if (!selectedYear || availableTerms.length === 0) return;
+    if (!selectedYear || availableTerms.length === 0) {
+      setSelectedTerm(null);
+      return;
+    }
 
-    if (!availableTerms.includes(Number(selectedTerm))) {
-      setSelectedTerm(availableTerms.at(-1));
+    if (!selectedTerm || !availableTerms.some((term) => Number(term.id) === Number(selectedTerm))) {
+      setSelectedTerm(availableTerms[availableTerms.length - 1]?.id ?? null);
     }
   }, [availableTerms, selectedYear, selectedTerm]);
 
@@ -101,11 +127,17 @@ export default function AttendanceList() {
     if (!selectedYear || !selectedTerm || kids.length === 0) return [];
 
     return allAttendance
-      .filter(
-        (record) =>
+      .filter((record) => {
+        const recordTermId = Number(record.term_id ?? record.term);
+        if (recordTermId) {
+          return recordTermId === Number(selectedTerm);
+        }
+
+        return (
           Number(record.year) === Number(selectedYear) &&
-          Number(record.term) === Number(selectedTerm),
-      )
+          Number(record.term) === Number(selectedTerm)
+        );
+      })
       .map((record) => {
         const kidId = record.kidId ?? record.kidid;
         const kid = kids.find((item) => Number(item.id) === Number(kidId));
@@ -203,11 +235,16 @@ export default function AttendanceList() {
           return null;
         }
 
+        const matchedTerm = availableTerms.find(
+          (term) =>
+            Number(term.year) === Number(row.year) &&
+            Number(term.term) === Number(row.term),
+        );
+
         return {
           kidid: kid.id,
           week: Number(row.week),
-          term: Number(row.term),
-          year: Number(row.year),
+          term_id: matchedTerm?.id ?? Number(row.term_id ?? row.term),
           status: row.status?.toLowerCase() || "maybe",
           reason: row.reason || "",
         };
@@ -256,7 +293,7 @@ export default function AttendanceList() {
           onYearChange={setSelectedYear}
           onTermChange={setSelectedTerm}
           hideWeek
-          refreshAttendance={fetchAllAttendance}
+          refreshAttendance={refreshPageData}
         />
 
         {selectedYear && selectedTerm ? (

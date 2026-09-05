@@ -12,7 +12,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { addYear, addTerm, deleteTerm } from "../../api/attendance";
 import { motion } from "framer-motion";
 
-export default function AddYearTerm({ onUpdate, availableYears = [] }) {
+export default function AddYearTerm({ onUpdate, availableYears = [], availableTerms = [] }) {
   const latestYear =
     // If backend returns years, use the latest one, else fallback to current system year
     availableYears.length > 0
@@ -89,9 +89,17 @@ export default function AddYearTerm({ onUpdate, availableYears = [] }) {
 
     setLoading(true);
     try {
-      const response = await deleteTerm(year, newTerm);
-      // DELETE /attendance/term/:year/:term
-      // removes ALL attendance rows matching filters
+      const matchedTerm = availableTerms.find(
+        (term) =>
+          Number(term.year) === Number(year) &&
+          Number(term.term) === Number(newTerm),
+      );
+
+      if (!matchedTerm?.id) {
+        throw new Error("No matching term found to delete.");
+      }
+
+      const response = await deleteTerm(matchedTerm.id);
       alert(response.message || "Term deleted successfully!");
       onUpdate();
     } catch (err) {
