@@ -22,16 +22,8 @@ router.get("/", async (req, res) => {
   const supabase = createSupabaseClient(req);
 
   try {
-    const {
-      kidid,
-      purpose,
-      month,
-      year,
-      sortBy,
-      order,
-      page,
-      limit,
-    } = req.query;
+    const { kidid, purpose, month, year, sortBy, order, page, limit } =
+      req.query;
 
     // Fetch user role
     const { data: currentUser } = await supabaseAdmin
@@ -43,10 +35,10 @@ router.get("/", async (req, res) => {
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
     let query = supabase
-        .from("catchups")
-        .select("*, kids(name, status_code, baptised, sunday_regulars)", {
-          count: "exact",
-        });
+      .from("catchups")
+      .select("*, kids(name, status_code, baptised, sunday_regulars)", {
+        count: "exact",
+      });
 
     // Leaders only see their own catchups
     if (!isPastor) {
@@ -73,14 +65,14 @@ router.get("/", async (req, res) => {
 
       const startDate = `${y}-${m}-01`;
       const endDate = new Date(y, month, 0) // last day of month
-          .toISOString()
-          .split("T")[0];
+        .toISOString()
+        .split("T")[0];
 
-      query = query
-          .gte("catchupdate", startDate)
-          .lte("catchupdate", endDate);
+      query = query.gte("catchupdate", startDate).lte("catchupdate", endDate);
     } else if (year) {
-      query = query.gte("catchupdate", `${year}-01-01`).lte("catchupdate", `${year}-12-31`);
+      query = query
+        .gte("catchupdate", `${year}-01-01`)
+        .lte("catchupdate", `${year}-12-31`);
     }
 
     // --------------------
@@ -98,8 +90,8 @@ router.get("/", async (req, res) => {
     const offset = (pageNum - 1) * limitNum;
 
     query = query
-        .order(sortColumn, { ascending: sortOrder })
-        .range(offset, offset + limitNum - 1);
+      .order(sortColumn, { ascending: sortOrder })
+      .range(offset, offset + limitNum - 1);
 
     const { data, error, count } = await query;
 
@@ -159,7 +151,9 @@ router.delete("/pastor/:id", async (req, res) => {
     }
 
     if (currentUser?.role?.toLowerCase() !== "pastor") {
-      return res.status(403).json({ error: "Only pastors can delete leader catchups" });
+      return res
+        .status(403)
+        .json({ error: "Only pastors can delete leader catchups" });
     }
 
     const { data, error } = await supabaseAdmin
@@ -200,10 +194,7 @@ router.get("/:id", async (req, res) => {
 
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
-    let query = supabase
-        .from("catchups")
-        .select("*")
-        .eq("catchupid", id);
+    let query = supabase.from("catchups").select("*").eq("catchupid", id);
 
     // Leaders only see their own catchups
     if (!isPastor) {
@@ -259,14 +250,11 @@ router.post("/", async (req, res) => {
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
     // Check if kid exists and user has access
-    let kidQuery = supabase
-        .from("kids")
-        .select("id")
-        .eq("id", kidid);
+    let kidQuery = supabase.from("kids").select("id").eq("id", kidid);
 
     // Leaders only create catchups for their own kids
     if (!isPastor) {
-        kidQuery = kidQuery.eq("leader_id", req.userId);
+      kidQuery = kidQuery.eq("leader_id", req.userId);
     }
 
     const { data: kidCheck } = await kidQuery.single();
@@ -276,18 +264,18 @@ router.post("/", async (req, res) => {
     }
 
     const { data, error } = await supabase
-        .from("catchups")
-        .insert({
-          kidid,
-          catchupdate,
-          catchupstarttime,
-          catchupendtime,
-          catchuppurpose,
-          catchupcomments,
-          leader_id: req.userId,
-        })
-        .select()
-        .single();
+      .from("catchups")
+      .insert({
+        kidid,
+        catchupdate,
+        catchupstarttime,
+        catchupendtime,
+        catchuppurpose,
+        catchupcomments,
+        leader_id: req.userId,
+      })
+      .select()
+      .single();
 
     if (error) return res.status(400).json({ error: error.message });
 
@@ -317,12 +305,12 @@ router.patch("/:id", async (req, res) => {
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
     let updateQuery = supabase
-        .from("catchups")
-        .update({
-          ...req.body,
-          updatedate: new Date(),
-        })
-        .eq("catchupid", id);
+      .from("catchups")
+      .update({
+        ...req.body,
+        updatedate: new Date(),
+      })
+      .eq("catchupid", id);
 
     // Leaders only update their own catchups
     if (!isPastor) {
@@ -361,10 +349,7 @@ router.delete("/:id", async (req, res) => {
 
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
-    let deleteQuery = supabase
-        .from("catchups")
-        .delete()
-        .eq("catchupid", id);
+    let deleteQuery = supabase.from("catchups").delete().eq("catchupid", id);
 
     // Leaders only delete their own catchups
     if (!isPastor) {
@@ -407,10 +392,7 @@ router.delete("/", async (req, res) => {
 
     const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
-    let deleteQuery = supabase
-        .from("catchups")
-        .delete()
-        .in("catchupid", ids);
+    let deleteQuery = supabase.from("catchups").delete().in("catchupid", ids);
 
     // Leaders only delete their own catchups
     if (!isPastor) {
