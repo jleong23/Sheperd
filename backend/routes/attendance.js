@@ -25,6 +25,7 @@ const createSupabaseClient = require("../supabaseClient");
 const {
   getVisibleTermOwners,
   getVisibleTermCreators,
+  getManagedLeaderIds,
 } = require("../lib/attendanceHierarchy");
 
 /**
@@ -238,7 +239,6 @@ router.patch("/:id", async (req, res) => {
       });
     }
 
-    // Validate status enum
     const validStatuses = ["coming", "maybe", "not coming"];
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid attendance status" });
@@ -248,12 +248,14 @@ router.patch("/:id", async (req, res) => {
     if (status !== undefined) updatePayload.status = status;
     if (reason !== undefined) updatePayload.reason = reason;
 
+    // Allow the record's own leader OR a pastor managing that leader
+    const managedIds = await getManagedLeaderIds(supabase, req.userId);
+
     const { data, error } = await supabase
       .from("attendance")
-      // Update attendance SET
       .update(updatePayload)
-      .eq("id", id) // WHERE id = record to update
-      .eq("leader_id", req.userId) // extra safety: ensures user owns record
+      .eq("id", id)
+      .in("leader_id", managedIds)
       .select()
       .single();
 

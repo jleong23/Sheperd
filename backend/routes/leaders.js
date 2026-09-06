@@ -349,7 +349,6 @@ router.put("/kids/:kidId/transfer", async (req, res) => {
       return res.status(400).json({ error: "newLeaderId is required" });
     }
 
-    // Verify caller is a pastor
     const { data: currentUser, error: userError } = await supabaseAdmin
       .from("users")
       .select("role")
@@ -360,7 +359,6 @@ router.put("/kids/:kidId/transfer", async (req, res) => {
       return res.status(403).json({ error: "Pastor access required" });
     }
 
-    // Look up which leader currently owns this kid
     const { data: kidRecord, error: kidError } = await supabaseAdmin
       .from("kids")
       .select("leader_id")
@@ -371,7 +369,6 @@ router.put("/kids/:kidId/transfer", async (req, res) => {
       return res.status(404).json({ error: "Kid not found" });
     }
 
-    // Verify caller manages BOTH the current leader and the destination leader
     const managedIds = await getManagedLeaderIds(supabaseAdmin, req.userId);
 
     if (!managedIds.includes(kidRecord.leader_id)) {
@@ -399,6 +396,14 @@ router.put("/kids/:kidId/transfer", async (req, res) => {
       .from("catchups")
       .update({ leader_id: newLeaderId })
       .eq("kidid", kidId);
+
+    // NEW: keep attendance.leader_id in sync too
+    const { error: attendanceError } = await supabaseAdmin
+      .from("attendance")
+      .update({ leader_id: newLeaderId })
+      .eq("kidid", kidId);
+
+    if (attendanceError) throw attendanceError;
 
     res.json(data);
   } catch (err) {

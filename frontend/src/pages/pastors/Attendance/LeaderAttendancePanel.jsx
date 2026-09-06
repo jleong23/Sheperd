@@ -1,69 +1,175 @@
 import { useMemo, useState } from "react";
 import { Calendar, ChevronDown } from "lucide-react";
+import toast from "react-hot-toast";
 import ExportAttendance from "../../../components/attendance/ExportAttendance.jsx";
+// TODO: fix this path once confirmed — should point at your api/attendance.js
+import { updateAttendance } from "../../../api/attendance.js";
 
 function normalizeStatus(status) {
   return status?.toLowerCase().trim().replace(/\s+/g, "");
 }
 
-function StatusList({ title, records, emptyText }) {
-  return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-5">
-      <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-        {title}
-      </h3>
+const STATUS_STYLES = {
+  coming: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  maybe: "bg-amber-50 text-amber-700 border-amber-200",
+  "not coming": "bg-rose-50 text-rose-700 border-rose-200",
+};
 
-      {records.length === 0 ? (
-        <p className="py-2 text-sm text-slate-400 italic">{emptyText}</p>
-      ) : (
-        <ul className="space-y-2.5">
+const STATUS_LABELS = {
+  coming: "Coming",
+  maybe: "Maybe",
+  "not coming": "Not coming",
+};
+
+function AttendanceRow({ record, onSaved }) {
+  const [status, setStatus] = useState(record.status || "maybe");
+  const [reason, setReason] = useState(record.reason || "");
+  const [savingStatus, setSavingStatus] = useState(false);
+  const [savingReason, setSavingReason] = useState(false);
+
+  const handleStatusChange = async (e) => {
+    const newStatus = e.target.value;
+    const previous = status;
+    setStatus(newStatus);
+    setSavingStatus(true);
+
+    try {
+      const updated = await updateAttendance(record.id, { status: newStatus });
+      onSaved({ ...record, ...updated });
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      setStatus(previous);
+      toast.error("Couldn't update status. Try again.");
+    } finally {
+      setSavingStatus(false);
+    }
+  };
+
+  const handleReasonBlur = async () => {
+    if (reason === (record.reason || "")) return;
+
+    setSavingReason(true);
+    try {
+      const updated = await updateAttendance(record.id, { reason });
+      onSaved({ ...record, ...updated });
+    } catch (err) {
+      console.error("Failed to update reason:", err);
+      setReason(record.reason || "");
+      toast.error("Couldn't update reason. Try again.");
+    } finally {
+      setSavingReason(false);
+    }
+  };
+
+  return (
+    <tr className="border-t border-slate-100 hover:bg-slate-50/50">
+      <td className="px-5 py-3 text-sm font-semibold text-slate-900 whitespace-nowrap">
+        {record.name}
+      </td>
+      <td className="px-5 py-3">
+        <select
+          value={status}
+          onChange={handleStatusChange}
+          disabled={savingStatus}
+          className={`text-xs font-bold rounded-full border px-3 py-1.5 outline-none cursor-pointer transition-opacity ${STATUS_STYLES[normalizeStatus(status) === "notcoming" ? "not coming" : status] || STATUS_STYLES.maybe} ${savingStatus ? "opacity-50" : ""}`}
+        >
+          <option value="coming">Coming</option>
+          <option value="maybe">Maybe</option>
+          <option value="not coming">Not coming</option>
+        </select>
+      </td>
+      <td className="px-5 py-3">
+        <input
+          type="text"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          onBlur={handleReasonBlur}
+          disabled={savingReason}
+          placeholder="No reason given"
+          className="w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-sm text-slate-600 placeholder:text-slate-400 outline-none transition-colors hover:border-slate-200 focus:border-indigo-400 focus:bg-white disabled:opacity-50"
+        />
+      </td>
+    </tr>
+  );
+}
+
+function WeekTable({ records, onRecordSaved }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200">
+      <table className="w-full">
+        <thead>
+          <tr className="bg-slate-50 text-left">
+            <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+              Name
+            </th>
+            <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+              Status
+            </th>
+            <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+              Reason
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white">
           {records.map((record) => (
-            <li
+            <AttendanceRow
               key={record.id}
-              className="group flex flex-col rounded-xl bg-white p-3 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200 transition-all hover:shadow-md hover:ring-indigo-500/20"
-            >
-              <span className="font-semibold text-slate-900">
-                {record.name}
-              </span>
-              {record.reason && (
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                  <span className="font-medium text-slate-400">Reason:</span>{" "}
-                  {record.reason}
-                </p>
-              )}
-            </li>
+              record={record}
+              onSaved={onRecordSaved}
+            />
           ))}
-        </ul>
-      )}
+        </tbody>
+      </table>
     </div>
   );
 }
 
 export default function LeaderAttendancePanel({ attendance }) {
+  const [localAttendance, setLocalAttendance] = useState(attendance);
   const [selectedYear, setSelectedYear] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
   const [openWeek, setOpenWeek] = useState(null);
 
-  const availableYears = useMemo(() => {
-    return [...new Set(attendance.map((record) => Number(record.attendance_terms?.year ?? record.year)).filter(Boolean))]
-      .sort((a, b) => b - a);
+  useMemo(() => {
+    setLocalAttendance(attendance);
   }, [attendance]);
+
+  const handleRecordSaved = (updatedRecord) => {
+    setLocalAttendance((prev) =>
+      prev.map((r) =>
+        r.id === updatedRecord.id ? { ...r, ...updatedRecord } : r,
+      ),
+    );
+  };
+
+  const availableYears = useMemo(() => {
+    return [
+      ...new Set(
+        localAttendance
+          .map((record) => Number(record.attendance_terms?.year ?? record.year))
+          .filter(Boolean),
+      ),
+    ].sort((a, b) => b - a);
+  }, [localAttendance]);
 
   const availableTerms = useMemo(() => {
     if (!selectedYear) return [];
     return [
       ...new Set(
-        attendance
+        localAttendance
           .filter(
             (record) =>
-              Number(record.attendance_terms?.year ?? record.year) === Number(selectedYear),
+              Number(record.attendance_terms?.year ?? record.year) ===
+              Number(selectedYear),
           )
-          .map((record) => Number(record.attendance_terms?.term ?? record.term)),
+          .map((record) =>
+            Number(record.attendance_terms?.term ?? record.term),
+          ),
       ),
     ]
       .filter(Boolean)
       .sort((a, b) => a - b);
-  }, [attendance, selectedYear]);
+  }, [localAttendance, selectedYear]);
 
   useMemo(() => {
     if (!selectedYear && availableYears.length > 0) {
@@ -80,12 +186,15 @@ export default function LeaderAttendancePanel({ attendance }) {
 
   const filteredAttendance = useMemo(() => {
     if (!selectedYear || !selectedTerm) return [];
-    return attendance.filter((record) => {
+    return localAttendance.filter((record) => {
       const recordYear = Number(record.attendance_terms?.year ?? record.year);
       const recordTerm = Number(record.attendance_terms?.term ?? record.term);
-      return recordYear === Number(selectedYear) && recordTerm === Number(selectedTerm);
+      return (
+        recordYear === Number(selectedYear) &&
+        recordTerm === Number(selectedTerm)
+      );
     });
-  }, [attendance, selectedYear, selectedTerm]);
+  }, [localAttendance, selectedYear, selectedTerm]);
 
   const groupedWeeks = useMemo(() => {
     return filteredAttendance.reduce((acc, record) => {
@@ -99,7 +208,7 @@ export default function LeaderAttendancePanel({ attendance }) {
     ([a], [b]) => Number(a) - Number(b),
   );
 
-  if (attendance.length === 0) {
+  if (localAttendance.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-3xl bg-white p-12 text-center shadow-sm ring-1 ring-slate-200">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50 text-slate-400">
@@ -176,17 +285,14 @@ export default function LeaderAttendancePanel({ attendance }) {
             const isOpen = openWeek === week;
 
             const coming = records.filter(
-              (record) => normalizeStatus(record.status) === "coming",
+              (r) => normalizeStatus(r.status) === "coming",
             );
-
             const maybe = records.filter(
-              (record) => normalizeStatus(record.status) === "maybe",
+              (r) => normalizeStatus(r.status) === "maybe",
             );
-
             const notComing = records.filter(
-              (record) => normalizeStatus(record.status) === "notcoming",
+              (r) => normalizeStatus(r.status) === "notcoming",
             );
-
             const attendanceRate =
               records.length > 0
                 ? Math.round((coming.length / records.length) * 100)
@@ -205,7 +311,6 @@ export default function LeaderAttendancePanel({ attendance }) {
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
                       <Calendar size={24} />
                     </div>
-
                     <div>
                       <h3 className="text-lg font-bold text-slate-900">
                         Week {week}
@@ -221,7 +326,6 @@ export default function LeaderAttendancePanel({ attendance }) {
                       </div>
                     </div>
                   </div>
-
                   <div
                     className={`rounded-full p-2 transition-transform ${isOpen ? "rotate-180 bg-slate-100 text-slate-900" : "text-slate-400"}`}
                   >
@@ -237,25 +341,21 @@ export default function LeaderAttendancePanel({ attendance }) {
                           label: "Coming",
                           val: coming.length,
                           color: "text-emerald-600",
-                          bg: "bg-emerald-50",
                         },
                         {
                           label: "Maybe",
                           val: maybe.length,
                           color: "text-amber-500",
-                          bg: "bg-amber-50",
                         },
                         {
                           label: "Not Coming",
                           val: notComing.length,
                           color: "text-rose-500",
-                          bg: "bg-rose-50",
                         },
                         {
                           label: "Rate",
                           val: `${attendanceRate}%`,
                           color: "text-slate-900",
-                          bg: "bg-slate-100",
                         },
                       ].map((stat) => (
                         <div
@@ -274,32 +374,17 @@ export default function LeaderAttendancePanel({ attendance }) {
                       ))}
                     </div>
 
-                    <div className="mb-6 flex">
+                    <div className="mb-4 flex">
                       <ExportAttendance
                         attendance={records}
                         label={`Export Week ${week}`}
                       />
                     </div>
 
-                    <div className="grid gap-6 lg:grid-cols-3">
-                      <StatusList
-                        title="Coming"
-                        records={coming}
-                        emptyText="No kids marked as coming."
-                      />
-
-                      <StatusList
-                        title="Maybe"
-                        records={maybe}
-                        emptyText="No kids marked as maybe."
-                      />
-
-                      <StatusList
-                        title="Not Coming"
-                        records={notComing}
-                        emptyText="No kids marked as not coming."
-                      />
-                    </div>
+                    <WeekTable
+                      records={records}
+                      onRecordSaved={handleRecordSaved}
+                    />
                   </div>
                 )}
               </div>
