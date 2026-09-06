@@ -47,19 +47,26 @@ export default function Home() {
       <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/20 blur-[120px]" />
       <div className="absolute top-96 right-20 w-72 h-72 bg-purple-500/20 blur-[120px]" />
 
-      <div className="relative max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <div className="relative max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Welcome + Attendance & New People Page Btn */}
         <Welcome />
-        {/* Group Stats */}
-        <GroupStats
-          yearLevel={yearLevel || "11"}
-          stats={stats}
-          loading={statsLoading}
-        />
-        {/* Events */}
-        <UpcomingEvents events={events} loading={loading} />
-        {/* Reminders */}
+
+        {/* Group Stats + Upcoming Events side by side on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <GroupStats
+            yearLevel={yearLevel || "11"}
+            stats={stats}
+            loading={statsLoading}
+          />
+          <UpcomingEvents events={events} loading={loading} />
+        </div>
+
+        {/* Reminders full-width below */}
         <Reminders />
+
+        {/* Future: latest added kid showcase — drop it here as its own
+            full-width card, or fold it into the grid above as a 3rd column
+            (lg:grid-cols-3) once you're ready to add it */}
       </div>
     </div>
   );

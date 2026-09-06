@@ -105,7 +105,7 @@ export default function AttendancePanel({
               {title}
             </span>
             <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">
-              {count} Students
+              {count} people
             </span>
           </div>
         </div>
