@@ -602,47 +602,6 @@ router.delete("/:id", async (req, res) => {
 });
 
 /**
- * @route DELETE/attendance/term
- * @desc Delete a term in a year
- * @access public
- */
-/*
-router.delete("/term/:year/:term", async (req, res) => {
-  const supabase = createSupabaseClient(req);
-  try {
-    const { year, term } = req.params;
-
-    if (!year || !term) {
-      return res.status(400).json({ error: "Year and term are required" });
-    }
-
-    // Delele all attendance records for the year and term
-    const { count, error } = await supabase
-      .from("attendance")
-      .delete({ count: "exact" }) // also return how many rows were deleted
-      .eq("year", Number(year)) // filter year
-      .eq("term", Number(term)) // filter term inside the year
-      .eq("leader_id", req.userId); // only this user's data
-
-    if (error) return res.status(400).json({ error: error.message });
-
-    if (count === 0) {
-      return res.status(404).json({
-        error: "No records found for that year and term",
-      });
-    }
-
-    res.json({
-      message: `Deleted all records for Year ${year} and Term ${term}`,
-      deletedCount: count,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to delete term" });
-  }
-}); */
-
-/**
  * @route POST /attendance/bulk
  * @desc Bulk insert or update attendance records
  * @access Public
