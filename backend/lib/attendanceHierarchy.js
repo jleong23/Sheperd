@@ -87,8 +87,58 @@ async function getVisibleTermCreators(supabase, userId) {
   return Array.from(creators);
 }
 
+/**
+ * Given a term's start_date and total weeks, returns the current week
+ * number (1-indexed), clamped to the term's range. Returns null if the
+ * term hasn't started yet.
+ */
+function computeCurrentWeek(startDate, totalWeeks) {
+  if (!startDate) return null;
+
+  const start = new Date(startDate);
+  const today = new Date();
+  start.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return null; // term hasn't started yet
+
+  const week = Math.floor(diffDays / 7) + 1;
+  return Math.min(week, totalWeeks);
+}
+
+/**
+ * Finds the term that "today" falls inside, based on start_date + weeks.
+ * Since (year, term) is globally unique, there's only ever one active
+ * term across the whole org at a time.
+ */
+async function getActiveTerm(supabase) {
+  const { data: terms, error } = await supabase
+    .from("attendance_terms")
+    .select("*")
+    .not("start_date", "is", null)
+    .lte("start_date", new Date().toISOString().split("T")[0])
+    .order("start_date", { ascending: false });
+
+  if (error || !terms?.length) return null;
+
+  // Find the first term whose window (start_date -> start_date + weeks*7)
+  // includes today; terms are already ordered most-recent-start first.
+  const today = new Date();
+  for (const term of terms) {
+    const start = new Date(term.start_date);
+    const end = new Date(start);
+    end.setDate(end.getDate() + term.weeks * 7);
+    if (today < end) return term;
+  }
+
+  return null;
+}
+
 module.exports = {
   getManagedLeaderIds,
   getVisibleTermOwners,
   getVisibleTermCreators,
+  computeCurrentWeek,
+  getActiveTerm,
 };

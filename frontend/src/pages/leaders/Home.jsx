@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import useEvents from "../../hooks/useEvents";
+import useWeeklySummary from "../../hooks/useWeeklySummary";
 import { fetchKidStats } from "../../api/kids";
 
 // Component Imports
 import Welcome from "../../components/home/Welcome";
 import GroupStats from "../../components/home/GroupStats";
 import UpcomingEvents from "../../components/home/UpcomingEvents";
+import WeeklySummary from "../../components/home/WeeklySummary";
 import Reminders from "../../components/home/Reminders";
 
 const eventOptions = {
@@ -17,6 +19,7 @@ const eventOptions = {
 export default function Home() {
   const { events, loading, fetchEvents } = useEvents(eventOptions);
   const [statsLoading, setStatsLoading] = useState(true);
+  const { summary, loading: summaryLoading, fetchSummary } = useWeeklySummary();
 
   // Default year level for now (since backend user profile doesn't have it yet)
   const yearLevel = "11";
@@ -29,7 +32,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchEvents();
-
+    fetchSummary();
     setStatsLoading(true);
 
     fetchKidStats()
@@ -40,7 +43,7 @@ export default function Home() {
       .finally(() => {
         setStatsLoading(false);
       });
-  }, [fetchEvents]);
+  }, [fetchEvents, fetchSummary]);
 
   return (
     <div className="min-h-screen bg-[#0f172a] relative overflow-hidden">
@@ -50,6 +53,8 @@ export default function Home() {
       <div className="relative max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Welcome + Attendance & New People Page Btn */}
         <Welcome />
+
+        <WeeklySummary summary={summary} loading={summaryLoading} />
 
         {/* Group Stats + Upcoming Events side by side on large screens */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">

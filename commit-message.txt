@@ -1,0 +1,31 @@
+feat(dashboard): add weekly attendance summary card
+
+- Added start_date column to attendance_terms via migration, giving
+  terms a real calendar anchor (previously only year/term/weeks
+  existed with no way to derive "current week" from today's date).
+- Added computeCurrentWeek() and getActiveTerm() helpers in
+  attendanceHierarchy.js: getActiveTerm() finds the term whose
+  [start_date, start_date + weeks*7] window contains today;
+  computeCurrentWeek() derives the 1-indexed week number from a
+  term's start_date, clamped to the term's total weeks.
+- Added GET /attendance/summary/this-week route, scoped via
+  getManagedLeaderIds (so pastors see aggregated leader data,
+  leaders see their own). Returns coming/maybe/notComing/total
+  counts for the active term's current week, or { active: false }
+  when no term is currently running.
+- Added useWeeklySummary hook and WeeklySummary component:
+  displays "X/Y coming this week", a three-way stacked progress bar
+  (coming/maybe/not coming), and a labeled breakdown legend.
+- Wired WeeklySummary into Home.jsx dashboard alongside existing
+  fetchEvents/fetchKidStats calls.
+
+Notes:
+- Existing attendance_terms rows need start_date backfilled manually
+  before the summary card will activate for them.
+- computeCurrentWeek() currently clamps to the final week once a
+  term's window has passed rather than going inactive — revisit if
+  "term ended" state is preferred over persisting the last week.
+- notComing filter relies on the literal status string "not coming"
+  matching the Postgres enum exactly; verify enum values if the
+  count ever reads as 0 unexpectedly.
+

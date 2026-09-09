@@ -26,6 +26,8 @@ const {
   getVisibleTermOwners,
   getVisibleTermCreators,
   getManagedLeaderIds,
+  getActiveTerm,
+  computeCurrentWeek,
 } = require("../lib/attendanceHierarchy");
 
 /**
@@ -104,6 +106,60 @@ router.get("/", async (req, res) => {
     res.status(500).json({
       error: "Failed fetching attendance",
     });
+  }
+});
+
+/**
+ * @route GET /attendance/summary/this-week
+ * @desc "X of Y kids coming this week" summary for the dashboard
+ */
+router.get("/summary/this-week", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+  try {
+    const activeTerm = await getActiveTerm(supabase);
+
+    if (!activeTerm) {
+      return res.json({ active: false });
+    }
+
+    const currentWeek = computeCurrentWeek(
+      activeTerm.start_date,
+      activeTerm.weeks,
+    );
+    if (!currentWeek) {
+      return res.json({ active: false });
+    }
+
+    const managedIds = await getManagedLeaderIds(supabase, req.userId);
+
+    const { data, error } = await supabase
+      .from("attendance")
+      .select("status")
+      .eq("term_id", activeTerm.id)
+      .eq("week", currentWeek)
+      .in("leader_id", managedIds);
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    const total = data.length;
+    const coming = data.filter((r) => r.status === "coming").length;
+    const maybe = data.filter((r) => r.status === "maybe").length;
+    const notComing = data.filter((r) => r.status === "not coming").length;
+
+    res.json({
+      active: true,
+      week: currentWeek,
+      totalWeeks: activeTerm.weeks,
+      year: activeTerm.year,
+      term: activeTerm.term,
+      coming,
+      maybe,
+      notComing,
+      total,
+    });
+  } catch (err) {
+    console.error("Error fetching weekly summary:", err);
+    res.status(500).json({ error: "Failed to fetch weekly summary" });
   }
 });
 
@@ -671,4 +727,5 @@ router.post("/bulk", async (req, res) => {
     res.status(500).json({ error: err.message || "Bulk import failed" });
   }
 });
+
 module.exports = router;
