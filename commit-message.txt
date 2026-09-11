@@ -1,31 +1,60 @@
-feat(dashboard): add weekly attendance summary card
+feat(kids): add year_level field and pastor leader-assignment on create
 
-- Added start_date column to attendance_terms via migration, giving
-  terms a real calendar anchor (previously only year/term/weeks
-  existed with no way to derive "current week" from today's date).
-- Added computeCurrentWeek() and getActiveTerm() helpers in
-  attendanceHierarchy.js: getActiveTerm() finds the term whose
-  [start_date, start_date + weeks*7] window contains today;
-  computeCurrentWeek() derives the 1-indexed week number from a
-  term's start_date, clamped to the term's total weeks.
-- Added GET /attendance/summary/this-week route, scoped via
-  getManagedLeaderIds (so pastors see aggregated leader data,
-  leaders see their own). Returns coming/maybe/notComing/total
-  counts for the active term's current week, or { active: false }
-  when no term is currently running.
-- Added useWeeklySummary hook and WeeklySummary component:
-  displays "X/Y coming this week", a three-way stacked progress bar
-  (coming/maybe/not coming), and a labeled breakdown legend.
-- Wired WeeklySummary into Home.jsx dashboard alongside existing
-  fetchEvents/fetchKidStats calls.
+Schema:
+- Added year_level integer column to kids (7-12, nullable), with a
+  check constraint. Nullable so existing kids aren't broken; they
+  show as "Unassigned" until a leader sets it.
+
+Backend (routes/kids.js):
+- Added year_level to the destructured fields and insert payload in
+  POST /.
+- Added year_level to the destructured fields and update payload in
+  PUT /:id.
+- No changes needed in leaders.js: POST /:leaderId/kids and
+  PUT /leaders/kids/:kidId already pass req.body through unfiltered,
+  so year_level (and any other KidForm field) flows through
+  automatically for pastor-initiated create/edit.
+
+Frontend (KidForm.jsx):
+- Added a Year Level select (7-12, "Unassigned" default).
+- Removed the showExtendedFields gating entirely. status_code,
+  parentname, address, baptised, and sunday_regulars now render
+  unconditionally instead of being hidden depending on which screen
+  opened the form. This was the root cause of AddKids.jsx (leader's
+  own quick-add) missing fields that KidManagement's edit flow had.
+
+Frontend (AddKids.jsx):
+- Replaced the standalone implementation (separate formData shape,
+  duplicated validation, duplicated checkbox markup) with a thin
+  wrapper around KidForm, matching the pattern AddKidModal.jsx
+  already used. Removes ~70 lines of duplicated logic and the
+  parentPhone/parent_phone, yearLevel/year_level naming mismatches
+  that came with maintaining two form implementations.
+
+Frontend (AddKidModal.jsx):
+- Added an optional requireLeaderSelection prop. When true, renders
+  a "Assign to Leader" dropdown (populated via getLeaders()) above
+  the form and requires a selection before submit; onAdded is then
+  called as onAdded(formData, selectedLeaderId) instead of
+  onAdded(formData). Defaults to false, so KidsList.jsx's existing
+  usage (leader adding their own kid) is unaffected.
+
+Frontend (AllKidsList.jsx):
+- handleAddKid now calls createKidForLeader(leaderId, ...) instead
+  of createKid(...), routing pastor-created kids through
+  POST /leaders/:leaderId/kids (existing route, already does pastor
+  + getManagedLeaderIds verification) instead of POST /kids, which
+  would have silently attributed the kid to the pastor instead of
+  the selected leader.
+- AddKidModal is rendered with requireLeaderSelection={true}.
+- Swapped a stray alert() for toast.error() in the catch block to
+  match the rest of the file's error-handling convention.
 
 Notes:
-- Existing attendance_terms rows need start_date backfilled manually
-  before the summary card will activate for them.
-- computeCurrentWeek() currently clamps to the final week once a
-  term's window has passed rather than going inactive — revisit if
-  "term ended" state is preferred over persisting the last week.
-- notComing filter relies on the literal status string "not coming"
-  matching the Postgres enum exactly; verify enum values if the
-  count ever reads as 0 unexpectedly.
-
+- AddKidModal's onAdded signature now differs based on
+  requireLeaderSelection (1 arg vs 2). Not type-enforced; worth
+  remembering if a third caller is added later.
+- Confirmed AllKidsList is only reachable via a pastor-gated route,
+  and POST /:leaderId/kids independently enforces pastor role
+  server-side, so there's no gap even if frontend routing were
+  bypassed.

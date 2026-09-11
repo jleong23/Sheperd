@@ -15,63 +15,10 @@ router.get("/", async (req, res) => {
     const { status } = req.query;
 
     let query = supabase
-        .from("kids")
-        .select("*")
-        .eq("leader_id", req.userId)
-        .order("id");
-
-    if (status && ["CORE", "FRINGE", "NP"].includes(status)) {
-      query = query.eq("status_code", status);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      return res.status(400).json({
-        error: error.message
-      });
-    }
-
-    res.json(data);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      error:"Failed to fetch kids"
-    });
-  }
-});
-
-
-
-/**
- * @route GET /kids/all
- * @desc Get all kids for pastor management
- * @access Pastor only
- */
-router.get("/all", async (req, res) => {
-  const supabase = createSupabaseClient(req);
-
-  try {
-    const {data:user,error:userError}=await supabaseAdmin
-        .from("users")
-        .select("role")
-        .eq("leader_id",req.userId)
-        .single();
-
-
-    if(userError || user.role?.toLowerCase() !== "pastor"){
-      return res.status(403).json({
-        error:"Pastor access required"
-      });
-    }
-
-    const { status } = req.query;
-
-    let query = supabase
-        .from("kids")
-        .select("*")
-        .order("id");
+      .from("kids")
+      .select("*")
+      .eq("leader_id", req.userId)
+      .order("id");
 
     if (status && ["CORE", "FRINGE", "NP"].includes(status)) {
       query = query.eq("status_code", status);
@@ -86,7 +33,52 @@ router.get("/all", async (req, res) => {
     }
 
     res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Failed to fetch kids",
+    });
+  }
+});
 
+/**
+ * @route GET /kids/all
+ * @desc Get all kids for pastor management
+ * @access Pastor only
+ */
+router.get("/all", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+
+  try {
+    const { data: user, error: userError } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("leader_id", req.userId)
+      .single();
+
+    if (userError || user.role?.toLowerCase() !== "pastor") {
+      return res.status(403).json({
+        error: "Pastor access required",
+      });
+    }
+
+    const { status } = req.query;
+
+    let query = supabase.from("kids").select("*").order("id");
+
+    if (status && ["CORE", "FRINGE", "NP"].includes(status)) {
+      query = query.eq("status_code", status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      return res.status(400).json({
+        error: error.message,
+      });
+    }
+
+    res.json(data);
   } catch (err) {
     console.error("Error fetching all kids:", err);
 
@@ -105,14 +97,13 @@ router.get("/stats", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
     // Fetch user role
-    const { data: currentUser } = await supabaseAdmin.from("users")
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
       .select("role")
       .eq("leader_id", req.userId)
       .single();
 
-    const isPastor =
-        currentUser.role.toLowerCase()
-        ==="pastor";
+    const isPastor = currentUser.role.toLowerCase() === "pastor";
 
     let totalQuery = supabase
       .from("kids")
@@ -128,36 +119,24 @@ router.get("/stats", async (req, res) => {
       .select("leader_id", { count: "exact", head: true })
       .eq("baptised", true);
 
-    if(!isPastor){
+    if (!isPastor) {
+      totalQuery = totalQuery.eq("leader_id", req.userId);
 
-      totalQuery =
-          totalQuery.eq(
-              "leader_id",
-              req.userId
-          );
+      regularQuery = regularQuery.eq("leader_id", req.userId);
 
-      regularQuery =
-          regularQuery.eq(
-              "leader_id",
-              req.userId
-          );
-
-      baptisedQuery =
-          baptisedQuery.eq(
-              "leader_id",
-              req.userId
-          );
-
+      baptisedQuery = baptisedQuery.eq("leader_id", req.userId);
     }
 
     const { count: total_kids, error: totalError } = await totalQuery;
     if (totalError) return res.status(400).json({ error: totalError.message });
 
     const { count: regular_kids, error: regularError } = await regularQuery;
-    if (regularError) return res.status(400).json({ error: regularError.message });
+    if (regularError)
+      return res.status(400).json({ error: regularError.message });
 
     const { count: baptised_kids, error: baptisedError } = await baptisedQuery;
-    if (baptisedError) return res.status(400).json({ error: baptisedError.message });
+    if (baptisedError)
+      return res.status(400).json({ error: baptisedError.message });
 
     res.json({ total_kids, regular_kids, baptised_kids });
   } catch (err) {
@@ -165,7 +144,6 @@ router.get("/stats", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch kid stats" });
   }
 });
-
 
 /**
  * @route GET /kids/:id
@@ -178,25 +156,18 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params; // Get the ID from URL parameters
 
     // Fetch user role
-    const { data: currentUser } = await supabaseAdmin.from("users")
-        .select("role")
-        .eq("leader_id", req.userId)
-        .single();
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("leader_id", req.userId)
+      .single();
 
-    const isPastor =
-        currentUser?.role?.toLowerCase() === "pastor";
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
-    let query = supabase
-        .from("kids")
-        .select("*")
-        .eq("id", id);
+    let query = supabase.from("kids").select("*").eq("id", id);
 
-
-    if(!isPastor){
-      query = query.eq(
-          "leader_id",
-          req.userId
-      );
+    if (!isPastor) {
+      query = query.eq("leader_id", req.userId);
     }
 
     const { data, error } = await query.single();
@@ -234,6 +205,7 @@ router.post("/", async (req, res) => {
       second_call,
       first_call_feedback,
       second_call_feedback,
+      year_level,
     } = req.body; // Extract data from request body
 
     if (!name) {
@@ -241,25 +213,26 @@ router.post("/", async (req, res) => {
     }
 
     // Insert new kid into the database
-      const { data, error } = await supabase
-          .from("kids")
-          .insert({
-              name,
-              birthday: birthday || null,
-              school: school !== undefined ? school : null,
-              phone: phone || null,
-              parent_phone: parent_phone || null,
-              parentname: parentname || null,
-              address: address || null,
-              status_code: status_code || "NP",
-              baptised: baptised || false,
-              sunday_regulars: sunday_regulars || false,
-              first_call: first_call || false,
-              second_call: second_call || false,
-              first_call_feedback: first_call_feedback || "",
-              second_call_feedback: second_call_feedback || "",
-              leader_id: req.userId,
-          })
+    const { data, error } = await supabase
+      .from("kids")
+      .insert({
+        name,
+        birthday: birthday || null,
+        school: school !== undefined ? school : null,
+        phone: phone || null,
+        parent_phone: parent_phone || null,
+        parentname: parentname || null,
+        address: address || null,
+        status_code: status_code || "NP",
+        baptised: baptised || false,
+        sunday_regulars: sunday_regulars || false,
+        first_call: first_call || false,
+        second_call: second_call || false,
+        first_call_feedback: first_call_feedback || "",
+        second_call_feedback: second_call_feedback || "",
+        year_level: year_level || null,
+        leader_id: req.userId,
+      })
       .select()
       .single();
 
@@ -296,6 +269,7 @@ router.put("/:id", async (req, res) => {
       second_call,
       first_call_feedback,
       second_call_feedback,
+      year_level,
     } = req.body;
 
     if (!name) {
@@ -303,7 +277,8 @@ router.put("/:id", async (req, res) => {
     }
 
     // Fetch user role
-    const { data: currentUser } = await supabaseAdmin.from("users")
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
       .select("role")
       .eq("leader_id", req.userId)
       .single();
@@ -325,21 +300,16 @@ router.put("/:id", async (req, res) => {
         second_call: second_call || false,
         first_call_feedback: first_call_feedback || "",
         second_call_feedback: second_call_feedback || "",
+        year_level: year_level || null,
         updated_at: new Date(),
       })
-      .eq("id", id)
+      .eq("id", id);
 
-    const isPastor =
-        currentUser?.role?.toLowerCase()
-        ==="pastor";
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
-      if(!isPastor){
-        updateQuery =
-            updateQuery.eq(
-                "leader_id",
-                req.userId
-            );
-      }
+    if (!isPastor) {
+      updateQuery = updateQuery.eq("leader_id", req.userId);
+    }
 
     const { data, error } = await updateQuery.select().single();
 
@@ -367,26 +337,18 @@ router.delete("/:id", async (req, res) => {
     const supabase = createSupabaseClient(req);
 
     // Fetch user role
-    const { data: currentUser } = await supabaseAdmin.from("users")
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
       .select("role")
       .eq("leader_id", req.userId)
       .single();
 
-    let deleteQuery = supabase
-        .from("kids")
-        .delete()
-        .eq("id",id);
+    let deleteQuery = supabase.from("kids").delete().eq("id", id);
 
-    const isPastor =
-        currentUser?.role?.toLowerCase()
-        ==="pastor";
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
-    if(!isPastor){
-      deleteQuery =
-          deleteQuery.eq(
-              "leader_id",
-              req.userId
-          );
+    if (!isPastor) {
+      deleteQuery = deleteQuery.eq("leader_id", req.userId);
     }
 
     const { data, error } = await deleteQuery.select();
@@ -420,26 +382,18 @@ router.delete("/", async (req, res) => {
     }
 
     // Fetch user role
-    const { data: currentUser } = await supabaseAdmin.from("users")
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
       .select("role")
       .eq("leader_id", req.userId)
       .single();
 
-    let deleteQuery = supabase
-      .from("kids")
-      .delete()
-      .in("id", ids);
+    let deleteQuery = supabase.from("kids").delete().in("id", ids);
 
-    const isPastor =
-        currentUser?.role?.toLowerCase()
-        ==="pastor";
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
 
-    if(!isPastor){
-      deleteQuery =
-          deleteQuery.eq(
-              "leader_id",
-              req.userId
-          );
+    if (!isPastor) {
+      deleteQuery = deleteQuery.eq("leader_id", req.userId);
     }
 
     const { data, error } = await deleteQuery.select();

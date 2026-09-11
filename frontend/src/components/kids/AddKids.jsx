@@ -15,6 +15,12 @@ export default function AddKids({ onKidAdded }) {
     school: "",
     phone: "",
     parentPhone: "",
+    parentname: "",
+    address: "",
+    yearLevel: "",
+    status_code: "NP",
+    baptised: false,
+    sunday_regulars: false,
   });
 
   const [errors, setErrors] = useState({});
@@ -25,12 +31,17 @@ export default function AddKids({ onKidAdded }) {
     { label: "School", name: "school", type: "text" },
     { label: "Phone", name: "phone", type: "text" },
     { label: "Parent Phone", name: "parentPhone", type: "text" },
+    { label: "Parent Name", name: "parentname", type: "text" },
   ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleCheckboxChange = (name, checked) => {
+    setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
   const resetForm = () => {
@@ -40,6 +51,12 @@ export default function AddKids({ onKidAdded }) {
       school: "",
       phone: "",
       parentPhone: "",
+      parentname: "",
+      address: "",
+      yearLevel: "",
+      status_code: "NP",
+      baptised: false,
+      sunday_regulars: false,
     });
     setErrors({});
   };
@@ -75,6 +92,12 @@ export default function AddKids({ onKidAdded }) {
         school: formData.school || "",
         phone: formData.phone || "",
         parent_phone: formData.parentPhone,
+        parentname: formData.parentname || "",
+        address: formData.address || "",
+        year_level: formData.yearLevel || null,
+        status_code: formData.status_code,
+        baptised: formData.baptised,
+        sunday_regulars: formData.sunday_regulars,
       });
 
       onKidAdded?.();
@@ -134,6 +157,92 @@ export default function AddKids({ onKidAdded }) {
                 error={errors[field.name]}
               />
             ))}
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-300">
+                Year Level
+              </label>
+              <select
+                name="yearLevel"
+                value={formData.yearLevel}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+              >
+                <option value="">Unassigned</option>
+                {[7, 8, 9, 10, 11, 12].map((n) => (
+                  <option key={n} value={n}>
+                    Year {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-300">
+                Status Code
+              </label>
+              <select
+                name="status_code"
+                value={formData.status_code}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+              >
+                <option value="CORE">Core</option>
+                <option value="FRINGE">Fringe</option>
+                <option value="NP">New People</option>
+              </select>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label className="block text-sm font-medium text-slate-300">
+                Address
+              </label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                rows="3"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+              />
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-indigo-500/50 hover:bg-slate-900">
+              <input
+                type="checkbox"
+                checked={formData.baptised}
+                onChange={(e) =>
+                  handleCheckboxChange("baptised", e.target.checked)
+                }
+                className="mt-1 h-5 w-5 rounded border-slate-700 bg-slate-950 accent-indigo-600"
+              />
+              <div>
+                <p className="text-sm font-semibold text-white">Baptised</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Has completed water baptism.
+                </p>
+              </div>
+            </label>
+
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-indigo-500/50 hover:bg-slate-900">
+              <input
+                type="checkbox"
+                checked={formData.sunday_regulars}
+                onChange={(e) =>
+                  handleCheckboxChange("sunday_regulars", e.target.checked)
+                }
+                className="mt-1 h-5 w-5 rounded border-slate-700 bg-slate-950 accent-indigo-600"
+              />
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Sunday Regular
+                </p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Attends Sunday services consistently.
+                </p>
+              </div>
+            </label>
           </div>
 
           <FormActions

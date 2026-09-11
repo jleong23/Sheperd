@@ -4,8 +4,7 @@ import { useAllKids } from "../../hooks/useAllKids";
 import { useBulkDelete } from "../../hooks/useBulkDelete";
 import KidStatusFilter from "./KidStatusFilter";
 import { useState } from "react";
-import { createKid } from "../../api/kids";
-import { transferKidToLeader } from "../../api/pastor";
+import { createKidForLeader, transferKidToLeader } from "../../api/pastor";
 import { motion } from "framer-motion";
 import KidManagement from "./KidManagement.jsx";
 import toast from "react-hot-toast";
@@ -24,21 +23,27 @@ export default function AllKidsList() {
     enterBulkMode,
   } = useBulkDelete(kids, getKids);
 
-  const handleAddKid = async (formData) => {
+  const handleAddKid = async (formData, leaderId) => {
     setActionLoading(true);
     try {
-      await createKid({
+      await createKidForLeader(leaderId, {
         name: formData.name,
         birthday: formData.birthday || null,
         school: formData.school || "",
         phone: formData.phone || "",
-        parent_phone: formData.parent_phone,
+        parent_phone: formData.parent_phone || "",
+        parentname: formData.parentname || "",
+        address: formData.address || "",
+        year_level: formData.year_level || null,
+        status_code: formData.status_code,
+        baptised: formData.baptised,
+        sunday_regulars: formData.sunday_regulars,
       });
       await getKids();
       setIsAddModalOpen(false);
     } catch (err) {
       console.error("Error adding kid:", err);
-      alert(err.response?.data?.error || "Error adding kid");
+      toast.error(err.response?.data?.error || "Error adding kid");
     } finally {
       setActionLoading(false);
     }
@@ -130,6 +135,7 @@ export default function AllKidsList() {
         onClose={() => setIsAddModalOpen(false)}
         onAdded={handleAddKid}
         loading={actionLoading}
+        requireLeaderSelection={true}
       />
     </div>
   );

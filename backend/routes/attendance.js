@@ -22,6 +22,7 @@
 const express = require("express");
 const router = express.Router();
 const createSupabaseClient = require("../supabaseClient");
+const supabaseAdmin = require("../lib/supabaseClient");
 const {
   getVisibleTermOwners,
   getVisibleTermCreators,
@@ -111,7 +112,10 @@ router.get("/", async (req, res) => {
 
 /**
  * @route GET /attendance/summary/this-week
- * @desc "X of Y kids coming this week" summary for the dashboard
+ * @desc "X of Y kids coming this week" summary for the dashboard.
+ *       Leaders get a flat summary for their own group.
+ *       Pastors get the same totals PLUS a breakdown by year_level
+ *       across every leader they manage.
  */
 router.get("/summary/this-week", async (req, res) => {
   const supabase = createSupabaseClient(req);
@@ -130,11 +134,46 @@ router.get("/summary/this-week", async (req, res) => {
       return res.json({ active: false });
     }
 
+    const { data: currentUser } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("leader_id", req.userId)
+      .single();
+
+    const isPastor = currentUser?.role?.toLowerCase() === "pastor";
     const managedIds = await getManagedLeaderIds(supabase, req.userId);
 
+    const baseResponse = {
+      active: true,
+      week: currentWeek,
+      totalWeeks: activeTerm.weeks,
+      year: activeTerm.year,
+      term: activeTerm.term,
+    };
+
+    if (!isPastor) {
+      // Leaders: unchanged flat summary
+      const { data, error } = await supabase
+        .from("attendance")
+        .select("status")
+        .eq("term_id", activeTerm.id)
+        .eq("week", currentWeek)
+        .in("leader_id", managedIds);
+
+      if (error) return res.status(400).json({ error: error.message });
+
+      const total = data.length;
+      const coming = data.filter((r) => r.status === "coming").length;
+      const maybe = data.filter((r) => r.status === "maybe").length;
+      const notComing = data.filter((r) => r.status === "not coming").length;
+
+      return res.json({ ...baseResponse, coming, maybe, notComing, total });
+    }
+
+    // Pastors: overall totals + breakdown by year_level
     const { data, error } = await supabase
       .from("attendance")
-      .select("status")
+      .select("status, kids(year_level)")
       .eq("term_id", activeTerm.id)
       .eq("week", currentWeek)
       .in("leader_id", managedIds);
@@ -146,17 +185,33 @@ router.get("/summary/this-week", async (req, res) => {
     const maybe = data.filter((r) => r.status === "maybe").length;
     const notComing = data.filter((r) => r.status === "not coming").length;
 
-    res.json({
-      active: true,
-      week: currentWeek,
-      totalWeeks: activeTerm.weeks,
-      year: activeTerm.year,
-      term: activeTerm.term,
-      coming,
-      maybe,
-      notComing,
-      total,
+    // Group by year_level (null -> "Unassigned")
+    const groups = {};
+    for (const row of data) {
+      const level = row.kids?.year_level ?? "Unassigned";
+      if (!groups[level]) {
+        groups[level] = {
+          yearLevel: level,
+          coming: 0,
+          maybe: 0,
+          notComing: 0,
+          total: 0,
+        };
+      }
+      groups[level].total += 1;
+      if (row.status === "coming") groups[level].coming += 1;
+      else if (row.status === "maybe") groups[level].maybe += 1;
+      else if (row.status === "not coming") groups[level].notComing += 1;
+    }
+
+    // Sort numerically, "Unassigned" last
+    const breakdown = Object.values(groups).sort((a, b) => {
+      if (a.yearLevel === "Unassigned") return 1;
+      if (b.yearLevel === "Unassigned") return -1;
+      return a.yearLevel - b.yearLevel;
     });
+
+    res.json({ ...baseResponse, coming, maybe, notComing, total, breakdown });
   } catch (err) {
     console.error("Error fetching weekly summary:", err);
     res.status(500).json({ error: "Failed to fetch weekly summary" });

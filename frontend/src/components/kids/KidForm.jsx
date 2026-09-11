@@ -8,7 +8,6 @@ export default function KidForm({
   onCancel,
   loading = false,
   submitText = "Save Changes",
-  showExtendedFields = false,
 }) {
   const [formData, setFormData] = useState({
     name: "",
@@ -21,6 +20,7 @@ export default function KidForm({
     status_code: "NP",
     baptised: false,
     sunday_regulars: false,
+    year_level: "",
     ...initialData,
   });
 
@@ -91,24 +91,22 @@ export default function KidForm({
           required
         />
 
-        {showExtendedFields && (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-300">
-              Status Code
-            </label>
-            <select
-              name="status_code"
-              value={formData.status_code}
-              onChange={handleChange}
-              required
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-            >
-              <option value="CORE">Core</option>
-              <option value="FRINGE">Fringe</option>
-              <option value="NP">New People</option>
-            </select>
-          </div>
-        )}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-slate-300">
+            Status Code
+          </label>
+          <select
+            name="status_code"
+            value={formData.status_code}
+            onChange={handleChange}
+            required
+            className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+          >
+            <option value="CORE">Core</option>
+            <option value="FRINGE">Fringe</option>
+            <option value="NP">New People</option>
+          </select>
+        </div>
 
         <FormInput
           label="Date of Birth"
@@ -125,14 +123,31 @@ export default function KidForm({
           onChange={handleChange}
         />
 
-        {showExtendedFields && (
-          <FormInput
-            label="Parent Name"
-            name="parentname"
-            value={formData.parentname}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-slate-300">
+            Year Level
+          </label>
+          <select
+            name="year_level"
+            value={formData.year_level || ""}
             onChange={handleChange}
-          />
-        )}
+            className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+          >
+            <option value="">Unassigned</option>
+            {[7, 8, 9, 10, 11, 12].map((n) => (
+              <option key={n} value={n}>
+                Year {n}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <FormInput
+          label="Parent Name"
+          name="parentname"
+          value={formData.parentname}
+          onChange={handleChange}
+        />
 
         <FormInput
           label="Contact"
@@ -150,66 +165,60 @@ export default function KidForm({
           error={errors.parent_phone}
         />
 
-        {showExtendedFields && (
-          <div className="space-y-2 md:col-span-2">
-            <label className="block text-sm font-medium text-slate-300">
-              Address
-            </label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              rows="3"
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-            />
-          </div>
-        )}
+        <div className="space-y-2 md:col-span-2">
+          <label className="block text-sm font-medium text-slate-300">
+            Address
+          </label>
+          <textarea
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            rows="3"
+            className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+          />
+        </div>
       </div>
 
-      {showExtendedFields && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-5">
-          <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400">
-            Participation
-          </h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-indigo-500/50 hover:bg-slate-900">
-              <input
-                type="checkbox"
-                checked={formData.baptised}
-                onChange={(e) =>
-                  handleCheckboxChange("baptised", e.target.checked)
-                }
-                className="mt-1 h-5 w-5 rounded border-slate-700 bg-slate-950 accent-indigo-600"
-              />
-              <div>
-                <p className="text-sm font-semibold text-white">Baptised</p>
-                <p className="mt-1 text-xs text-slate-400">
-                  Has completed water baptism.
-                </p>
-              </div>
-            </label>
+      <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-5">
+        <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400">
+          Participation
+        </h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-indigo-500/50 hover:bg-slate-900">
+            <input
+              type="checkbox"
+              checked={formData.baptised}
+              onChange={(e) =>
+                handleCheckboxChange("baptised", e.target.checked)
+              }
+              className="mt-1 h-5 w-5 rounded border-slate-700 bg-slate-950 accent-indigo-600"
+            />
+            <div>
+              <p className="text-sm font-semibold text-white">Baptised</p>
+              <p className="mt-1 text-xs text-slate-400">
+                Has completed water baptism.
+              </p>
+            </div>
+          </label>
 
-            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-indigo-500/50 hover:bg-slate-900">
-              <input
-                type="checkbox"
-                checked={formData.sunday_regulars}
-                onChange={(e) =>
-                  handleCheckboxChange("sunday_regulars", e.target.checked)
-                }
-                className="mt-1 h-5 w-5 rounded border-slate-700 bg-slate-950 accent-indigo-600"
-              />
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  Sunday Regular
-                </p>
-                <p className="mt-1 text-xs text-slate-400">
-                  Attends Sunday services consistently.
-                </p>
-              </div>
-            </label>
-          </div>
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-indigo-500/50 hover:bg-slate-900">
+            <input
+              type="checkbox"
+              checked={formData.sunday_regulars}
+              onChange={(e) =>
+                handleCheckboxChange("sunday_regulars", e.target.checked)
+              }
+              className="mt-1 h-5 w-5 rounded border-slate-700 bg-slate-950 accent-indigo-600"
+            />
+            <div>
+              <p className="text-sm font-semibold text-white">Sunday Regular</p>
+              <p className="mt-1 text-xs text-slate-400">
+                Attends Sunday services consistently.
+              </p>
+            </div>
+          </label>
         </div>
-      )}
+      </div>
 
       <FormActions
         onCancel={onCancel}

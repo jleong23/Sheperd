@@ -34,6 +34,7 @@ export default function KidsList() {
         school: formData.school || "",
         phone: formData.phone || "",
         parent_phone: formData.parent_phone,
+        year_level: formData.year_level || null,
       });
       await getKids();
       setIsAddModalOpen(false);
