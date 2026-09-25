@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { fetchKidById } from "../../api/kids";
+import { fetchKidById, updateKid } from "../../api/kids";
 import { getCatchups } from "../../api/catchups";
+import { getLeaderById, transferKidToLeader } from "../../api/pastor";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import { CatchupModal } from "../catchups/CatchupModal";
+import EditKidModal from "./EditKidModal";
+import TransferKidModal from "./TransferKidModal";
 import KidStatusBadge from "../ui/KidStatusBadge";
 import KidFlagBadge from "../ui/KidFlagBadge";
 
@@ -14,17 +17,20 @@ export default function KidProfile({ id: propId, kid: propKid }) {
   const id = propId || paramId;
   const navigate = useNavigate();
 
-  // Prefer propKid, then location.state.kid, then null
   const initialKid = propKid || location.state?.kid || null;
 
   const [kid, setKid] = useState(initialKid);
   const [catchups, setCatchups] = useState([]);
   const [loading, setLoading] = useState(!initialKid);
   const [loadingCatchups, setLoadingCatchups] = useState(true);
+  const [leaderName, setLeaderName] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCatchup, setSelectedCatchup] = useState(null);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
 
   const loadData = async (forceFetchKid = false) => {
     try {
@@ -72,9 +78,48 @@ export default function KidProfile({ id: propId, kid: propKid }) {
     }
   }, [propKid, location.state?.kid]);
 
+  // Leader name is only resolvable via a pastor-only route. Leaders viewing
+  // their own kid's profile will get a 403 here — expected, so we just hide
+  // the field/controls rather than surfacing an error.
+  useEffect(() => {
+    if (kid?.leader_id) {
+      getLeaderById(kid.leader_id)
+        .then((leader) => setLeaderName(leader.user_name || leader.email))
+        .catch(() => setLeaderName(null));
+    }
+  }, [kid?.leader_id]);
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedCatchup(null);
+  };
+
+  const handleProfileSaved = async (formData) => {
+    setEditLoading(true);
+    try {
+      await updateKid(kid.id, formData);
+      await loadData(true);
+      setIsEditModalOpen(false);
+    } catch (err) {
+      console.error("Failed to update kid", err);
+      alert("Failed to update profile.");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleTransferConfirm = async (kidId, newLeaderId) => {
+    setEditLoading(true);
+    try {
+      await transferKidToLeader(kidId, newLeaderId);
+      await loadData(true);
+      setIsTransferModalOpen(false);
+    } catch (err) {
+      console.error("Failed to transfer kid", err);
+      alert("Failed to transfer kid.");
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   const formatDate = (date) => {
@@ -91,10 +136,18 @@ export default function KidProfile({ id: propId, kid: propKid }) {
   const details = [
     { label: "Date of Birth", value: formatDate(kid?.birthday), icon: "🎂" },
     { label: "School", value: kid?.school || "N/A", icon: "🏫" },
+    {
+      label: "Year Level",
+      value: kid?.year_level ? `Year ${kid.year_level}` : "Unassigned",
+      icon: "🎓",
+    },
     { label: "Parent Name", value: kid?.parentname || "N/A", icon: "👨‍👩‍👧" },
     { label: "Contact", value: kid?.phone || "N/A", icon: "📞" },
     { label: "Parent Contact", value: kid?.parent_phone || "N/A", icon: "☎️" },
     { label: "Address", value: kid?.address || "N/A", icon: "📍" },
+    ...(leaderName
+      ? [{ label: "Assigned Leader", value: leaderName, icon: "🧑‍🏫" }]
+      : []),
   ];
 
   const Skeleton = () => (
@@ -160,16 +213,29 @@ export default function KidProfile({ id: propId, kid: propKid }) {
   return (
     <div className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
-        {!propId && (
+        <div className="mb-6 flex items-center justify-between">
+          {!propId ? (
+            <motion.button
+              onClick={() => navigate(-1)}
+              whileHover={{ x: -3 }}
+              whileTap={{ scale: 0.97 }}
+              className="rounded-full border border-slate-700 bg-slate-900/70 px-5 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-500/50 hover:text-white"
+            >
+              ← Back
+            </motion.button>
+          ) : (
+            <div />
+          )}
+
           <motion.button
-            onClick={() => navigate(-1)}
-            whileHover={{ x: -3 }}
+            onClick={() => setIsEditModalOpen(true)}
+            whileHover={{ y: -2, scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
-            className="mb-6 rounded-full border border-slate-700 bg-slate-900/70 px-5 py-2 text-sm font-semibold text-slate-300 transition hover:border-indigo-500/50 hover:text-white"
+            className="rounded-full border border-indigo-500/40 bg-indigo-500/10 px-5 py-2 text-sm font-semibold text-indigo-300 transition hover:bg-indigo-500/20"
           >
-            ← Back
+            ✏️ Edit Profile
           </motion.button>
-        )}
+        </div>
 
         <motion.section
           initial={{ opacity: 0, y: 24 }}
@@ -318,6 +384,24 @@ export default function KidProfile({ id: propId, kid: propKid }) {
           loadData(true);
           handleCloseModal();
         }}
+      />
+
+      <EditKidModal
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        kid={kid}
+        onSaved={handleProfileSaved}
+        loading={editLoading}
+        leaderName={leaderName}
+        onChangeLeader={() => setIsTransferModalOpen(true)}
+      />
+
+      <TransferKidModal
+        open={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        kid={kid}
+        onTransfer={handleTransferConfirm}
+        loading={editLoading}
       />
     </div>
   );

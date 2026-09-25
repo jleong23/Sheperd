@@ -11,6 +11,7 @@ export default function Modal({ open, children, onClose }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
         >
           <motion.div
             onMouseDown={(e) => e.stopPropagation()}

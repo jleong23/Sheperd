@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import KidListGrid from "./KidListGrid.jsx";
 import EditKidModal from "./EditKidModal.jsx";
@@ -8,6 +8,7 @@ import Modal from "../ui/Modals/Modal.jsx";
 import { updateKidForLeader } from "../../api/pastor.js";
 import { deleteKid } from "../../api/kids.js";
 import toast from "react-hot-toast";
+import { getLeaderById } from "../../api/pastor.js";
 
 export default function KidManagement({
   kids,
@@ -22,6 +23,7 @@ export default function KidManagement({
   const [profileOpen, setProfileOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [leaderName, setLeaderName] = useState(null);
 
   const isLoading = externalLoading || loading;
 
@@ -88,6 +90,16 @@ export default function KidManagement({
     }
   };
 
+  useEffect(() => {
+    if (selectedKid?.leader_id) {
+      getLeaderById(selectedKid.leader_id)
+        .then((leader) => setLeaderName(leader.user_name || leader.email))
+        .catch(() => setLeaderName(null));
+    } else {
+      setLeaderName(null);
+    }
+  }, [selectedKid?.leader_id]);
+
   return (
     <>
       <div className="rounded-2xlp-4">
@@ -117,6 +129,8 @@ export default function KidManagement({
         onSaved={onSaved}
         loading={loading}
         showExtendedFields={true}
+        leaderName={leaderName}
+        onChangeLeader={() => setTransferOpen(true)}
       />
 
       <TransferKidModal

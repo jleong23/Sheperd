@@ -171,7 +171,7 @@ export default function KidForm({
           </label>
           <textarea
             name="address"
-            value={formData.address}
+            value={formData.address ?? ""}
             onChange={handleChange}
             rows="3"
             className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"

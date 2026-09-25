@@ -9,6 +9,8 @@ export default function EditKidModal({
   onSaved,
   loading,
   showExtendedFields = true,
+  leaderName,
+  onChangeLeader,
 }) {
   if (!kid) return null;
 
@@ -31,6 +33,29 @@ export default function EditKidModal({
             Keep this kid's information accurate and up to date.
           </p>
         </div>
+
+        {/* Optional: only rendered when a caller passes leaderName + a
+            handler. Leader change stays a dedicated action (TransferKidModal)
+            owned by the parent, not folded into this form's own submit. */}
+        {leaderName && onChangeLeader && (
+          <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Assigned Leader
+              </p>
+              <p className="mt-1 text-sm font-semibold text-white">
+                {leaderName}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onChangeLeader}
+              className="w-fit rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20"
+            >
+              Change Leader
+            </button>
+          </div>
+        )}
 
         <KidForm
           initialData={kid}
