@@ -90,42 +90,28 @@ router.get("/all", async (req, res) => {
 
 /**
  * @route GET /kids/stats
- * @desc Get statistics for kids (Total, Regulars, etc.)
- * @access Public
+ * @desc Get stats for the CURRENT USER's own kids (leader or pastor)
+ * @access Private
  */
 router.get("/stats", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
-    // Fetch user role
-    const { data: currentUser } = await supabaseAdmin
-      .from("users")
-      .select("role")
-      .eq("leader_id", req.userId)
-      .single();
-
-    const isPastor = currentUser.role.toLowerCase() === "pastor";
-
-    let totalQuery = supabase
-      .from("kids")
-      .select("leader_id", { count: "exact", head: true });
-
-    let regularQuery = supabase
+    const totalQuery = supabase
       .from("kids")
       .select("leader_id", { count: "exact", head: true })
-      .eq("sunday_regulars", true);
+      .eq("leader_id", req.userId);
 
-    let baptisedQuery = supabase
+    const regularQuery = supabase
       .from("kids")
       .select("leader_id", { count: "exact", head: true })
-      .eq("baptised", true);
+      .eq("sunday_regulars", true)
+      .eq("leader_id", req.userId);
 
-    if (!isPastor) {
-      totalQuery = totalQuery.eq("leader_id", req.userId);
-
-      regularQuery = regularQuery.eq("leader_id", req.userId);
-
-      baptisedQuery = baptisedQuery.eq("leader_id", req.userId);
-    }
+    const baptisedQuery = supabase
+      .from("kids")
+      .select("leader_id", { count: "exact", head: true })
+      .eq("baptised", true)
+      .eq("leader_id", req.userId);
 
     const { count: total_kids, error: totalError } = await totalQuery;
     if (totalError) return res.status(400).json({ error: totalError.message });
