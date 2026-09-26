@@ -132,6 +132,33 @@ router.get("/stats", async (req, res) => {
 });
 
 /**
+ * @route GET /kids/year-levels
+ * @desc Get the year level(s) assigned to the current leader/pastor
+ * @access Private
+ */
+router.get("/year-levels", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+  try {
+    const { data, error } = await supabase
+      .from("leader_year_levels")
+      .select("year_level")
+      .eq("leader_id", req.userId)
+      .order("year_level", { ascending: true });
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    const year_levels = data.map((row) => row.year_level);
+
+    res.json({ year_levels });
+  } catch (err) {
+    console.error("Error fetching year levels:", err);
+    res.status(500).json({ error: "Failed to fetch year levels" });
+  }
+});
+
+/**
  * @route GET /kids/:id
  * @desc Get a single kid by their ID
  * @access Public

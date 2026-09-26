@@ -1,9 +1,16 @@
 import StatCardSkeleton from "./StatCardSkeleton.jsx";
 import { motion } from "framer-motion";
 
-export default function GroupStats({ yearLevel, stats, loading }) {
+export default function GroupStats({ yearLevels, stats, loading }) {
+  const yearLevelDisplay =
+    !yearLevels || yearLevels.length === 0
+      ? "Unassigned"
+      : yearLevels.length === 1
+        ? `Year ${yearLevels[0]}`
+        : `Year ${yearLevels.join(", ")}`;
+
   const cards = [
-    { label: "Year Level", value: yearLevel ?? "Unavailable", icon: "🏫" },
+    { label: "Year Level", value: yearLevelDisplay, icon: "🏫" },
     {
       label: "Number of kids in this group",
       value: stats?.total_kids ?? "Unavailable",

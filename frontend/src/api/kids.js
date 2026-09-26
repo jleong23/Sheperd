@@ -120,3 +120,17 @@ export async function deleteKid(id) {
     throw err;
   }
 }
+
+/**
+ * Fetch year level(s) assigned to the current leader
+ * GET /kids/year-levels
+ */
+export async function fetchYearLevels() {
+  try {
+    const response = await api.get("/kids/year-levels");
+    return response.data;
+  } catch (err) {
+    console.error("Failed to fetch year levels:", err);
+    throw err;
+  }
+}

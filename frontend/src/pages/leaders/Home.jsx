@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import useEvents from "../../hooks/useEvents";
 import useWeeklySummary from "../../hooks/useWeeklySummary";
-import { fetchKidStats } from "../../api/kids";
+import { fetchKidStats, fetchYearLevels } from "../../api/kids";
 
 // Component Imports
 import Welcome from "../../components/home/Welcome";
@@ -21,20 +21,20 @@ export default function Home() {
   const [statsLoading, setStatsLoading] = useState(true);
   const { summary, loading: summaryLoading, fetchSummary } = useWeeklySummary();
 
-  // Default year level for now (since backend user profile doesn't have it yet)
-  const yearLevel = "11";
+  const [yearLevels, setYearLevels] = useState([]);
+  const [yearLevelsLoading, setYearLevelsLoading] = useState(true);
 
   const [stats, setStats] = useState({
     total_kids: 0,
     regular_kids: 0,
-    baptised_kids: 0, // Placeholder until column exists
+    baptised_kids: 0,
   });
 
   useEffect(() => {
     fetchEvents();
     fetchSummary();
-    setStatsLoading(true);
 
+    setStatsLoading(true);
     fetchKidStats()
       .then((data) => {
         setStats(data);
@@ -42,6 +42,16 @@ export default function Home() {
       .catch((err) => console.error("Failed to fetch stats:", err))
       .finally(() => {
         setStatsLoading(false);
+      });
+
+    setYearLevelsLoading(true);
+    fetchYearLevels()
+      .then((data) => {
+        setYearLevels(data.year_levels || []);
+      })
+      .catch((err) => console.error("Failed to fetch year levels:", err))
+      .finally(() => {
+        setYearLevelsLoading(false);
       });
   }, [fetchEvents, fetchSummary]);
 
@@ -59,9 +69,9 @@ export default function Home() {
         {/* Group Stats + Upcoming Events side by side on large screens */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <GroupStats
-            yearLevel={yearLevel || "11"}
+            yearLevels={yearLevels}
             stats={stats}
-            loading={statsLoading}
+            loading={statsLoading || yearLevelsLoading}
           />
           <UpcomingEvents events={events} loading={loading} />
         </div>
