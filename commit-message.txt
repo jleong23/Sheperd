@@ -1,0 +1,19 @@
+Fix group stats scoping and add leader year-level assignments
+
+- Add GET /kids/year-levels endpoint to return the year level(s)
+  assigned to the current leader/pastor via the new
+  leader_year_levels join table. Registered before the /:id route
+  to avoid being swallowed by Express's route matching.
+
+- Add leader_year_levels table (leader_id, year_level) to model
+  leaders covering one or more year levels, since a single leader
+  can be responsible for multiple groups (e.g. Year 8 and Year 9)
+  when group sizes are small. Includes a select RLS policy so
+  leaders can read their own assignments.
+
+- Update Home.jsx to fetch year levels via fetchYearLevels()
+  instead of using a hardcoded placeholder value.
+
+- Update GroupStats.jsx to accept a yearLevels array and format it
+  for display (e.g. "Year 8, 9"), falling back to "Unassigned"
+  when a leader has no year levels assigned yet.
