@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import useEvents from "../../hooks/useEvents";
 import useWeeklySummary from "../../hooks/useWeeklySummary";
+import { useAuth } from "../../context/AuthContext";
 import { fetchKidStats, fetchYearLevels } from "../../api/kids";
 
-// Component Imports
 import Welcome from "../../components/home/Welcome";
 import GroupStats from "../../components/home/GroupStats";
 import UpcomingEvents from "../../components/home/UpcomingEvents";
 import WeeklySummary from "../../components/home/WeeklySummary";
 import Reminders from "../../components/home/Reminders";
+import MinistryStats from "../../components/home/MinistryStats";
 
 const eventOptions = {
   sortBy: "eventstartdate",
@@ -20,6 +21,7 @@ export default function Home() {
   const { events, loading, fetchEvents } = useEvents(eventOptions);
   const [statsLoading, setStatsLoading] = useState(true);
   const { summary, loading: summaryLoading, fetchSummary } = useWeeklySummary();
+  const { role } = useAuth();
 
   const [yearLevels, setYearLevels] = useState([]);
   const [yearLevelsLoading, setYearLevelsLoading] = useState(true);
@@ -36,23 +38,15 @@ export default function Home() {
 
     setStatsLoading(true);
     fetchKidStats()
-      .then((data) => {
-        setStats(data);
-      })
+      .then((data) => setStats(data))
       .catch((err) => console.error("Failed to fetch stats:", err))
-      .finally(() => {
-        setStatsLoading(false);
-      });
+      .finally(() => setStatsLoading(false));
 
     setYearLevelsLoading(true);
     fetchYearLevels()
-      .then((data) => {
-        setYearLevels(data.year_levels || []);
-      })
+      .then((data) => setYearLevels(data.year_levels || []))
       .catch((err) => console.error("Failed to fetch year levels:", err))
-      .finally(() => {
-        setYearLevelsLoading(false);
-      });
+      .finally(() => setYearLevelsLoading(false));
   }, [fetchEvents, fetchSummary]);
 
   return (
@@ -61,12 +55,10 @@ export default function Home() {
       <div className="absolute top-96 right-20 w-72 h-72 bg-purple-500/20 blur-[120px]" />
 
       <div className="relative max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Welcome + Attendance & New People Page Btn */}
         <Welcome />
 
         <WeeklySummary summary={summary} loading={summaryLoading} />
 
-        {/* Group Stats + Upcoming Events side by side on large screens */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           <GroupStats
             yearLevels={yearLevels}
@@ -76,12 +68,9 @@ export default function Home() {
           <UpcomingEvents events={events} loading={loading} />
         </div>
 
-        {/* Reminders full-width below */}
-        <Reminders />
+        {role?.toLowerCase() === "pastor" && <MinistryStats />}
 
-        {/* Future: latest added kid showcase — drop it here as its own
-            full-width card, or fold it into the grid above as a 3rd column
-            (lg:grid-cols-3) once you're ready to add it */}
+        <Reminders />
       </div>
     </div>
   );

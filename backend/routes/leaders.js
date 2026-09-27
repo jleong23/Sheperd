@@ -2,7 +2,10 @@ const express = require("express");
 const router = express.Router();
 
 const supabaseAdmin = require("../lib/supabaseClient");
-const { getManagedLeaderIds } = require("../lib/attendanceHierarchy");
+const {
+  getManagedLeaderIds,
+  getActiveTerm,
+} = require("../lib/attendanceHierarchy");
 
 /**
  * @route GET /leaders
@@ -57,6 +60,133 @@ router.get("/", async (req, res) => {
     res.status(500).json({
       error: "Failed fetching leaders",
     });
+  }
+});
+
+/**
+ * @route GET /leaders/ministry-stats
+ * @desc Ministry-wide stats across the pastor's managed hierarchy:
+ *       total kids, baptised kids, status/year-level breakdowns,
+ *       leader count, and current-term attendance rate.
+ * @access Pastor only
+ */
+router.get("/ministry-stats", async (req, res) => {
+  try {
+    const { data: currentUser, error: userError } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("leader_id", req.userId)
+      .single();
+
+    if (userError || currentUser?.role?.toLowerCase() !== "pastor") {
+      return res.status(403).json({ error: "Pastor access required" });
+    }
+
+    const managedIds = await getManagedLeaderIds(supabaseAdmin, req.userId);
+
+    if (managedIds.length === 0) {
+      return res.json({
+        total_kids: 0,
+        baptised_kids: 0,
+        status_breakdown: { CORE: 0, FRINGE: 0, NP: 0 },
+        year_level_breakdown: {},
+        total_leaders: 0,
+        attendance: { coming: 0, total: 0, rate: null, term: null },
+      });
+    }
+
+    const { count: total_kids, error: totalError } = await supabaseAdmin
+      .from("kids")
+      .select("*", { count: "exact", head: true })
+      .in("leader_id", managedIds);
+    if (totalError) throw totalError;
+
+    const { count: baptised_kids, error: baptisedError } = await supabaseAdmin
+      .from("kids")
+      .select("*", { count: "exact", head: true })
+      .in("leader_id", managedIds)
+      .eq("baptised", true);
+    if (baptisedError) throw baptisedError;
+
+    // Status + year-level breakdowns need raw rows (count queries can't group)
+    const { data: kidRows, error: kidRowsError } = await supabaseAdmin
+      .from("kids")
+      .select("status_code, year_level")
+      .in("leader_id", managedIds);
+    if (kidRowsError) throw kidRowsError;
+
+    const status_breakdown = { CORE: 0, FRINGE: 0, NP: 0 };
+    const year_level_breakdown = {};
+
+    kidRows.forEach((kid) => {
+      if (kid.status_code && status_breakdown[kid.status_code] !== undefined) {
+        status_breakdown[kid.status_code] += 1;
+      }
+      const yl = kid.year_level ?? "Unassigned";
+      year_level_breakdown[yl] = (year_level_breakdown[yl] || 0) + 1;
+    });
+
+    const { count: total_leaders, error: leaderCountError } =
+      await supabaseAdmin
+        .from("users")
+        .select("*", { count: "exact", head: true })
+        .in("leader_id", managedIds)
+        .eq("role", "leader");
+    if (leaderCountError) throw leaderCountError;
+
+    // Attendance rate for the current term
+    const activeTerm = await getActiveTerm(supabaseAdmin);
+    let attendance = { coming: 0, total: 0, rate: null, term: null };
+
+    if (activeTerm) {
+      const { data: kidIdsRows, error: kidIdsError } = await supabaseAdmin
+        .from("kids")
+        .select("id")
+        .in("leader_id", managedIds);
+      if (kidIdsError) throw kidIdsError;
+
+      const kidIds = kidIdsRows.map((k) => k.id);
+
+      if (kidIds.length > 0) {
+        const { count: comingCount, error: comingError } = await supabaseAdmin
+          .from("attendance")
+          .select("*", { count: "exact", head: true })
+          .eq("term_id", activeTerm.id)
+          .in("kidid", kidIds)
+          .eq("status", "coming");
+        if (comingError) throw comingError;
+
+        const { count: totalRecorded, error: totalRecordedError } =
+          await supabaseAdmin
+            .from("attendance")
+            .select("*", { count: "exact", head: true })
+            .eq("term_id", activeTerm.id)
+            .in("kidid", kidIds);
+        if (totalRecordedError) throw totalRecordedError;
+
+        attendance = {
+          coming: comingCount || 0,
+          total: totalRecorded || 0,
+          rate:
+            totalRecorded > 0
+              ? Math.round((comingCount / totalRecorded) * 1000) / 10
+              : null,
+          term: { year: activeTerm.year, term: activeTerm.term },
+        };
+      }
+    }
+
+    res.json({
+      total_kids: total_kids || 0,
+      baptised_kids: baptised_kids || 0,
+      status_breakdown,
+      year_level_breakdown,
+      total_leaders: total_leaders || 0,
+      attendance,
+    });
+  } catch (err) {
+    console.error("Error fetching ministry stats:", err);
+    res.status(500).json({ error: "Failed to fetch ministry stats" });
   }
 });
 
