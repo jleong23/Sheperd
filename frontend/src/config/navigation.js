@@ -5,24 +5,27 @@ export const navigation = {
       label: "Home",
     },
     {
-      to: "/attendance",
-      label: "Attendance",
-    },
-    {
       to: "/kid-list",
-      label: "Kid List",
+      label: "Listings",
     },
     {
       to: "/events",
       label: "Events",
     },
     {
-      to: "/catchups",
-      label: "Catchups",
-    },
-    {
       to: "/new-people",
       label: "New People",
+    },
+  ],
+
+  pastoralCare: [
+    {
+      to: "/attendance",
+      label: "Attendance",
+    },
+    {
+      to: "/catchups",
+      label: "Catchups",
     },
   ],
 

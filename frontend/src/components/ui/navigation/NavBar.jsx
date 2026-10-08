@@ -5,6 +5,7 @@ import { useAuth } from "../../../context/AuthContext.jsx";
 import { motion, AnimatePresence } from "framer-motion";
 import { navigation } from "../../../config/navigation.js";
 import PastorDropdown from "./PastorDropDown.jsx";
+import PastoralCareDropdown from "./PastoralCareDropdown.jsx";
 import { useClickOutside } from "../../../hooks/useClickOutside.js";
 
 function ProfileAvatar({ email }) {
@@ -80,6 +81,8 @@ export default function NavBar() {
                 </NavLink>
               </motion.li>
             ))}
+
+            <PastoralCareDropdown />
 
             {isPastor && <PastorDropdown />}
           </ul>
@@ -163,6 +166,32 @@ export default function NavBar() {
                     </NavLink>
                   </li>
                 ))}
+
+                {/* Pastoral Care */}
+                <li>
+                  <div className="my-3 border-t border-white/10" />
+
+                  <p className="px-4 pb-1 text-xs uppercase text-slate-500">
+                    Pastoral Care
+                  </p>
+
+                  {navigation.pastoralCare.map(({ to, label }) => (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      onClick={() => setMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `block rounded-xl px-4 py-3 text-base font-semibold transition ${
+                          isActive
+                            ? "bg-blue-500/15 text-blue-300"
+                            : "text-slate-300 hover:bg-white/10 hover:text-white"
+                        }`
+                      }
+                    >
+                      {label}
+                    </NavLink>
+                  ))}
+                </li>
 
                 {isPastor && (
                   <>
