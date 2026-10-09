@@ -71,9 +71,10 @@ export default function AttendancePanel({
         if (r.status === "coming") acc.coming += 1;
         else if (r.status === "maybe") acc.maybe += 1;
         else if (r.status === "not coming") acc.notComing += 1;
+        else if (r.status === "tbc") acc.tbc += 1;
         return acc;
       },
-      { coming: 0, maybe: 0, notComing: 0 },
+      { coming: 0, maybe: 0, notComing: 0, tbc: 0 },
     );
   }, [records]);
 
@@ -141,7 +142,7 @@ export default function AttendancePanel({
               className="p-4 bg-white/5 border-b border-white/10 flex flex-col gap-4 shadow-sm z-10 shrink-0"
             >
               {/* Stats Grid */}
-              <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
                 <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 py-2 sm:px-3 sm:py-1 rounded-xl sm:rounded-full bg-green-500/15 text-green-300 border border-green-400/30 text-[10px] sm:text-xs font-bold uppercase tracking-tight">
                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
                   <span className="hidden sm:inline">Coming:</span>{" "}
@@ -156,6 +157,10 @@ export default function AttendancePanel({
                   <span className="w-2 h-2 rounded-full bg-red-500"></span>
                   <span className="hidden sm:inline">Not Coming:</span>{" "}
                   {summary.notComing}
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1 sm:gap-2 px-2 py-2 sm:px-3 sm:py-1 rounded-xl sm:rounded-full bg-blue-500/15 text-blue-300 border border-blue-400/30 text-[10px] sm:text-xs font-bold uppercase tracking-tight">
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  <span className="hidden sm:inline">TBC:</span> {summary.tbc}
                 </div>
               </div>
 

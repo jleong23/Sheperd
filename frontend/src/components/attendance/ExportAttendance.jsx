@@ -57,10 +57,11 @@ export default function ExportAttendance({ attendance, label }) {
           if (r.status === "coming") acc.coming++;
           else if (r.status === "maybe") acc.maybe++;
           else if (r.status === "not coming") acc.notComing++;
+          else if (r.status === "tbc") acc.tbc++;
           return acc;
         },
         // Initial counter values
-        { coming: 0, maybe: 0, notComing: 0 },
+        { coming: 0, maybe: 0, notComing: 0, tbc: 0 },
       );
 
       // Return formatted summary row
@@ -70,6 +71,7 @@ export default function ExportAttendance({ attendance, label }) {
         coming: counts.coming,
         maybe: counts.maybe,
         notComing: counts.notComing,
+        tbc: counts.tbc,
       };
     });
 
@@ -86,6 +88,7 @@ export default function ExportAttendance({ attendance, label }) {
       { header: "Coming", key: "coming", width: 12 },
       { header: "Maybe", key: "maybe", width: 12 },
       { header: "Not Coming", key: "notComing", width: 15 },
+      { header: "TBC", key: "tbc", width: 10 },
     ];
 
     summaryData
@@ -116,6 +119,7 @@ export default function ExportAttendance({ attendance, label }) {
       coming: summaryData.reduce((sum, r) => sum + r.coming, 0),
       maybe: summaryData.reduce((sum, r) => sum + r.maybe, 0),
       notComing: summaryData.reduce((sum, r) => sum + r.notComing, 0),
+      tbc: summaryData.reduce((sum, r) => sum + r.tbc, 0),
     });
 
     totalRow.font = { bold: true };

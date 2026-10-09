@@ -13,16 +13,18 @@ const STATUS_STYLES = {
   coming: "bg-emerald-50 text-emerald-700 border-emerald-200",
   maybe: "bg-amber-50 text-amber-700 border-amber-200",
   "not coming": "bg-rose-50 text-rose-700 border-rose-200",
+  tbc: "bg-blue-50 text-blue-700 border-blue-200",
 };
 
 const STATUS_LABELS = {
   coming: "Coming",
   maybe: "Maybe",
   "not coming": "Not coming",
+  tbc: "TBC",
 };
 
 function AttendanceRow({ record, onSaved }) {
-  const [status, setStatus] = useState(record.status || "maybe");
+  const [status, setStatus] = useState(record.status || "tbc");
   const [reason, setReason] = useState(record.reason || "");
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingReason, setSavingReason] = useState(false);
@@ -71,11 +73,12 @@ function AttendanceRow({ record, onSaved }) {
           value={status}
           onChange={handleStatusChange}
           disabled={savingStatus}
-          className={`text-xs font-bold rounded-full border px-3 py-1.5 outline-none cursor-pointer transition-opacity ${STATUS_STYLES[normalizeStatus(status) === "notcoming" ? "not coming" : status] || STATUS_STYLES.maybe} ${savingStatus ? "opacity-50" : ""}`}
+          className={`text-xs font-bold rounded-full border px-3 py-1.5 outline-none cursor-pointer transition-opacity ${STATUS_STYLES[normalizeStatus(status) === "notcoming" ? "not coming" : normalizeStatus(status)] || STATUS_STYLES.tbc} ${savingStatus ? "opacity-50" : ""}`}
         >
           <option value="coming">Coming</option>
           <option value="maybe">Maybe</option>
           <option value="not coming">Not coming</option>
+          <option value="tbc">TBC</option>
         </select>
       </td>
       <td className="px-5 py-3">
@@ -293,6 +296,9 @@ export default function LeaderAttendancePanel({ attendance }) {
             const notComing = records.filter(
               (r) => normalizeStatus(r.status) === "notcoming",
             );
+            const tbc = records.filter(
+              (r) => normalizeStatus(r.status) === "tbc",
+            );
             const attendanceRate =
               records.length > 0
                 ? Math.round((coming.length / records.length) * 100)
@@ -351,6 +357,11 @@ export default function LeaderAttendancePanel({ attendance }) {
                           label: "Not Coming",
                           val: notComing.length,
                           color: "text-rose-500",
+                        },
+                        {
+                          label: "TBC",
+                          val: tbc.length,
+                          color: "text-blue-600",
                         },
                         {
                           label: "Rate",

@@ -12,9 +12,22 @@
 import { motion } from "framer-motion";
 import { CgProfile } from "react-icons/cg";
 
-const STATUS_CYCLE = ["maybe", "not coming", "coming"];
+const STATUS_CYCLE = ["tbc", "maybe", "not coming", "coming"];
+
+const STATUS_LABELS = {
+  tbc: "TBC",
+  maybe: "Maybe",
+  coming: "Coming",
+  "not coming": "Not coming",
+};
 
 const STATUS_STYLES = {
+  tbc: {
+    container:
+      "border-blue-400/35 bg-white/5 hover:border-blue-400/60 hover:shadow-[0_0_18px_rgba(59,130,246,0.18)]",
+    badge:
+      "bg-blue-500/10 text-blue-300 border border-blue-400/30 hover:bg-blue-500/15",
+  },
   coming: {
     container:
       "border-green-400/35 bg-white/5 hover:border-green-400/60 hover:shadow-[0_0_18px_rgba(34,197,94,0.18)]",
@@ -47,17 +60,17 @@ export default function AttendanceStudentCard({
   onReasonChange,
   onReasonSubmit,
 }) {
-  const styles = STATUS_STYLES[record.status] ?? STATUS_STYLES.default;
+  const status = record.status || "tbc";
+  const styles = STATUS_STYLES[status] ?? STATUS_STYLES.default;
 
   const handleStatusTap = () => {
-    const currentIndex = STATUS_CYCLE.indexOf(record.status);
+    const currentIndex = STATUS_CYCLE.indexOf(status);
     const nextStatus = STATUS_CYCLE[(currentIndex + 1) % STATUS_CYCLE.length];
 
     onStatusChange(record.id, nextStatus);
   };
 
-  const shouldShowReason =
-    record.status === "not coming" || record.status === "maybe";
+  const shouldShowReason = status === "not coming" || status === "maybe";
 
   return (
     <motion.div
@@ -76,7 +89,7 @@ export default function AttendanceStudentCard({
           onClick={handleStatusTap}
           className={`px-3 py-2 min-h-[44px] rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-wider w-28 sm:w-32 text-left flex justify-between items-center transition-all shadow-sm active:scale-95 ${styles.badge}`}
         >
-          <span className="truncate">{record.status}</span>
+          <span className="truncate">{STATUS_LABELS[status] || status}</span>
           <span className="text-xs opacity-70">Tap</span>
         </button>
       </div>
@@ -84,7 +97,7 @@ export default function AttendanceStudentCard({
       {shouldShowReason && (
         <div className="mt-1 pt-4 border-t border-white/10 flex flex-col gap-2.5">
           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-            Reason for {record.status}
+            Reason for {STATUS_LABELS[status] || status}
           </label>
 
           <div className="flex flex-col sm:flex-row gap-2">

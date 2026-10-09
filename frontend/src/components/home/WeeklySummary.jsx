@@ -1,7 +1,8 @@
-function StatusBar({ coming, maybe, notComing, total }) {
+function StatusBar({ coming, maybe, notComing, tbc, total }) {
   const comingPct = total > 0 ? (coming / total) * 100 : 0;
   const maybePct = total > 0 ? (maybe / total) * 100 : 0;
   const notComingPct = total > 0 ? (notComing / total) * 100 : 0;
+  const tbcPct = total > 0 ? (tbc / total) * 100 : 0;
 
   return (
     <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden flex">
@@ -11,11 +12,12 @@ function StatusBar({ coming, maybe, notComing, total }) {
         className="h-full bg-slate-500"
         style={{ width: `${notComingPct}%` }}
       />
+      <div className="h-full bg-indigo-400" style={{ width: `${tbcPct}%` }} />
     </div>
   );
 }
 
-function StatusLegend({ coming, maybe, notComing }) {
+function StatusLegend({ coming, maybe, notComing, tbc }) {
   return (
     <div className="mt-2 flex gap-4 text-sm text-slate-400">
       <span className="flex items-center gap-1.5">
@@ -27,6 +29,9 @@ function StatusLegend({ coming, maybe, notComing }) {
       <span className="flex items-center gap-1.5">
         <span className="w-2 h-2 rounded-full bg-slate-500" /> {notComing} not
         coming
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-indigo-400" /> {tbc} TBC
       </span>
     </div>
   );
@@ -47,7 +52,7 @@ export default function WeeklySummary({ summary, loading }) {
     );
   }
 
-  const { coming, maybe, notComing, total, week, totalWeeks, breakdown } =
+  const { coming, maybe, notComing, tbc, total, week, totalWeeks, breakdown } =
     summary;
 
   return (
@@ -63,9 +68,15 @@ export default function WeeklySummary({ summary, loading }) {
         coming={coming}
         maybe={maybe}
         notComing={notComing}
+        tbc={tbc}
         total={total}
       />
-      <StatusLegend coming={coming} maybe={maybe} notComing={notComing} />
+      <StatusLegend
+        coming={coming}
+        maybe={maybe}
+        notComing={notComing}
+        tbc={tbc}
+      />
 
       {/* Pastor-only: breakdown by year level */}
       {breakdown && (
@@ -87,6 +98,7 @@ export default function WeeklySummary({ summary, loading }) {
                 coming={g.coming}
                 maybe={g.maybe}
                 notComing={g.notComing}
+                tbc={g.tbc}
                 total={g.total}
               />
             </div>
