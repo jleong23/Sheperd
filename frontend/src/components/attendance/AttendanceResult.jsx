@@ -17,7 +17,7 @@
  * - AttendanceStudentCard → Individual student attendance card
  */
 import { useEffect, useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { Calendar } from "lucide-react";
 
 import AttendancePanel from "./AttendancePanel.jsx";
@@ -28,11 +28,10 @@ import InlineSpinner from "../ui/InlineSpinner.jsx";
 export default function AttendanceResult({
   currentAttendance,
   onStatusChange,
+  onCallStatusChange,
   onReasonChange,
   onReasonSubmit,
   onImport,
-  selectedTerm,
-  selectedYear,
   importing,
 }) {
   // ---------------------------------------------------
@@ -81,7 +80,7 @@ export default function AttendanceResult({
   }, [sortedWeeks, open]);
 
   return sortedWeeks.length > 0 ? (
-    <motion.section
+    <Motion.section
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
@@ -125,11 +124,7 @@ export default function AttendanceResult({
         </div>
 
         {/* Hidden import input */}
-        <ImportAttendance
-          onImport={onImport}
-          term={selectedTerm}
-          year={selectedYear}
-        />
+        <ImportAttendance onImport={onImport} />
       </div>
 
       {/* ---------------------------------------------------
@@ -147,16 +142,15 @@ export default function AttendanceResult({
             records={attendanceByWeek[week]}
             allAttendance={currentAttendance}
             onStatusChange={onStatusChange}
+            onCallStatusChange={onCallStatusChange}
             onImport={onImport}
             onReasonChange={onReasonChange}
             onReasonSubmit={onReasonSubmit}
-            selectedTerm={selectedTerm}
-            selectedYear={selectedYear}
             importing={importing}
           />
         ))}
       </div>
-    </motion.section>
+    </Motion.section>
   ) : (
     // ---------------------------------------------------
     // Empty State

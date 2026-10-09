@@ -58,10 +58,21 @@ export default function ExportAttendance({ attendance, label }) {
           else if (r.status === "maybe") acc.maybe++;
           else if (r.status === "not coming") acc.notComing++;
           else if (r.status === "tbc") acc.tbc++;
+          if (r.call_status === "called") acc.called++;
+          else if (r.call_status === "npu") acc.npu++;
+          else acc.noCall++;
           return acc;
         },
         // Initial counter values
-        { coming: 0, maybe: 0, notComing: 0, tbc: 0 },
+        {
+          coming: 0,
+          maybe: 0,
+          notComing: 0,
+          tbc: 0,
+          called: 0,
+          noCall: 0,
+          npu: 0,
+        },
       );
 
       // Return formatted summary row
@@ -72,6 +83,9 @@ export default function ExportAttendance({ attendance, label }) {
         maybe: counts.maybe,
         notComing: counts.notComing,
         tbc: counts.tbc,
+        called: counts.called,
+        noCall: counts.noCall,
+        npu: counts.npu,
       };
     });
 
@@ -89,6 +103,9 @@ export default function ExportAttendance({ attendance, label }) {
       { header: "Maybe", key: "maybe", width: 12 },
       { header: "Not Coming", key: "notComing", width: 15 },
       { header: "TBC", key: "tbc", width: 10 },
+      { header: "Called", key: "called", width: 10 },
+      { header: "No Call", key: "noCall", width: 10 },
+      { header: "NPU", key: "npu", width: 10 },
     ];
 
     summaryData
@@ -120,6 +137,9 @@ export default function ExportAttendance({ attendance, label }) {
       maybe: summaryData.reduce((sum, r) => sum + r.maybe, 0),
       notComing: summaryData.reduce((sum, r) => sum + r.notComing, 0),
       tbc: summaryData.reduce((sum, r) => sum + r.tbc, 0),
+      called: summaryData.reduce((sum, r) => sum + r.called, 0),
+      noCall: summaryData.reduce((sum, r) => sum + r.noCall, 0),
+      npu: summaryData.reduce((sum, r) => sum + r.npu, 0),
     });
 
     totalRow.font = { bold: true };
@@ -135,6 +155,7 @@ export default function ExportAttendance({ attendance, label }) {
       sheet.columns = [
         { header: "Name", key: "name", width: 25 },
         { header: "Status", key: "status", width: 15 },
+        { header: "Call", key: "callStatus", width: 14 },
         { header: "Reason", key: "reason", width: 30 },
         { header: "Week", key: "week", width: 10 },
         { header: "Term", key: "term", width: 10 },
@@ -145,6 +166,7 @@ export default function ExportAttendance({ attendance, label }) {
         sheet.addRow({
           name: r.name,
           status: r.status,
+          callStatus: r.call_status || "no_call",
           reason: r.reason || "",
           week: r.week,
           term: r.term,

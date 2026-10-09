@@ -279,7 +279,8 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
-    const { kidId, week, status, reason, name, term_id } = req.body;
+    const { kidId, week, status, call_status, reason, name, term_id } =
+      req.body;
 
     if (!kidId || !week || !term_id) {
       return res
@@ -290,6 +291,11 @@ router.post("/", async (req, res) => {
     const validStatuses = ["coming", "maybe", "not coming", "tbc"];
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid attendance status" });
+    }
+
+    const validCallStatuses = ["called", "no_call", "npu"];
+    if (call_status !== undefined && !validCallStatuses.includes(call_status)) {
+      return res.status(400).json({ error: "Invalid call status" });
     }
 
     const { data: kidCheck, error: kidError } = await supabase
@@ -328,6 +334,7 @@ router.post("/", async (req, res) => {
         name: name || kidCheck.name,
         week,
         status: status || "tbc",
+        ...(call_status !== undefined && { call_status }),
         reason: reason || null,
         term_id,
         leader_id: req.userId,
@@ -361,11 +368,16 @@ router.patch("/:id", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
     const { id } = req.params;
-    const { status, reason } = req.body;
+    const { status, call_status, reason } = req.body;
 
-    if (status === undefined && reason === undefined) {
+    if (
+      status === undefined &&
+      call_status === undefined &&
+      reason === undefined
+    ) {
       return res.status(400).json({
-        error: "At least one field (status or reason) must be provided",
+        error:
+          "At least one field (status, call_status or reason) must be provided",
       });
     }
 
@@ -374,8 +386,14 @@ router.patch("/:id", async (req, res) => {
       return res.status(400).json({ error: "Invalid attendance status" });
     }
 
+    const validCallStatuses = ["called", "no_call", "npu"];
+    if (call_status !== undefined && !validCallStatuses.includes(call_status)) {
+      return res.status(400).json({ error: "Invalid call status" });
+    }
+
     const updatePayload = { updated_at: new Date() };
     if (status !== undefined) updatePayload.status = status;
+    if (call_status !== undefined) updatePayload.call_status = call_status;
     if (reason !== undefined) updatePayload.reason = reason;
 
     // Allow the record's own leader OR a pastor managing that leader
@@ -749,6 +767,7 @@ router.post("/bulk", async (req, res) => {
     }
 
     const validStatuses = ["coming", "maybe", "not coming", "tbc"];
+    const validCallStatuses = ["called", "no_call", "npu"];
 
     // -----------------------------
     // Validate & sanitize records
@@ -762,12 +781,19 @@ router.post("/bulk", async (req, res) => {
         throw new Error(`Invalid status at index ${index}: ${r.status}`);
       }
 
+      if (r.call_status && !validCallStatuses.includes(r.call_status)) {
+        throw new Error(
+          `Invalid call status at index ${index}: ${r.call_status}`,
+        );
+      }
+
       return {
         kidid: r.kidid,
 
         week: Number(r.week),
         term_id: Number(r.term_id),
         status: r.status || "tbc",
+        call_status: r.call_status || "no_call",
         reason: r.reason || "",
         leader_id: req.userId,
         updated_at: new Date(),

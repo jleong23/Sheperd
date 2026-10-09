@@ -198,6 +198,30 @@ export default function AttendanceList() {
     }
   };
 
+  const handleCallStatusChange = async (recordId, callStatus) => {
+    const previousRecord = currentAttendance.find(
+      (record) => record.id === recordId,
+    );
+
+    if (!previousRecord) return;
+
+    updateAttendanceRecord({
+      ...previousRecord,
+      call_status: callStatus,
+    });
+
+    try {
+      const updatedRecord = await updateAttendance(recordId, {
+        call_status: callStatus,
+      });
+      updateAttendanceRecord(updatedRecord);
+    } catch (error) {
+      console.error("Failed to update call status:", error);
+      updateAttendanceRecord(previousRecord);
+      toast.error("Failed to update call status.");
+    }
+  };
+
   const handleReasonChange = (recordId, reason) => {
     setAllAttendance((prev) =>
       prev.map((record) =>
@@ -250,6 +274,7 @@ export default function AttendanceList() {
           week: Number(row.week),
           term_id: matchedTerm?.id ?? Number(row.term_id ?? row.term),
           status: row.status?.toLowerCase() || "tbc",
+          call_status: row.callStatus || "no_call",
           reason: row.reason || "",
         };
       })
@@ -305,12 +330,11 @@ export default function AttendanceList() {
             <AttendanceResult
               currentAttendance={currentAttendance}
               onStatusChange={handleStatusChange}
+              onCallStatusChange={handleCallStatusChange}
               onAttendanceUpdate={updateAttendanceRecord}
               onReasonChange={handleReasonChange}
               onReasonSubmit={handleReasonSubmit}
               onImport={handleImport}
-              selectedTerm={selectedTerm}
-              selectedYear={selectedYear}
               importing={importing}
             />
           ) : (
