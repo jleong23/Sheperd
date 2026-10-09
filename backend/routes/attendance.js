@@ -354,6 +354,61 @@ router.post("/", async (req, res) => {
 });
 
 /**
+ * @route PATCH /attendance/week/:termId/:week/submission
+ * @desc Mark or unmark a leader's weekly attendance as submitted for review
+ */
+router.patch("/week/:termId/:week/submission", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+
+  try {
+    const termId = Number(req.params.termId);
+    const week = Number(req.params.week);
+    const { submitted_for_review: submittedForReview } = req.body;
+
+    if (
+      !Number.isInteger(termId) ||
+      termId <= 0 ||
+      !Number.isInteger(week) ||
+      week <= 0 ||
+      typeof submittedForReview !== "boolean"
+    ) {
+      return res.status(400).json({
+        error: "Valid term, week and submitted_for_review are required",
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("attendance")
+      .update({
+        submitted_for_review: submittedForReview,
+        updated_at: new Date(),
+      })
+      .eq("term_id", termId)
+      .eq("week", week)
+      .eq("leader_id", req.userId)
+      .select("id");
+
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data || data.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "No attendance records found for week" });
+    }
+
+    res.json({
+      term_id: termId,
+      week,
+      submitted_for_review: submittedForReview,
+    });
+  } catch (err) {
+    console.error("Error submitting weekly attendance:", err);
+    res
+      .status(500)
+      .json({ error: "Failed to update weekly attendance submission" });
+  }
+});
+
+/**
  * @route PATCH /attendance/:id
  * @desc Partially update an attendance record (status or reason)
  * @access Private

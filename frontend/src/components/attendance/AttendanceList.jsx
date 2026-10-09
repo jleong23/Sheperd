@@ -9,6 +9,7 @@ import {
   addBulkAttendance,
   getAttendance,
   getAttendanceTerms,
+  setAttendanceWeekSubmission,
   updateAttendance,
 } from "../../api/attendance.js";
 import { fetchKids } from "../../api/kids.js";
@@ -222,6 +223,46 @@ export default function AttendanceList() {
     }
   };
 
+  const handleWeekSubmissionChange = async (week, submittedForReview) => {
+    if (!selectedTerm) return;
+
+    const weekRecords = currentAttendance.filter(
+      (record) => Number(record.week) === Number(week),
+    );
+    if (weekRecords.length === 0) return;
+
+    const previousSubmissions = new Map(
+      weekRecords.map((record) => [record.id, record.submitted_for_review]),
+    );
+    const recordIds = new Set(previousSubmissions.keys());
+
+    setAllAttendance((previous) =>
+      previous.map((record) =>
+        recordIds.has(record.id)
+          ? { ...record, submitted_for_review: submittedForReview }
+          : record,
+      ),
+    );
+
+    try {
+      await setAttendanceWeekSubmission(selectedTerm, week, submittedForReview);
+    } catch (error) {
+      console.error("Failed to update weekly attendance submission:", error);
+      setAllAttendance((previous) =>
+        previous.map((record) =>
+          previousSubmissions.has(record.id)
+            ? {
+                ...record,
+                submitted_for_review: previousSubmissions.get(record.id),
+              }
+            : record,
+        ),
+      );
+      toast.error("Failed to update attendance submission.");
+      throw error;
+    }
+  };
+
   const handleReasonChange = (recordId, reason) => {
     setAllAttendance((prev) =>
       prev.map((record) =>
@@ -335,6 +376,8 @@ export default function AttendanceList() {
               onReasonChange={handleReasonChange}
               onReasonSubmit={handleReasonSubmit}
               onImport={handleImport}
+              onWeekSubmissionChange={handleWeekSubmissionChange}
+              selectedTerm={selectedTerm}
               importing={importing}
             />
           ) : (

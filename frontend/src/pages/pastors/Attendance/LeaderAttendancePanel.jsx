@@ -319,6 +319,9 @@ export default function LeaderAttendancePanel({ attendance }) {
         <div className="divide-y divide-slate-100">
           {sortedWeeks.map(([week, records]) => {
             const isOpen = openWeek === week;
+            const submittedForReview = records.some(
+              (record) => record.submitted_for_review,
+            );
 
             const coming = records.filter(
               (r) => normalizeStatus(r.status) === "coming",
@@ -354,6 +357,15 @@ export default function LeaderAttendancePanel({ attendance }) {
                       <h3 className="text-lg font-bold text-slate-900">
                         Week {week}
                       </h3>
+                      <span
+                        className={`mt-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ring-1 ${
+                          submittedForReview
+                            ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                            : "bg-slate-100 text-slate-600 ring-slate-200"
+                        }`}
+                      >
+                        {submittedForReview ? "Submitted for review" : "Not submitted"}
+                      </span>
                       <div className="mt-1 flex items-center gap-3">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                           {records.length} Students

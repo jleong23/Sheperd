@@ -10,8 +10,8 @@
  * - Displays student cards
  */
 
-import { useMemo } from "react";
-import { Calendar, ChevronDown } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calendar, Check, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion as Motion } from "framer-motion";
 
 import AttendanceStudentCard from "./AttendanceStudentCard.jsx";
@@ -59,9 +59,26 @@ export default function AttendancePanel({
   onReasonChange,
   onReasonSubmit,
   onImport,
+  onWeekSubmissionChange,
+  selectedTerm,
   importing,
 }) {
   const isOpen = open === id; // Check if this week is currently open
+  const [savingSubmission, setSavingSubmission] = useState(false);
+  const submittedForReview = records.some(
+    (record) => record.submitted_for_review,
+  );
+
+  const handleSubmissionClick = async () => {
+    setSavingSubmission(true);
+    try {
+      await onWeekSubmissionChange(id, !submittedForReview);
+    } catch {
+      // The parent reports the save error and restores the previous state.
+    } finally {
+      setSavingSubmission(false);
+    }
+  };
 
   // Calculate summary stats
   const summary = useMemo(() => {
@@ -186,6 +203,29 @@ export default function AttendancePanel({
                   {importing && <InlineSpinner />}
                   {importing ? "Importing..." : `Import Week ${id}`}
                 </label>
+                <button
+                  type="button"
+                  onClick={handleSubmissionClick}
+                  disabled={savingSubmission || !selectedTerm}
+                  aria-pressed={submittedForReview}
+                  aria-label={
+                    submittedForReview
+                      ? `Week ${id} submitted for pastor review. Click to withdraw submission.`
+                      : `Submit attendance for week ${id}`
+                  }
+                  className={`flex min-h-[44px] items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-all active:scale-95 disabled:cursor-wait disabled:opacity-60 ${
+                    submittedForReview
+                      ? "border-green-400/40 bg-green-500/15 text-green-200 hover:bg-green-500/25"
+                      : "border-slate-400/30 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20"
+                  }`}
+                >
+                  {submittedForReview && <Check className="h-4 w-4" />}
+                  {savingSubmission
+                    ? "Saving..."
+                    : submittedForReview
+                      ? "Submitted"
+                      : "Submit attendance"}
+                </button>
               </div>
               <ImportAttendance onImport={onImport} week={id} />
             </Motion.div>
