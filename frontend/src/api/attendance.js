@@ -52,6 +52,30 @@ export async function updateAttendance(recordId, updates) {
 }
 
 /**
+ * Set the submitted-for-review state for one week.
+ * PATCH /attendance/week/:termId/:week/submission
+ */
+export async function setAttendanceWeekSubmission(
+  termId,
+  week,
+  submittedForReview,
+) {
+  try {
+    const response = await api.patch(
+      `/attendance/week/${termId}/${week}/submission`,
+      { submitted_for_review: submittedForReview },
+    );
+    return response.data;
+  } catch (err) {
+    console.error(
+      `Failed to update attendance submission for week ${week}:`,
+      err,
+    );
+    throw err;
+  }
+}
+
+/**
  * Create a new attendance year
  * POST /attendance/year
  * Body: { year: 2026 }

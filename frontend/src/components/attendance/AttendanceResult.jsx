@@ -32,6 +32,8 @@ export default function AttendanceResult({
   onReasonChange,
   onReasonSubmit,
   onImport,
+  onWeekSubmissionChange,
+  selectedTerm,
   importing,
 }) {
   // ---------------------------------------------------
@@ -146,6 +148,8 @@ export default function AttendanceResult({
             onImport={onImport}
             onReasonChange={onReasonChange}
             onReasonSubmit={onReasonSubmit}
+            onWeekSubmissionChange={onWeekSubmissionChange}
+            selectedTerm={selectedTerm}
             importing={importing}
           />
         ))}
