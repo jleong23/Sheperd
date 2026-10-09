@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 
-export default function ImportAttendance({ onImport, week, term, year }) {
+export default function ImportAttendance({ onImport, week }) {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -56,6 +56,7 @@ export default function ImportAttendance({ onImport, week, term, year }) {
         return {
           name: r.Name?.trim(),
           status: r.Status?.toLowerCase().trim().replace(/\s+/g, " "),
+          callStatus: normalizeCallStatus(r.Call),
           reason: r.Reason || "",
           week: rowWeek,
           term: rowTerm,
@@ -66,6 +67,16 @@ export default function ImportAttendance({ onImport, week, term, year }) {
       onImport(cleaned);
     } catch (err) {
       alert(err.message);
+    }
+
+    function normalizeCallStatus(value) {
+      const normalized = value
+        ?.toLowerCase()
+        .trim()
+        .replace(/[\s-]+/g, "_");
+      return ["called", "no_call", "npu"].includes(normalized)
+        ? normalized
+        : "no_call";
     }
   };
 

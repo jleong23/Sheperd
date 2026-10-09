@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Calendar, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 import ExportAttendance from "../../../components/attendance/ExportAttendance.jsx";
+import CallStatusPill from "../../../components/attendance/CallStatusPill.jsx";
 // TODO: fix this path once confirmed — should point at your api/attendance.js
 import { updateAttendance } from "../../../api/attendance.js";
 
@@ -27,6 +28,8 @@ function AttendanceRow({ record, onSaved }) {
   const [status, setStatus] = useState(record.status || "tbc");
   const [reason, setReason] = useState(record.reason || "");
   const [savingStatus, setSavingStatus] = useState(false);
+  const [callStatus, setCallStatus] = useState(record.call_status || "no_call");
+  const [savingCallStatus, setSavingCallStatus] = useState(false);
   const [savingReason, setSavingReason] = useState(false);
 
   const handleStatusChange = async (e) => {
@@ -44,6 +47,25 @@ function AttendanceRow({ record, onSaved }) {
       toast.error("Couldn't update status. Try again.");
     } finally {
       setSavingStatus(false);
+    }
+  };
+
+  const handleCallStatusChange = async (newCallStatus) => {
+    const previous = callStatus;
+    setCallStatus(newCallStatus);
+    setSavingCallStatus(true);
+
+    try {
+      const updated = await updateAttendance(record.id, {
+        call_status: newCallStatus,
+      });
+      onSaved({ ...record, ...updated });
+    } catch (err) {
+      console.error("Failed to update call status:", err);
+      setCallStatus(previous);
+      toast.error("Couldn't update call status. Try again.");
+    } finally {
+      setSavingCallStatus(false);
     }
   };
 
@@ -81,6 +103,14 @@ function AttendanceRow({ record, onSaved }) {
           <option value="tbc">TBC</option>
         </select>
       </td>
+      <td className="min-w-56 px-5 py-3">
+        <CallStatusPill
+          value={callStatus}
+          onChange={handleCallStatusChange}
+          disabled={savingCallStatus}
+          animationId={`pastor-${record.id}`}
+        />
+      </td>
       <td className="px-5 py-3">
         <input
           type="text"
@@ -98,8 +128,8 @@ function AttendanceRow({ record, onSaved }) {
 
 function WeekTable({ records, onRecordSaved }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200">
-      <table className="w-full">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200">
+      <table className="w-full min-w-[820px]">
         <thead>
           <tr className="bg-slate-50 text-left">
             <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -107,6 +137,9 @@ function WeekTable({ records, onRecordSaved }) {
             </th>
             <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">
               Status
+            </th>
+            <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+              Call
             </th>
             <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider text-slate-500">
               Reason

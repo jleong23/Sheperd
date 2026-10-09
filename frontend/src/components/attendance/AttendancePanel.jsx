@@ -12,7 +12,7 @@
 
 import { useMemo } from "react";
 import { Calendar, ChevronDown } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 
 import AttendanceStudentCard from "./AttendanceStudentCard.jsx";
 import ExportAttendance from "./ExportAttendance.jsx";
@@ -55,11 +55,10 @@ export default function AttendancePanel({
   count,
   records,
   onStatusChange,
+  onCallStatusChange,
   onReasonChange,
   onReasonSubmit,
   onImport,
-  selectedTerm,
-  selectedYear,
   importing,
 }) {
   const isOpen = open === id; // Check if this week is currently open
@@ -124,7 +123,7 @@ export default function AttendancePanel({
       --------------------------------------------------- */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <Motion.div
             key={`panel-${id}`}
             variants={panelVariants}
             initial="closed"
@@ -135,7 +134,7 @@ export default function AttendancePanel({
             }`}
           >
             {/* Panel Header / Summary */}
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -188,16 +187,11 @@ export default function AttendancePanel({
                   {importing ? "Importing..." : `Import Week ${id}`}
                 </label>
               </div>
-              <ImportAttendance
-                onImport={onImport}
-                week={id}
-                term={selectedTerm}
-                year={selectedYear}
-              />
-            </motion.div>
+              <ImportAttendance onImport={onImport} week={id} />
+            </Motion.div>
 
             {/* Scrollable Content Area */}
-            <motion.div
+            <Motion.div
               variants={descriptionVariants}
               initial="closed"
               animate="open"
@@ -210,13 +204,14 @@ export default function AttendancePanel({
                     key={record.id}
                     record={record}
                     onStatusChange={onStatusChange}
+                    onCallStatusChange={onCallStatusChange}
                     onReasonChange={onReasonChange}
                     onReasonSubmit={onReasonSubmit}
                   />
                 ))}
               </div>
-            </motion.div>
-          </motion.div>
+            </Motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
     </>
