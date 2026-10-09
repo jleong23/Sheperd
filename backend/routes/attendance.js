@@ -166,8 +166,16 @@ router.get("/summary/this-week", async (req, res) => {
       const coming = data.filter((r) => r.status === "coming").length;
       const maybe = data.filter((r) => r.status === "maybe").length;
       const notComing = data.filter((r) => r.status === "not coming").length;
+      const tbc = data.filter((r) => r.status === "tbc").length;
 
-      return res.json({ ...baseResponse, coming, maybe, notComing, total });
+      return res.json({
+        ...baseResponse,
+        coming,
+        maybe,
+        notComing,
+        tbc,
+        total,
+      });
     }
 
     // Pastors: overall totals + breakdown by year_level
@@ -184,6 +192,7 @@ router.get("/summary/this-week", async (req, res) => {
     const coming = data.filter((r) => r.status === "coming").length;
     const maybe = data.filter((r) => r.status === "maybe").length;
     const notComing = data.filter((r) => r.status === "not coming").length;
+    const tbc = data.filter((r) => r.status === "tbc").length;
 
     // Group by year_level (null -> "Unassigned")
     const groups = {};
@@ -195,6 +204,7 @@ router.get("/summary/this-week", async (req, res) => {
           coming: 0,
           maybe: 0,
           notComing: 0,
+          tbc: 0,
           total: 0,
         };
       }
@@ -202,6 +212,7 @@ router.get("/summary/this-week", async (req, res) => {
       if (row.status === "coming") groups[level].coming += 1;
       else if (row.status === "maybe") groups[level].maybe += 1;
       else if (row.status === "not coming") groups[level].notComing += 1;
+      else if (row.status === "tbc") groups[level].tbc += 1;
     }
 
     // Sort numerically, "Unassigned" last
@@ -211,7 +222,15 @@ router.get("/summary/this-week", async (req, res) => {
       return a.yearLevel - b.yearLevel;
     });
 
-    res.json({ ...baseResponse, coming, maybe, notComing, total, breakdown });
+    res.json({
+      ...baseResponse,
+      coming,
+      maybe,
+      notComing,
+      tbc,
+      total,
+      breakdown,
+    });
   } catch (err) {
     console.error("Error fetching weekly summary:", err);
     res.status(500).json({ error: "Failed to fetch weekly summary" });
@@ -268,7 +287,7 @@ router.post("/", async (req, res) => {
         .json({ error: "kidId, week and term_id are required" });
     }
 
-    const validStatuses = ["coming", "maybe", "not coming"];
+    const validStatuses = ["coming", "maybe", "not coming", "tbc"];
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid attendance status" });
     }
@@ -308,7 +327,7 @@ router.post("/", async (req, res) => {
         kidid: kidId,
         name: name || kidCheck.name,
         week,
-        status: status || "maybe",
+        status: status || "tbc",
         reason: reason || null,
         term_id,
         leader_id: req.userId,
@@ -350,7 +369,7 @@ router.patch("/:id", async (req, res) => {
       });
     }
 
-    const validStatuses = ["coming", "maybe", "not coming"];
+    const validStatuses = ["coming", "maybe", "not coming", "tbc"];
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid attendance status" });
     }
@@ -490,7 +509,7 @@ router.post("/year", async (req, res) => {
             name: kid.name,
             week,
             term_id: termData.id,
-            status: "maybe",
+            status: "tbc",
             reason: "",
             leader_id: ownerId,
           });
@@ -600,7 +619,7 @@ router.post("/term", async (req, res) => {
             name: kid.name,
             week,
             term_id: termData.id,
-            status: "maybe",
+            status: "tbc",
             reason: "",
             leader_id: ownerId,
           });
@@ -729,7 +748,7 @@ router.post("/bulk", async (req, res) => {
       return res.status(400).json({ error: "Records array is required" });
     }
 
-    const validStatuses = ["coming", "maybe", "not coming"];
+    const validStatuses = ["coming", "maybe", "not coming", "tbc"];
 
     // -----------------------------
     // Validate & sanitize records
@@ -748,7 +767,7 @@ router.post("/bulk", async (req, res) => {
 
         week: Number(r.week),
         term_id: Number(r.term_id),
-        status: r.status || "maybe",
+        status: r.status || "tbc",
         reason: r.reason || "",
         leader_id: req.userId,
         updated_at: new Date(),

@@ -94,8 +94,9 @@ export default function AttendanceList() {
   }, [fetchAllAttendance, fetchAllTerms]);
 
   const availableYears = useMemo(() => {
-    return [...new Set(terms.map((term) => Number(term.year)).filter(Boolean))]
-      .sort((a, b) => b - a);
+    return [
+      ...new Set(terms.map((term) => Number(term.year)).filter(Boolean)),
+    ].sort((a, b) => b - a);
   }, [terms]);
 
   const availableTerms = useMemo(() => {
@@ -118,7 +119,10 @@ export default function AttendanceList() {
       return;
     }
 
-    if (!selectedTerm || !availableTerms.some((term) => Number(term.id) === Number(selectedTerm))) {
+    if (
+      !selectedTerm ||
+      !availableTerms.some((term) => Number(term.id) === Number(selectedTerm))
+    ) {
       setSelectedTerm(availableTerms[availableTerms.length - 1]?.id ?? null);
     }
   }, [availableTerms, selectedYear, selectedTerm]);
@@ -245,7 +249,7 @@ export default function AttendanceList() {
           kidid: kid.id,
           week: Number(row.week),
           term_id: matchedTerm?.id ?? Number(row.term_id ?? row.term),
-          status: row.status?.toLowerCase() || "maybe",
+          status: row.status?.toLowerCase() || "tbc",
           reason: row.reason || "",
         };
       })
