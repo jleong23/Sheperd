@@ -80,9 +80,12 @@ export async function setAttendanceWeekSubmission(
  * POST /attendance/year
  * Body: { year: 2026 }
  */
-export async function addYear(year) {
+export async function addYear(year, startDate) {
   try {
-    const response = await api.post("/attendance/year", { year });
+    const response = await api.post("/attendance/year", {
+      year,
+      start_date: startDate,
+    });
     return response.data;
   } catch (err) {
     console.error("Failed to add year:", err);
@@ -93,18 +96,35 @@ export async function addYear(year) {
 /**
  * Create a new term inside a year
  * POST /attendance/term
- * Body: { year, term, weeks }
+ * Body: { year, term, weeks: 10, start_date }
  */
-export async function addTerm(year, term, weeks = 10) {
+export async function addTerm(year, term, startDate) {
   try {
     const response = await api.post("/attendance/term", {
       year,
       term,
-      weeks,
+      weeks: 10,
+      start_date: startDate,
     });
     return response.data;
   } catch (err) {
     console.error("Failed to add term:", err);
+    throw err;
+  }
+}
+
+/**
+ * Update the start date for an existing term.
+ * PATCH /attendance/term/:termId
+ */
+export async function updateTermStartDate(termId, startDate) {
+  try {
+    const response = await api.patch(`/attendance/term/${termId}`, {
+      start_date: startDate,
+    });
+    return response.data;
+  } catch (err) {
+    console.error(`Failed to update term ${termId} start date:`, err);
     throw err;
   }
 }

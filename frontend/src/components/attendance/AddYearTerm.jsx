@@ -8,11 +8,20 @@
  */
 
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import { addYear, addTerm, deleteTerm } from "../../api/attendance";
-import { motion } from "framer-motion";
+import { CalendarDays, Plus, Trash2 } from "lucide-react";
+import {
+  addYear,
+  addTerm,
+  deleteTerm,
+  updateTermStartDate,
+} from "../../api/attendance";
+import { motion as Motion } from "framer-motion";
 
-export default function AddYearTerm({ onUpdate, availableYears = [], availableTerms = [] }) {
+export default function AddYearTerm({
+  onUpdate,
+  availableYears = [],
+  allTerms = [],
+}) {
   const latestYear =
     // If backend returns years, use the latest one, else fallback to current system year
     availableYears.length > 0
@@ -23,23 +32,23 @@ export default function AddYearTerm({ onUpdate, availableYears = [], availableTe
   const [year, setYear] = useState(latestYear);
   // Term number input (1,2,3)
   const [newTerm, setNewTerm] = useState("");
-  // Number of weeks in a term (default = 10)
-  const [weeks, setWeeks] = useState(10);
+  const [startDate, setStartDate] = useState("");
   // Disables buttons while API calls are running
   const [loading, setLoading] = useState(false);
 
   const handleAddYear = async () => {
     const nextYear = latestYear + 1;
+    if (!startDate) return alert("Please select a start date for Term 1.");
     if (
       !window.confirm(
-        `Are you sure you want to add year ${nextYear}? This will create default attendance for all current kids.`,
+        `Are you sure you want to add year ${nextYear}? Term 1 will start on ${startDate} and will create attendance for all current kids.`,
       )
     )
       return;
 
     setLoading(true);
     try {
-      const response = await addYear(nextYear);
+      const response = await addYear(nextYear, startDate);
       alert(`Year ${nextYear} added successfully!`);
       onUpdate(response.createdRecords); // Pass new records up for a fast update
     } catch (err) {
@@ -53,9 +62,10 @@ export default function AddYearTerm({ onUpdate, availableYears = [], availableTe
   const handleAddTerm = async () => {
     if (!newTerm || isNaN(Number(newTerm)))
       return alert("Please enter a valid term number.");
+    if (!startDate) return alert("Please select a start date for the term.");
     if (
       !window.confirm(
-        `Are you sure you want to add term ${newTerm} to year ${year}?`,
+        `Are you sure you want to add term ${newTerm} to year ${year}, starting ${startDate}?`,
       )
     )
       return;
@@ -63,12 +73,46 @@ export default function AddYearTerm({ onUpdate, availableYears = [], availableTe
     setLoading(true);
     try {
       // POST /attendance/term - creates attendance rows for all kids for this term
-      await addTerm(year, Number(newTerm), Number(weeks));
+      await addTerm(Number(year), Number(newTerm), startDate);
       alert(`Term ${newTerm} for year ${year} added successfully!`);
       onUpdate(); // A full refresh is easier here
     } catch (err) {
       console.error("Failed to add term:", err);
       alert(err.response?.data?.error || "Failed to add term.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateTermStartDate = async () => {
+    const matchedTerm = allTerms.find(
+      (term) =>
+        Number(term.year) === Number(year) &&
+        Number(term.term) === Number(newTerm),
+    );
+
+    if (!matchedTerm?.id) {
+      return alert("No existing term matches the selected year and term.");
+    }
+    if (!startDate) return alert("Please select a start date for the term.");
+    if (matchedTerm.start_date === startDate) {
+      return alert("The selected term already has this start date.");
+    }
+    if (
+      !window.confirm(
+        `Update the start date for Year ${year}, Term ${newTerm} to ${startDate}? This changes the dates shown for all 10 weeks.`,
+      )
+    )
+      return;
+
+    setLoading(true);
+    try {
+      await updateTermStartDate(matchedTerm.id, startDate);
+      alert(`Start date for Term ${newTerm}, ${year} updated.`);
+      onUpdate();
+    } catch (err) {
+      console.error("Failed to update term start date:", err);
+      alert(err.response?.data?.error || "Failed to update term start date.");
     } finally {
       setLoading(false);
     }
@@ -89,7 +133,7 @@ export default function AddYearTerm({ onUpdate, availableYears = [], availableTe
 
     setLoading(true);
     try {
-      const matchedTerm = availableTerms.find(
+      const matchedTerm = allTerms.find(
         (term) =>
           Number(term.year) === Number(year) &&
           Number(term.term) === Number(newTerm),
@@ -111,7 +155,7 @@ export default function AddYearTerm({ onUpdate, availableYears = [], availableTe
   };
 
   return (
-    <motion.div
+    <Motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
@@ -154,18 +198,20 @@ export default function AddYearTerm({ onUpdate, availableYears = [], availableTe
             />
           </div>
 
-          {/* Weeks input */}
+          {/* Term start date */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-              Weeks Duration
+              Term Start Date
             </label>
             <input
-              type="number"
-              placeholder="e.g. 10"
-              value={weeks}
-              onChange={(e) => setWeeks(e.target.value)}
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
               className="w-full border border-white/10 bg-white/10 text-white min-h-[44px] px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all text-sm font-medium placeholder:text-slate-500"
             />
+            <span className="ml-1 text-xs text-slate-400">
+              Each term runs for 10 weeks.
+            </span>
           </div>
         </div>
 
@@ -191,6 +237,15 @@ export default function AddYearTerm({ onUpdate, availableYears = [], availableTe
           </div>
 
           <button
+            onClick={handleUpdateTermStartDate}
+            className="w-full border border-amber-400/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50"
+            disabled={loading}
+          >
+            <CalendarDays className="w-4 h-4" />
+            Update Existing Term Date
+          </button>
+
+          <button
             onClick={handleDeleteTerm}
             className="w-full bg-red-500/10 border border-red-400/30 text-red-300 hover:bg-red-500/20 min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50 disabled:active:scale-100 hover:shadow-[0_0_25px_rgba(239,68,68,0.35)]"
             disabled={loading}
@@ -200,6 +255,6 @@ export default function AddYearTerm({ onUpdate, availableYears = [], availableTe
           </button>
         </div>
       </div>
-    </motion.div>
+    </Motion.div>
   );
 }

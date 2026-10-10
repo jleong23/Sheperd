@@ -31,6 +31,20 @@ const {
   computeCurrentWeek,
 } = require("../lib/attendanceHierarchy");
 
+const TERM_WEEKS = 10;
+
+function isValidDateOnly(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return (
+    !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value
+  );
+}
+
 /**
  * @route GET /attendance/terms
  * @desc Get all available attendance years and terms
@@ -83,7 +97,8 @@ router.get("/", async (req, res) => {
  attendance_terms(
     year,
     term,
-    weeks
+    weeks,
+    start_date
  )
 `,
       )
@@ -507,9 +522,14 @@ router.delete("/term/:id", async (req, res) => {
 router.post("/year", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
-    const { year } = req.body;
-    if (!year) {
-      return res.status(400).json({ error: "Year required" });
+    const { year, start_date: startDate } = req.body;
+    if (!Number.isInteger(Number(year)) || Number(year) < 1) {
+      return res.status(400).json({ error: "A valid year is required" });
+    }
+    if (!isValidDateOnly(startDate)) {
+      return res.status(400).json({
+        error: "A valid term start_date is required in YYYY-MM-DD format",
+      });
     }
 
     // Guard: only pastors can create years
@@ -524,8 +544,6 @@ router.post("/year", async (req, res) => {
     }
 
     const term = 1;
-    const weeks = 10;
-
     // 1. Find or create the ONE shared term row for (year, term:1)
     let { data: termData, error: termFetchError } = await supabase
       .from("attendance_terms")
@@ -541,7 +559,13 @@ router.post("/year", async (req, res) => {
     if (!termData) {
       const { data: newTerm, error: termInsertError } = await supabase
         .from("attendance_terms")
-        .insert({ year, term, weeks, created_by: req.userId })
+        .insert({
+          year: Number(year),
+          term,
+          weeks: TERM_WEEKS,
+          start_date: startDate,
+          created_by: req.userId,
+        })
         .select()
         .single();
 
@@ -549,6 +573,10 @@ router.post("/year", async (req, res) => {
         return res.status(400).json({ error: termInsertError.message });
       }
       termData = newTerm;
+    } else if (termData.start_date !== startDate) {
+      return res.status(409).json({
+        error: "Term already exists with a different start date; update the term date instead",
+      });
     }
 
     // 2. Fan out attendance rows to every leader in this pastor's hierarchy
@@ -619,9 +647,19 @@ router.post("/year", async (req, res) => {
 router.post("/term", async (req, res) => {
   const supabase = createSupabaseClient(req);
   try {
-    const { year, term, weeks = 10 } = req.body;
-    if (!year || !term) {
-      return res.status(400).json({ error: "Year and term are required" });
+    const { year, term, start_date: startDate } = req.body;
+    if (
+      !Number.isInteger(Number(year)) ||
+      Number(year) < 1 ||
+      !Number.isInteger(Number(term)) ||
+      Number(term) < 1
+    ) {
+      return res.status(400).json({ error: "A valid year and term are required" });
+    }
+    if (!isValidDateOnly(startDate)) {
+      return res.status(400).json({
+        error: "A valid start_date is required in YYYY-MM-DD format",
+      });
     }
 
     // Guard: only pastors can create terms
@@ -639,8 +677,8 @@ router.post("/term", async (req, res) => {
     let { data: termData, error: termFetchError } = await supabase
       .from("attendance_terms")
       .select("*")
-      .eq("year", year)
-      .eq("term", term)
+      .eq("year", Number(year))
+      .eq("term", Number(term))
       .maybeSingle();
 
     if (termFetchError) {
@@ -650,7 +688,13 @@ router.post("/term", async (req, res) => {
     if (!termData) {
       const { data: newTerm, error: termInsertError } = await supabase
         .from("attendance_terms")
-        .insert({ year, term, weeks, created_by: req.userId })
+        .insert({
+          year: Number(year),
+          term: Number(term),
+          weeks: TERM_WEEKS,
+          start_date: startDate,
+          created_by: req.userId,
+        })
         .select()
         .single();
 
@@ -658,6 +702,10 @@ router.post("/term", async (req, res) => {
         return res.status(400).json({ error: termInsertError.message });
       }
       termData = newTerm;
+    } else if (termData.start_date !== startDate) {
+      return res.status(409).json({
+        error: "Term already exists with a different start date; update the term date instead",
+      });
     }
 
     // 2. Fan out attendance rows to every leader in this pastor's hierarchy
@@ -718,6 +766,54 @@ router.post("/term", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed creating term" });
+  }
+});
+
+/**
+ * @route PATCH /attendance/term/:id
+ * @desc Update an attendance term's start date (pastor only)
+ */
+router.patch("/term/:id", async (req, res) => {
+  const supabase = createSupabaseClient(req);
+
+  try {
+    const termId = Number(req.params.id);
+    const { start_date: startDate } = req.body;
+
+    if (!Number.isInteger(termId) || termId <= 0) {
+      return res.status(400).json({ error: "A valid term ID is required" });
+    }
+    if (!isValidDateOnly(startDate)) {
+      return res.status(400).json({
+        error: "A valid start_date is required in YYYY-MM-DD format",
+      });
+    }
+
+    const { data: currentUser, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("leader_id", req.userId)
+      .single();
+
+    if (userError || currentUser?.role?.toLowerCase() !== "pastor") {
+      return res.status(403).json({ error: "Pastor access required" });
+    }
+
+    const { data, error } = await supabase
+      .from("attendance_terms")
+      .update({ start_date: startDate })
+      .eq("id", termId)
+      .eq("created_by", req.userId)
+      .select()
+      .maybeSingle();
+
+    if (error) return res.status(400).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: "Term not found" });
+
+    res.json(data);
+  } catch (err) {
+    console.error("Error updating attendance term start date:", err);
+    res.status(500).json({ error: "Failed to update term start date" });
   }
 });
 

@@ -18,6 +18,7 @@ import AttendanceStudentCard from "./AttendanceStudentCard.jsx";
 import ExportAttendance from "./ExportAttendance.jsx";
 import ImportAttendance from "./ImportAttendance.jsx";
 import InlineSpinner from "../ui/InlineSpinner.jsx";
+import { getAttendanceWeekDateRange } from "../../utils/attendanceDates.js";
 
 // ---------------------------------------------------
 // Framer Motion Animation Variants
@@ -61,9 +62,11 @@ export default function AttendancePanel({
   onImport,
   onWeekSubmissionChange,
   selectedTerm,
+  termStartDate,
   importing,
 }) {
   const isOpen = open === id; // Check if this week is currently open
+  const weekDateRange = getAttendanceWeekDateRange(termStartDate, id);
   const [savingSubmission, setSavingSubmission] = useState(false);
   const submittedForReview = records.some(
     (record) => record.submitted_for_review,
@@ -121,6 +124,11 @@ export default function AttendancePanel({
             <span className="text-lg sm:text-xl font-medium text-slate-200 tracking-wide">
               {title}
             </span>
+            {weekDateRange && (
+              <span className="text-xs font-medium text-blue-200">
+                {weekDateRange}
+              </span>
+            )}
             <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">
               {count} people
             </span>

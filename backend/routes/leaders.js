@@ -319,7 +319,7 @@ router.get("/:leaderId/attendance", async (req, res) => {
 
     const { data, error } = await supabaseAdmin
       .from("attendance")
-      .select(`*, attendance_terms(year, term, weeks)`)
+      .select(`*, attendance_terms(year, term, weeks, start_date)`)
       .in("kidid", kidIds);
 
     if (error) throw error;

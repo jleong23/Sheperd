@@ -3,6 +3,7 @@ import { Calendar, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 import ExportAttendance from "../../../components/attendance/ExportAttendance.jsx";
 import CallStatusPill from "../../../components/attendance/CallStatusPill.jsx";
+import { getAttendanceWeekDateRange } from "../../../utils/attendanceDates.js";
 // TODO: fix this path once confirmed — should point at your api/attendance.js
 import { updateAttendance } from "../../../api/attendance.js";
 
@@ -322,6 +323,10 @@ export default function LeaderAttendancePanel({ attendance }) {
             const submittedForReview = records.some(
               (record) => record.submitted_for_review,
             );
+            const weekDateRange = getAttendanceWeekDateRange(
+              records[0]?.attendance_terms?.start_date,
+              Number(week),
+            );
 
             const coming = records.filter(
               (r) => normalizeStatus(r.status) === "coming",
@@ -357,6 +362,11 @@ export default function LeaderAttendancePanel({ attendance }) {
                       <h3 className="text-lg font-bold text-slate-900">
                         Week {week}
                       </h3>
+                      {weekDateRange && (
+                        <p className="mt-1 text-sm font-medium text-indigo-600">
+                          {weekDateRange}
+                        </p>
+                      )}
                       <span
                         className={`mt-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ring-1 ${
                           submittedForReview

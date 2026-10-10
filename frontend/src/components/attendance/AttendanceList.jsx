@@ -108,6 +108,13 @@ export default function AttendanceList() {
       .sort((a, b) => Number(a.term) - Number(b.term));
   }, [selectedYear, terms]);
 
+  const selectedTermStartDate = useMemo(
+    () =>
+      terms.find((term) => Number(term.id) === Number(selectedTerm))
+        ?.start_date ?? null,
+    [selectedTerm, terms],
+  );
+
   useEffect(() => {
     if (!selectedYear && availableYears.length > 0) {
       setSelectedYear(availableYears[0]);
@@ -360,6 +367,7 @@ export default function AttendanceList() {
           selectedTerm={selectedTerm}
           availableYears={availableYears}
           availableTerms={availableTerms}
+          allTerms={terms}
           onYearChange={setSelectedYear}
           onTermChange={setSelectedTerm}
           hideWeek
@@ -378,6 +386,7 @@ export default function AttendanceList() {
               onImport={handleImport}
               onWeekSubmissionChange={handleWeekSubmissionChange}
               selectedTerm={selectedTerm}
+              termStartDate={selectedTermStartDate}
               importing={importing}
             />
           ) : (
