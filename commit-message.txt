@@ -1,19 +1,39 @@
-Fix group stats scoping and add leader year-level assignments
+refactor(attendance): redesign Years & Terms manager UI
 
-- Add GET /kids/year-levels endpoint to return the year level(s)
-  assigned to the current leader/pastor via the new
-  leader_year_levels join table. Registered before the /:id route
-  to avoid being swallowed by Express's route matching.
+Redesign the AddYearTerm manager and the AttendanceSort filter bar
+for a cleaner, more professional and less cramped layout. No API
+calls or business logic changed.
 
-- Add leader_year_levels table (leader_id, year_level) to model
-  leaders covering one or more year levels, since a single leader
-  can be responsible for multiple groups (e.g. Year 8 and Year 9)
-  when group sizes are small. Includes a select RLS policy so
-  leaders can read their own assignments.
+AddYearTerm:
+- Reorganise the form into clearly separated sections: Term details,
+  Create, and Manage existing term, with consistent padding and
+  dividers
+- Add a header with an icon, title and short description
+- Add a live status chip that shows whether the selected year and
+  term already exist, including the current start date
+- Disable actions contextually: Add Term is disabled when the term
+  already exists; Update Start Date and Delete Term are disabled
+  when no matching term exists
+- Extract reusable Field and Section components
+- Merge the repeated try/catch/finally loading and error handling
+  into a single run() helper
+- Memoise the matched term lookup instead of recomputing it inside
+  each handler
+- Remove the max-w-3xl cap so the panel matches the width of the
+  other attendance components
+- Simplify button styling to a single solid primary action, neutral
+  outline secondary actions, and a red outline for the destructive
+  action, replacing the gradient, glow and amber styles
+- Fix the invalid border-gray-100 divider on the dark theme
 
-- Update Home.jsx to fetch year levels via fetchYearLevels()
-  instead of using a hardcoded placeholder value.
-
-- Update GroupStats.jsx to accept a yearLevels array and format it
-  for display (e.g. "Year 8, 9"), falling back to "Unassigned"
-  when a leader has no year levels assigned yet.
+AttendanceSort:
+- Fix the collapsible manager panel, which used the invalid
+  Tailwind class max-height-[1000px]; it now animates using a
+  grid-rows transition
+- Remove the redundant wrapper card around AddYearTerm to avoid a
+  double border
+- Extract a SelectField component and replace the duplicated inline
+  SVG arrows with the lucide ChevronDown icon
+- Simplify term option normalisation
+- Add aria-expanded to the manager toggle button
+- Increase spacing between the header, manager and filter bar

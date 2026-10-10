@@ -2,13 +2,14 @@
  * AddYearTerm Component
  * ---------------------------------------
  * Admin utility for managing attendance structure:
- * - Create new academic year
- * - Create new term under a year
- * - Delete term (removes all related attendance records)
+ * - Create a new academic year
+ * - Create a new term under a year
+ * - Update an existing term's start date
+ * - Delete a term (removes all related attendance records)
  */
 
-import { useState } from "react";
-import { CalendarDays, Plus, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { CalendarDays, CalendarPlus, Plus, Trash2 } from "lucide-react";
 import {
   addYear,
   addTerm,
@@ -17,87 +18,115 @@ import {
 } from "../../api/attendance";
 import { motion as Motion } from "framer-motion";
 
+const INPUT_CLASS =
+  "w-full min-h-[44px] rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-white placeholder:text-slate-500 transition-all [color-scheme:dark] focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30";
+
+function Field({ label, hint, children }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-xs font-semibold text-slate-300">{label}</label>
+      {children}
+      {hint && <span className="text-xs text-slate-500">{hint}</span>}
+    </div>
+  );
+}
+
+function Section({ title, description, children }) {
+  return (
+    <section className="space-y-4 px-6 py-6">
+      <div>
+        <h3 className="text-sm font-semibold text-white">{title}</h3>
+        {description && (
+          <p className="mt-1 text-xs text-slate-400">{description}</p>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export default function AddYearTerm({
   onUpdate,
   availableYears = [],
   allTerms = [],
 }) {
   const latestYear =
-    // If backend returns years, use the latest one, else fallback to current system year
     availableYears.length > 0
       ? Math.max(...availableYears)
       : new Date().getFullYear();
 
-  // Selected year for term operations
   const [year, setYear] = useState(latestYear);
-  // Term number input (1,2,3)
   const [newTerm, setNewTerm] = useState("");
   const [startDate, setStartDate] = useState("");
-  // Disables buttons while API calls are running
   const [loading, setLoading] = useState(false);
 
-  const handleAddYear = async () => {
-    const nextYear = latestYear + 1;
-    if (!startDate) return alert("Please select a start date for Term 1.");
-    if (
-      !window.confirm(
-        `Are you sure you want to add year ${nextYear}? Term 1 will start on ${startDate} and will create attendance for all current kids.`,
-      )
-    )
-      return;
+  const nextYear = latestYear + 1;
 
+  // Existing term matching the year + term inputs (if any)
+  const matchedTerm = useMemo(
+    () =>
+      allTerms.find(
+        (t) =>
+          Number(t.year) === Number(year) && Number(t.term) === Number(newTerm),
+      ),
+    [allTerms, year, newTerm],
+  );
+
+  const hasTermInput = Boolean(year && newTerm);
+
+  // Shared wrapper: loading state + error handling
+  const run = async (task, fallbackMessage) => {
     setLoading(true);
     try {
-      const response = await addYear(nextYear, startDate);
-      alert(`Year ${nextYear} added successfully!`);
-      onUpdate(response.createdRecords); // Pass new records up for a fast update
+      await task();
     } catch (err) {
-      console.error("Failed to add year:", err);
-      alert(err.response?.data?.error || "Failed to add year.");
+      console.error(fallbackMessage, err);
+      alert(err.response?.data?.error || err.message || fallbackMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddTerm = async () => {
+  const handleAddYear = () => {
+    if (!startDate) return alert("Please select a start date for Term 1.");
+    if (
+      !window.confirm(
+        `Add year ${nextYear}? Term 1 will start on ${startDate} and attendance will be created for all current kids.`,
+      )
+    )
+      return;
+
+    run(async () => {
+      const response = await addYear(nextYear, startDate);
+      alert(`Year ${nextYear} added successfully!`);
+      onUpdate(response.createdRecords);
+    }, "Failed to add year.");
+  };
+
+  const handleAddTerm = () => {
     if (!newTerm || isNaN(Number(newTerm)))
       return alert("Please enter a valid term number.");
     if (!startDate) return alert("Please select a start date for the term.");
     if (
       !window.confirm(
-        `Are you sure you want to add term ${newTerm} to year ${year}, starting ${startDate}?`,
+        `Add term ${newTerm} to year ${year}, starting ${startDate}?`,
       )
     )
       return;
 
-    setLoading(true);
-    try {
-      // POST /attendance/term - creates attendance rows for all kids for this term
+    run(async () => {
       await addTerm(Number(year), Number(newTerm), startDate);
       alert(`Term ${newTerm} for year ${year} added successfully!`);
-      onUpdate(); // A full refresh is easier here
-    } catch (err) {
-      console.error("Failed to add term:", err);
-      alert(err.response?.data?.error || "Failed to add term.");
-    } finally {
-      setLoading(false);
-    }
+      onUpdate();
+    }, "Failed to add term.");
   };
 
-  const handleUpdateTermStartDate = async () => {
-    const matchedTerm = allTerms.find(
-      (term) =>
-        Number(term.year) === Number(year) &&
-        Number(term.term) === Number(newTerm),
-    );
-
-    if (!matchedTerm?.id) {
+  const handleUpdateTermStartDate = () => {
+    if (!matchedTerm?.id)
       return alert("No existing term matches the selected year and term.");
-    }
     if (!startDate) return alert("Please select a start date for the term.");
-    if (matchedTerm.start_date === startDate) {
+    if (matchedTerm.start_date === startDate)
       return alert("The selected term already has this start date.");
-    }
     if (
       !window.confirm(
         `Update the start date for Year ${year}, Term ${newTerm} to ${startDate}? This changes the dates shown for all 10 weeks.`,
@@ -105,53 +134,27 @@ export default function AddYearTerm({
     )
       return;
 
-    setLoading(true);
-    try {
+    run(async () => {
       await updateTermStartDate(matchedTerm.id, startDate);
       alert(`Start date for Term ${newTerm}, ${year} updated.`);
       onUpdate();
-    } catch (err) {
-      console.error("Failed to update term start date:", err);
-      alert(err.response?.data?.error || "Failed to update term start date.");
-    } finally {
-      setLoading(false);
-    }
+    }, "Failed to update term start date.");
   };
 
-  const handleDeleteTerm = async () => {
-    if (!year || !newTerm) {
-      alert("Please enter both year and term to delete");
-      return;
-    }
-
+  const handleDeleteTerm = () => {
+    if (!matchedTerm?.id) return alert("No matching term found to delete.");
     if (
       !window.confirm(
-        `Are you sure you want to delete ALL records for Year ${year}, Term ${newTerm}? This cannot be undone.`,
+        `Delete ALL records for Year ${year}, Term ${newTerm}? This cannot be undone.`,
       )
     )
       return;
 
-    setLoading(true);
-    try {
-      const matchedTerm = allTerms.find(
-        (term) =>
-          Number(term.year) === Number(year) &&
-          Number(term.term) === Number(newTerm),
-      );
-
-      if (!matchedTerm?.id) {
-        throw new Error("No matching term found to delete.");
-      }
-
+    run(async () => {
       const response = await deleteTerm(matchedTerm.id);
       alert(response.message || "Term deleted successfully!");
       onUpdate();
-    } catch (err) {
-      console.error("Failed to delete term:", err);
-      alert(err.response?.data?.error || "Failed to delete term.");
-    } finally {
-      setLoading(false);
-    }
+    }, "Failed to delete term.");
   };
 
   return (
@@ -159,102 +162,144 @@ export default function AddYearTerm({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className="bg-white/5 rounded-3xl shadow-xl border border-white/10 w-full max-w-2xl mx-auto overflow-hidden backdrop-blur-md"
+      className="w-full overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-xl backdrop-blur-md"
     >
-      <div className="bg-white/5 px-5 py-4 border-b border-white/10">
-        <h2 className="text-lg font-bold text-white">Configuration</h2>
-        <p className="text-xs text-slate-300 mt-0.5">
-          Add new academic years or terms to the system.
-        </p>
-      </div>
-
-      <div className="p-5 sm:p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
-          {/* Year input */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-              Year
-            </label>
-            <input
-              type="number"
-              placeholder="e.g. 2024"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              className="w-full border border-white/10 bg-white/10 text-white min-h-[44px] px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all text-sm font-medium placeholder:text-slate-500"
-            />
-          </div>
-
-          {/* Term input */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-              Term
-            </label>
-            <input
-              type="number"
-              placeholder="e.g. 1"
-              value={newTerm}
-              onChange={(e) => setNewTerm(e.target.value)}
-              className="w-full border border-white/10 bg-white/10 text-white min-h-[44px] px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all text-sm font-medium placeholder:text-slate-500"
-            />
-          </div>
-
-          {/* Term start date */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
-              Term Start Date
-            </label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full border border-white/10 bg-white/10 text-white min-h-[44px] px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all text-sm font-medium placeholder:text-slate-500"
-            />
-            <span className="ml-1 text-xs text-slate-400">
-              Each term runs for 10 weeks.
-            </span>
-          </div>
+      {/* Header */}
+      <header className="flex items-center gap-4 border-b border-white/10 px-6 py-5">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300">
+          <CalendarDays className="h-5 w-5" />
         </div>
+        <div>
+          <h2 className="text-base font-semibold text-white">
+            Years &amp; Terms
+          </h2>
+          <p className="text-xs text-slate-400">
+            Create or adjust the academic calendar. Each term runs for 10 weeks.
+          </p>
+        </div>
+      </header>
 
-        {/* Actions */}
-        <div className="flex flex-col gap-3 pt-6 border-t border-gray-100">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
-              onClick={handleAddYear}
-              className="bg-blue-500/10 text-white min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-sm flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50 disabled:active:scale-100 hover:shadow-[0_0_25px_rgba(34,197,94,0.4)]"
-              disabled={loading}
+      <div className="divide-y divide-white/10">
+        {/* Term details */}
+        <Section
+          title="Term details"
+          description="Choose a year and term, then pick the date it starts."
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Field label="Year">
+              <input
+                type="number"
+                placeholder="e.g. 2026"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                className={INPUT_CLASS}
+              />
+            </Field>
+            <Field label="Term">
+              <input
+                type="number"
+                min="1"
+                placeholder="e.g. 1"
+                value={newTerm}
+                onChange={(e) => setNewTerm(e.target.value)}
+                className={INPUT_CLASS}
+              />
+            </Field>
+            <Field label="Start date">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className={INPUT_CLASS}
+              />
+            </Field>
+          </div>
+
+          {/* Live status */}
+          {hasTermInput && (
+            <div
+              className={`rounded-xl border px-4 py-3 text-xs ${
+                matchedTerm
+                  ? "border-amber-400/20 bg-amber-500/10 text-amber-200"
+                  : "border-emerald-400/20 bg-emerald-500/10 text-emerald-200"
+              }`}
             >
-              <Plus className="w-4 h-4" />
-              Add Year {latestYear + 1}
-            </button>
+              {matchedTerm
+                ? `Term ${newTerm}, ${year} already exists${
+                    matchedTerm.start_date
+                      ? ` and starts on ${matchedTerm.start_date}`
+                      : ""
+                  }.`
+                : `Term ${newTerm}, ${year} doesn't exist yet. It's ready to be created.`}
+            </div>
+          )}
+        </Section>
+
+        {/* Create */}
+        <Section
+          title="Create"
+          description={`Adding a year creates Term 1 using the start date above, with attendance for all current kids.`}
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <button
               onClick={handleAddTerm}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-sm flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50 disabled:active:scale-100 hover:shadow-[0_0_25px_rgba(99,102,241,0.45)]"
-              disabled={loading}
+              disabled={loading || Boolean(matchedTerm)}
+              className={`${BTN_BASE} ${BTN_PRIMARY}`}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="h-4 w-4" />
               Add Term
             </button>
+            <button
+              onClick={handleAddYear}
+              disabled={loading}
+              className={`${BTN_BASE} ${BTN_SECONDARY}`}
+            >
+              <CalendarPlus className="h-4 w-4" />
+              Add Year {nextYear}
+            </button>
           </div>
+        </Section>
 
-          <button
-            onClick={handleUpdateTermStartDate}
-            className="w-full border border-amber-400/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50"
-            disabled={loading}
-          >
-            <CalendarDays className="w-4 h-4" />
-            Update Existing Term Date
-          </button>
-
-          <button
-            onClick={handleDeleteTerm}
-            className="w-full bg-red-500/10 border border-red-400/30 text-red-300 hover:bg-red-500/20 min-h-[44px] px-4 rounded-xl font-bold text-xs uppercase tracking-wide transition-all flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50 disabled:active:scale-100 hover:shadow-[0_0_25px_rgba(239,68,68,0.35)]"
-            disabled={loading}
-          >
-            <Trash2 className="w-4 h-4" />
-            Delete Term
-          </button>
-        </div>
+        {/* Manage existing */}
+        <Section
+          title="Manage existing term"
+          description="Applies to the year and term selected above."
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <button
+              onClick={handleUpdateTermStartDate}
+              disabled={loading || !matchedTerm}
+              className={`${BTN_BASE} ${BTN_SECONDARY}`}
+            >
+              <CalendarDays className="h-4 w-4" />
+              Update Start Date
+            </button>
+            <button
+              onClick={handleDeleteTerm}
+              disabled={loading || !matchedTerm}
+              className={`${BTN_BASE} ${BTN_DANGER}`}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Term
+            </button>
+          </div>
+          <p className="text-xs text-slate-500">
+            Deleting a term permanently removes all of its attendance records.
+          </p>
+        </Section>
       </div>
     </Motion.div>
   );
 }
+
+const BTN_BASE =
+  "flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100";
+
+const BTN_PRIMARY =
+  "bg-blue-600 text-white hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50";
+
+const BTN_SECONDARY =
+  "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:border-white/20";
+
+const BTN_DANGER =
+  "border border-red-400/20 bg-transparent text-red-300 hover:bg-red-500/10 hover:border-red-400/40";

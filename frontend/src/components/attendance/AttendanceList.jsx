@@ -370,7 +370,6 @@ export default function AttendanceList() {
           allTerms={terms}
           onYearChange={setSelectedYear}
           onTermChange={setSelectedTerm}
-          hideWeek
           refreshAttendance={refreshPageData}
         />
 
