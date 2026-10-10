@@ -23,7 +23,7 @@ import { useState } from "react";
 import { Settings, X } from "lucide-react";
 import AddYearTerm from "./AddYearTerm";
 import useUser from "../../hooks/useUser";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext.jsx";
 
 const SELECT_BASE_CLASS =
@@ -40,6 +40,7 @@ export default function AttendanceSort({
   selectedTerm,
   availableYears,
   availableTerms,
+  allTerms,
   onYearChange,
   onTermChange,
   refreshAttendance,
@@ -72,7 +73,7 @@ export default function AttendanceSort({
   });
 
   return (
-    <motion.div
+    <Motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
@@ -82,7 +83,7 @@ export default function AttendanceSort({
           Page Header
       ====================================== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -93,7 +94,7 @@ export default function AttendanceSort({
           <p className="text-slate-400 text-xs sm:text-sm mt-1">
             Manage attendance records and weekly reports
           </p>
-        </motion.div>
+        </Motion.div>
 
         {/* ======================================
             Toggle AddYearTerm Manager
@@ -137,7 +138,7 @@ export default function AttendanceSort({
             <AddYearTerm
               onUpdate={refreshAttendance}
               availableYears={availableYears}
-              availableTerms={availableTerms}
+              allTerms={allTerms}
             />
           </div>
         </div>
@@ -248,6 +249,6 @@ export default function AttendanceSort({
           </div>
         </div>
       </div>
-    </motion.div>
+    </Motion.div>
   );
 }

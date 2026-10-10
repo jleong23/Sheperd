@@ -34,6 +34,7 @@ export default function AttendanceResult({
   onImport,
   onWeekSubmissionChange,
   selectedTerm,
+  termStartDate,
   importing,
 }) {
   // ---------------------------------------------------
@@ -150,6 +151,7 @@ export default function AttendanceResult({
             onReasonSubmit={onReasonSubmit}
             onWeekSubmissionChange={onWeekSubmissionChange}
             selectedTerm={selectedTerm}
+            termStartDate={termStartDate}
             importing={importing}
           />
         ))}
