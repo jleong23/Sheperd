@@ -3,37 +3,68 @@
  * -------------------
  * Attendance filtering and configuration component.
  *
- * Responsibilities:
- * - Display page heading and attendance information
- * - Filter attendance by academic year and term
- * - Toggle the AddYearTerm management panel
- * - Pass selected filters back to parent component
+ * - Displays page heading
+ * - Filters attendance by academic year and term
+ * - Toggles the AddYearTerm management panel (pastor only)
  *
  * Props:
- * - selectedYear → currently selected academic year
- * - selectedTerm → currently selected term
- * - availableYears → list of available years
- * - availableTerms → list of available terms for selected year
- * - onYearChange → callback when year changes
- * - onTermChange → callback when term changes
- * - refreshAttendance → refresh attendance data after updates
+ * - selectedYear / selectedTerm → current filters
+ * - availableYears / availableTerms → filter options
+ * - allTerms → every term (used by the manager)
+ * - onYearChange / onTermChange → filter callbacks
+ * - refreshAttendance → refresh data after manager updates
  */
 
 import { useState } from "react";
-import { Settings, X } from "lucide-react";
+import { ChevronDown, Settings, X } from "lucide-react";
 import AddYearTerm from "./AddYearTerm";
 import useUser from "../../hooks/useUser";
 import { motion as Motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext.jsx";
 
-const SELECT_BASE_CLASS =
-  "w-full appearance-none border text-sm font-medium rounded-xl block min-h-[44px] px-4 pr-10 transition-all";
+const SELECT_CLASS =
+  "w-full min-h-[44px] appearance-none rounded-xl border px-4 pr-10 text-sm font-medium transition-all";
+const SELECT_ACTIVE =
+  "cursor-pointer border-white/10 bg-white/5 text-white hover:bg-white/10 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30";
+const SELECT_DISABLED =
+  "cursor-not-allowed border-white/5 bg-white/[0.03] text-slate-600";
 
-const SELECT_ACTIVE_CLASS =
-  "bg-white/10 border-white/10 text-white focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 cursor-pointer";
-
-const SELECT_DISABLED_CLASS =
-  "bg-white/5 border-white/10 text-slate-500 cursor-not-allowed";
+function SelectField({
+  label,
+  value,
+  onChange,
+  disabled,
+  placeholder,
+  children,
+}) {
+  return (
+    <div className="flex flex-1 flex-col gap-2">
+      <label
+        className={`text-xs font-semibold ${
+          disabled ? "text-slate-600" : "text-slate-300"
+        }`}
+      >
+        {label}
+      </label>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          className={`${SELECT_CLASS} ${disabled ? SELECT_DISABLED : SELECT_ACTIVE}`}
+        >
+          <option value="">{placeholder}</option>
+          {children}
+        </select>
+        <ChevronDown
+          className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 ${
+            disabled ? "text-slate-600" : "text-slate-400"
+          }`}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function AttendanceSort({
   selectedYear,
@@ -45,30 +76,21 @@ export default function AttendanceSort({
   onTermChange,
   refreshAttendance,
 }) {
-  // Controls whether the AddYearTerm manager panel is visible
-  const [showAddYearTerm, setShowAddYearTerm] = useState(false);
+  const [showManager, setShowManager] = useState(false);
 
-  // Custom hook to fetch current user information
-  // yearLevel is displayed in the page heading
   const { yearLevel } = useUser(1);
   const { profile } = useAuth();
-
   const isPastor = profile?.role === "pastor";
-  const normalizedAvailableTerms = (availableTerms ?? []).map((term) => {
-    if (term && typeof term === "object") {
-      const termNumber = Number(term.term ?? term.id ?? 0);
-      const termValue = Number(term.id ?? term.term ?? 0);
 
-      return {
-        value: termValue,
-        label: Number.isFinite(termNumber) ? `Term ${termNumber}` : "Term",
-      };
-    }
+  // Normalise terms into { value, label } options
+  const termOptions = (availableTerms ?? []).map((term) => {
+    const isObject = term && typeof term === "object";
+    const number = Number(isObject ? (term.term ?? term.id) : term);
+    const value = Number(isObject ? (term.id ?? term.term) : term);
 
-    const termNumber = Number(term);
     return {
-      value: termNumber,
-      label: Number.isFinite(termNumber) ? `Term ${termNumber}` : String(term),
+      value,
+      label: Number.isFinite(number) ? `Term ${number}` : "Term",
     };
   });
 
@@ -77,177 +99,93 @@ export default function AttendanceSort({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
-      className="mb-6 sm:mb-8"
+      className="mb-8"
     >
-      {/* ======================================
-          Page Header
-      ====================================== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-        <Motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+      {/* Page header */}
+      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
             {yearLevel} Attendance
           </h1>
-
-          <p className="text-slate-400 text-xs sm:text-sm mt-1">
+          <p className="mt-1 text-xs text-slate-400 sm:text-sm">
             Manage attendance records and weekly reports
           </p>
-        </Motion.div>
+        </div>
 
-        {/* ======================================
-            Toggle AddYearTerm Manager
-        ====================================== */}
         {isPastor && (
           <button
-            onClick={() => setShowAddYearTerm((prev) => !prev)}
-            className={`bg-slate-200/10 flex items-center justify-center gap-2 px-4 py-2 min-h-[44px] rounded-xl font-bold transition-all duration-200 active:scale-95 ${
-              showAddYearTerm
-                ? "bg-white/10 text-slate-200 hover:bg-white/15 border border-white/10"
-                : "text-white shadow-[0_0_20px_rgba(99,102,241,0.35)] hover:shadow-[0_0_28px_rgba(99,102,241,0.55)]"
+            onClick={() => setShowManager((prev) => !prev)}
+            aria-expanded={showManager}
+            className={`flex min-h-[44px] items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-all active:scale-[0.98] ${
+              showManager
+                ? "border-white/10 bg-white/10 text-slate-200 hover:bg-white/15"
+                : "border-white/10 bg-white/5 text-white hover:bg-white/10"
             }`}
           >
-            {showAddYearTerm ? (
+            {showManager ? (
               <>
-                <X className="w-4 h-4" />
-                <span>Close Manager</span>
+                <X className="h-4 w-4" />
+                Close Manager
               </>
             ) : (
               <>
-                <Settings className="w-4 h-4" />
-                <span>Manage Years & Terms</span>
+                <Settings className="h-4 w-4" />
+                Manage Years &amp; Terms
               </>
             )}
           </button>
         )}
       </div>
 
-      {/* ======================================
-          Expandable AddYearTerm Panel
-      ====================================== */}
+      {/* Collapsible manager panel */}
       {isPastor && (
         <div
-          className={`overflow-hidden transition-all duration-500 ease-in-out ${
-            showAddYearTerm
-              ? "max-height-[1000px] opacity-100 mb-8"
-              : "max-h-0 opacity-0"
+          className={`grid transition-all duration-300 ease-in-out ${
+            showManager
+              ? "grid-rows-[1fr] opacity-100"
+              : "grid-rows-[0fr] opacity-0"
           }`}
         >
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-2 shadow-xl backdrop-blur-md">
-            <AddYearTerm
-              onUpdate={refreshAttendance}
-              availableYears={availableYears}
-              allTerms={allTerms}
-            />
+          <div className="min-h-0 overflow-hidden">
+            <div className="pb-6">
+              <AddYearTerm
+                onUpdate={refreshAttendance}
+                availableYears={availableYears}
+                allTerms={allTerms}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {/* ======================================
-          Filters Bar
-      ====================================== */}
-      <div className="bg-white/5 p-4 sm:p-5 rounded-3xl border border-white/10 shadow-xl backdrop-blur-md flex flex-col sm:flex-row gap-4 sm:gap-8 items-stretch sm:items-center">
-        {/* ======================================
-            Academic Year Filter
-        ====================================== */}
-        <div className="flex flex-col gap-2 flex-1">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-            Academic Year
-          </label>
+      {/* Filters */}
+      <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 shadow-xl backdrop-blur-md sm:flex-row sm:gap-6">
+        <SelectField
+          label="Academic year"
+          placeholder="Select year"
+          value={selectedYear || ""}
+          onChange={(e) => onYearChange(Number(e.target.value))}
+        >
+          {availableYears.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </SelectField>
 
-          <div className="relative">
-            <select
-              className={`${SELECT_BASE_CLASS} ${SELECT_ACTIVE_CLASS}`}
-              // Controlled component value
-              value={selectedYear || ""}
-              // Convert dropdown string value into Number
-              // HTML select values are always strings
-              onChange={(e) => onYearChange(Number(e.target.value))}
-            >
-              <option value="">Select Year</option>
-
-              {/* Render available years dynamically */}
-              {availableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-
-            {/* Custom dropdown arrow icon */}
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* ======================================
-            Term Filter
-        ====================================== */}
-        <div className="flex flex-col gap-2 flex-1">
-          <label
-            className={`text-[10px] font-black uppercase tracking-widest ml-1 ${
-              // Make label lighter when disabled
-              !selectedYear ? "text-gray-300" : "text-gray-400"
-            }`}
-          >
-            Term
-          </label>
-
-          <div className="relative">
-            <select
-              className={`${SELECT_BASE_CLASS} ${
-                !selectedYear ? SELECT_DISABLED_CLASS : SELECT_ACTIVE_CLASS
-              }`}
-              value={selectedTerm || ""}
-              onChange={(e) => onTermChange(Number(e.target.value))}
-              disabled={!selectedYear}
-            >
-              <option value="">Select Term</option>
-
-              {/* Render available terms dynamically */}
-              {normalizedAvailableTerms.map((term) => (
-                <option key={term.value} value={term.value}>
-                  {term.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Custom dropdown icon */}
-            <div
-              className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 ${
-                !selectedYear ? "text-slate-500" : "text-slate-300"
-              }`}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <SelectField
+          label="Term"
+          placeholder="Select term"
+          value={selectedTerm || ""}
+          onChange={(e) => onTermChange(Number(e.target.value))}
+          disabled={!selectedYear}
+        >
+          {termOptions.map((term) => (
+            <option key={term.value} value={term.value}>
+              {term.label}
+            </option>
+          ))}
+        </SelectField>
       </div>
     </Motion.div>
   );
