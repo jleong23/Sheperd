@@ -1,56 +1,68 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import HeroPreview from "./HeroPreview.jsx";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.6, ease: "easeOut" },
+  }),
+};
 
 export default function SplashHero() {
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.8,
-        ease: "easeOut",
-      }}
-      className="flex min-h-[65vh] flex-col items-center justify-center text-center"
-    >
-      <section className="flex min-h-[65vh] flex-col items-center justify-center text-center">
+    <section className="grid items-center gap-14 py-14 sm:py-20 lg:grid-cols-2 lg:gap-10">
+      {/* Copy */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        className="text-center lg:text-left"
+      >
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6 rounded-full border border-indigo-500/40 bg-indigo-500/10 px-4 py-2 text-sm text-indigo-300"
+          variants={fadeUp}
+          custom={0}
+          className="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-medium text-indigo-300 sm:text-sm"
         >
-          ✨ Youth Ministry Management Platform
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-400" />
+          </span>
+          Youth Ministry Management Platform
         </motion.div>
 
-        <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight sm:text-6xl">
-          Manage Your{" "}
+        <motion.h1
+          variants={fadeUp}
+          custom={1}
+          className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl"
+        >
+          Manage your{" "}
           <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Youth Ministry
+            youth ministry
           </span>{" "}
-          With Confidence.
-        </h1>
+          with confidence.
+        </motion.h1>
 
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-400">
-          Keep track of kids, attendance, events, catchups, and new people in
-          one simple dashboard built for leaders.
-        </p>
+        <motion.p
+          variants={fadeUp}
+          custom={2}
+          className="mx-auto mt-6 max-w-xl text-base leading-7 text-slate-400 sm:text-lg lg:mx-0"
+        >
+          Keep track of kids, attendance, events, catchups and new people in one
+          simple dashboard built for leaders.
+        </motion.p>
+      </motion.div>
 
-        <div className="mt-10 flex w-full max-w-xs flex-col gap-4 sm:max-w-none sm:flex-row sm:justify-center">
-          <Link
-            to="/signup"
-            className="block w-full rounded-full bg-white px-8 py-4 text-center text-sm font-bold text-slate-900 hover:bg-slate-200 sm:w-auto"
-          >
-            Get Started
-          </Link>
-
-          <Link
-            to="/login"
-            className="block w-full rounded-full bg-slate-800 px-8 py-4 text-center text-sm font-bold text-white hover:bg-slate-700 sm:w-auto"
-          >
-            Login
-          </Link>
-        </div>
-      </section>
-    </motion.section>
+      {/* Live product preview */}
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+      >
+        <HeroPreview />
+      </motion.div>
+    </section>
   );
 }
