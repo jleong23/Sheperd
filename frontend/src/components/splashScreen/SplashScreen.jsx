@@ -17,7 +17,7 @@ function Glow({ className, x, y, duration }) {
         repeatType: "mirror",
         ease: "easeInOut",
       }}
-      className={`pointer-events-none absolute h-[28rem] w-[28rem] rounded-full blur-[120px] ${className}`}
+      className={`pointer-events-none absolute h-80 w-80 rounded-full blur-3xl ${className}`}
     />
   );
 }

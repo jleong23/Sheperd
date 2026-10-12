@@ -4,94 +4,109 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-// NavBar
-import NavBar from "./components/ui/navigation/NavBar.jsx";
+import { lazy, Suspense } from "react";
 import { Toaster } from "react-hot-toast";
+
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import RoleRoute from "./auth/RoleRoute.jsx";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 
-// Auth
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import Login from "./pages/leaders/Login";
-import Signup from "./pages/leaders/Signup";
-import RoleRoute from "./auth/RoleRoute.jsx";
+// Load pages only when the user visits them.
+const NavBar = lazy(() => import("./components/ui/navigation/NavBar.jsx"));
+const Footer = lazy(() => import("./components/ui/Footer"));
 
-// Leader Pages
-import LeaderHome from "./pages/leaders/Home";
-import Kids from "./pages/leaders/Kids";
-import Attendance from "./pages/leaders/Attendance";
-import AllKids from "./pages/pastors/AllKids.jsx";
-import Events from "./pages/leaders/Events";
-import Catchups from "./pages/leaders/Catchups";
-import KidProfile from "./components/kids/KidProfile";
-import Footer from "./components/ui/Footer";
-import NewPeople from "./components/newPeople/NewPeople";
-import Splash from "./pages/leaders/Splash.jsx";
-import PastorDashboard from "./pages/pastors/PastorDashboard.jsx";
-import LeaderStats from "./pages/pastors/LeaderStats.jsx";
+const Login = lazy(() => import("./pages/leaders/Login"));
+const Signup = lazy(() => import("./pages/leaders/Signup"));
+const Splash = lazy(() => import("./pages/leaders/Splash.jsx"));
 
-// Helper component to protect routes
+const LeaderHome = lazy(() => import("./pages/leaders/Home"));
+const Kids = lazy(() => import("./pages/leaders/Kids"));
+const Attendance = lazy(() => import("./pages/leaders/Attendance"));
+const Events = lazy(() => import("./pages/leaders/Events"));
+const Catchups = lazy(() => import("./pages/leaders/Catchups"));
+
+const AllKids = lazy(() => import("./pages/pastors/AllKids.jsx"));
+const PastorDashboard = lazy(
+  () => import("./pages/pastors/PastorDashboard.jsx"),
+);
+const LeaderStats = lazy(() => import("./pages/pastors/LeaderStats.jsx"));
+
+const KidProfile = lazy(() => import("./components/kids/KidProfile"));
+const NewPeople = lazy(() => import("./components/newPeople/NewPeople"));
+
+// Protect routes that require authentication.
 const PrivateRoute = ({ children }) => {
   const { token, loading } = useAuth();
 
-  if (loading) return <LoadingSpinner fullPage={true} />;
+  if (loading) {
+    return <LoadingSpinner fullPage={true} />;
+  }
 
-  return token ? children : <Navigate to="/welcome" />;
+  return token ? children : <Navigate to="/welcome" replace />;
 };
 
 function AppRoutes() {
   return (
     <>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/welcome" element={<Splash />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+      <Suspense fallback={<LoadingSpinner fullPage={true} />}>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/welcome" element={<Splash />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/*"
-          element={
-            <PrivateRoute>
-              <>
-                <NavBar />
-                <main className="pt-20">
-                  <Routes>
-                    <Route
-                      path="/pastor"
-                      element={
-                        <RoleRoute allowedRole="pastor">
-                          <PastorDashboard />
-                        </RoleRoute>
-                      }
-                    />
-                    <Route
-                      path="/pastor/leaders/:leaderId"
-                      element={
-                        <RoleRoute allowedRole="pastor">
-                          <LeaderStats />
-                        </RoleRoute>
-                      }
-                    />
-                    <Route path="/" element={<LeaderHome />} />
-                    <Route path="/kid-list" element={<Kids />} />
-                    <Route path="/kids/:id" element={<KidProfile />} />
-                    <Route path="/attendance" element={<Attendance />} />
-                    <Route path="/events" element={<Events />} />
-                    <Route path="/catchups" element={<Catchups />} />
-                    <Route path="/new-people" element={<NewPeople />} />
-                    <Route path="/all-kids" element={<AllKids />} />
-                  </Routes>
-                </main>
-                <Footer />
-              </>
-            </PrivateRoute>
-          }
-        />
-      </Routes>
+          {/* Protected routes */}
+          <Route
+            path="/*"
+            element={
+              <PrivateRoute>
+                <>
+                  <NavBar />
+
+                  <main className="pt-20">
+                    <Routes>
+                      <Route
+                        path="/pastor"
+                        element={
+                          <RoleRoute allowedRole="pastor">
+                            <PastorDashboard />
+                          </RoleRoute>
+                        }
+                      />
+
+                      <Route
+                        path="/pastor/leaders/:leaderId"
+                        element={
+                          <RoleRoute allowedRole="pastor">
+                            <LeaderStats />
+                          </RoleRoute>
+                        }
+                      />
+
+                      <Route path="/" element={<LeaderHome />} />
+                      <Route path="/kid-list" element={<Kids />} />
+                      <Route path="/kids/:id" element={<KidProfile />} />
+                      <Route path="/attendance" element={<Attendance />} />
+                      <Route path="/events" element={<Events />} />
+                      <Route path="/catchups" element={<Catchups />} />
+                      <Route path="/new-people" element={<NewPeople />} />
+                      <Route path="/all-kids" element={<AllKids />} />
+                    </Routes>
+                  </main>
+
+                  <Footer />
+                </>
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </Suspense>
+
       <Toaster position="top-right" />
     </>
   );
 }
+
 export default function App() {
   return (
     <div className="min-h-screen font-sans">
